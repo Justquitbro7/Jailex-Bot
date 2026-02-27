@@ -2,57 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jailex Overlay</title>
     <style>
-        body {
-            background-color: transparent !important;
-            margin: 0;
-            padding: 15px;
-            overflow: hidden;
-            font-family: 'Segoe UI', Arial, sans-serif;
-        }
-
-        #chat-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            gap: 12px;
-            justify-content: flex-end; 
-        }
-
-        .chat-message {
-            background: rgba(11, 22, 42, 0.85); /* Bears Navy */
-            border-left: 5px solid #ff6a00; /* Neon Orange */
-            padding: 12px;
-            border-radius: 0 8px 8px 0;
-            color: white;
-            font-size: 22px; /* Slightly larger for easier reading */
-            font-weight: 500;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            animation: slideIn 0.3s ease-out;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            max-width: 90%;
-        }
-
-        .user-name {
-            color: #00f3ff; /* Neon Blue */
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.9em;
-            display: block; /* Puts name above message */
-            margin-bottom: 2px;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-30px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
+        body { background-color: transparent !important; margin: 0; padding: 15px; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        #chat-container { display: flex; flex-direction: column; height: 100vh; gap: 12px; justify-content: flex-end; }
+        .chat-message { background: rgba(11, 22, 42, 0.85); border-left: 5px solid #ff6a00; padding: 12px; border-radius: 0 8px 8px 0; color: white; font-size: 22px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); animation: slideIn 0.3s ease-out; max-width: 90%; }
+        .user-name { color: #00f3ff; font-weight: bold; text-transform: uppercase; font-size: 0.9em; display: block; margin-bottom: 2px; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
 <body>
     <div id="chat-container"></div>
-
     <script>
         const container = document.getElementById('chat-container');
         const params = new URLSearchParams(window.location.search);
@@ -63,17 +23,9 @@
             const div = document.createElement('div');
             div.className = 'chat-message';
             const icon = platform === 'twitch' ? '🟣' : '🟢';
-            
-            // Clean up the text (removes trailing spaces/newlines)
-            const cleanText = text.trim();
-            
-            div.innerHTML = `<span class="user-name">${icon} ${user}</span> ${cleanText}`;
+            div.innerHTML = `<span class="user-name">${icon} ${user}</span> ${text.trim()}`;
             container.appendChild(div);
-            
-            // Auto-remove old messages to keep screen clear
             if (container.children.length > 8) container.removeChild(container.firstChild);
-            
-            // Make messages fade out after 25 seconds
             setTimeout(() => {
                 div.style.transition = "opacity 1s";
                 div.style.opacity = "0";
@@ -81,43 +33,44 @@
             }, 25000);
         }
 
+        // --- TWITCH ---
         if(twitchUser) {
-            const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-            ws.onopen = () => {
-                ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
-                ws.send('PASS oauth:anonymous'); 
-                ws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
-                ws.send('JOIN #' + twitchUser.toLowerCase());
+            const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+            tws.onopen = () => {
+                tws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+                tws.send('PASS oauth:anonymous'); 
+                tws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
+                tws.send('JOIN #' + twitchUser.toLowerCase());
             };
-            ws.onmessage = (e) => {
+            tws.onmessage = (e) => {
                 if(e.data.includes('PRIVMSG')) {
-                    // NEW: Smarter parsing to ignore metadata badges
                     const match = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/);
-                    if (match) {
-                        const name = match[1];
-                        const msg = match[2];
-                        addMessage(name, msg, 'twitch');
-                    } else {
-                        // Fallback for simple messages
-                        const parts = e.data.split('!');
-                        if(parts.length > 1) {
-                            const name = parts[0].substring(1);
-                            const msg = e.data.split('PRIVMSG')[1].split(':')[1];
-                            addMessage(name, msg, 'twitch');
-                        }
-                    }
+                    if (match) addMessage(match[1], match[2], 'twitch');
                 }
             };
         }
 
+        // --- KICK (RE-ENGINEERED) ---
         if(kickChatId) {
             const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-            kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kickChatId}.v2` } })); };
+            
+            kws.onopen = () => {
+                // Kick's connection handshake
+                kws.send(JSON.stringify({
+                    event: "pusher:subscribe",
+                    data: { channel: `chatrooms.${kickChatId}.v2` }
+                }));
+                // Keep-alive ping every 20 seconds
+                setInterval(() => { kws.send(JSON.stringify({event: "pusher:ping", data: {}})); }, 20000);
+                addMessage("SYSTEM", "Kick Connected Successfully 🟢", "kick");
+            };
+
             kws.onmessage = (e) => {
                 const data = JSON.parse(e.data);
+                // Listen for the specific ChatMessageEvent
                 if (data.event === "App\\Events\\ChatMessageEvent") {
-                    const m = JSON.parse(data.data);
-                    addMessage(m.sender.username, m.content, 'kick');
+                    const msgData = JSON.parse(data.data);
+                    addMessage(msgData.sender.username, msgData.content, 'kick');
                 }
             };
         }
