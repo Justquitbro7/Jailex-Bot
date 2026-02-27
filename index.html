@@ -166,7 +166,7 @@
         </div>
     </div>
 
-    <div class="log-box" id="sysLog">> SYSTEM READY. CLICK ENABLE AUDIO TO START.<br></div>
+    <div class="log-box" id="sysLog">> SYSTEM READY.<br></div>
 </div>
 
 <script>
@@ -174,6 +174,10 @@
     let twitchWs, kickWs, keywords = {}, activeTimers = [];
     let isTwitchConnected = false, isKickConnected = false;
     let ttsUnlocked = false, isSpeaking = false, ttsQueue = [];
+    
+    // NEW: Duplicate protection for Kick
+    let lastKickMsg = "";
+    let lastKickUser = "";
 
     window.onload = () => {
         ['twitchUser', 'twitchOAuth', 'kickChatroomId', 'kickToken'].forEach(id => {
@@ -229,7 +233,6 @@
         if (cleanToken === '') return;
         const oauth = 'oauth:' + cleanToken;
 
-        logMsg("Twitch: Connecting WebSocket...");
         twitchWs = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
         twitchWs.onopen = () => {
             twitchWs.send(`PASS ${oauth}`);
@@ -241,8 +244,8 @@
             if (msg.includes('PING')) twitchWs.send('PONG :tmi.twitch.tv');
             if (msg.includes('366 ' + user)) {
                 isTwitchConnected = true;
-                logMsg("Twitch: JOINED CHANNEL SUCCESSFUL.");
-                document.getElementById('connectTwitchBtn').innerText = "TWITCH ONLINE";
+                logMsg("Twitch: Connected!");
+                document.getElementById('connectTwitchBtn').innerText = "ONLINE";
             }
             if (msg.includes('PRIVMSG')) {
                 const parts = msg.split('!');
@@ -259,16 +262,24 @@
 
     function connectKick() {
         const id = document.getElementById('kickChatroomId').value;
-        logMsg("Kick: Connecting Pusher...");
         kickWs = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
         kickWs.onopen = () => { kickWs.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${id}.v2` } })); };
         kickWs.onmessage = (e) => {
             const data = JSON.parse(e.data);
-            if (data.event === "pusher:connection_established") { isKickConnected = true; logMsg("Kick: WEBSOCKET CONNECTED."); }
+            if (data.event === "pusher:connection_established") { isKickConnected = true; logMsg("Kick: Connected!"); }
             if (data.event === "App\\Events\\ChatMessageEvent") {
                 const m = JSON.parse(data.data);
                 const name = m.sender.username;
                 const content = m.content;
+                
+                // NEW: Duplicate Shield Check
+                if (name === lastKickUser && content === lastKickMsg) {
+                    return; // Stop the double-talk
+                }
+                
+                lastKickUser = name;
+                lastKickMsg = content;
+
                 logMsg(`[Kick] ${name}: ${content}`);
                 if (!KNOWN_BOTS.includes(name.toLowerCase())) {
                     speak(`${name} says ${content}`);
@@ -315,10 +326,8 @@
             sendTwitch(message);
             sendKick(message);
         }, minutes * 60000);
-
         activeTimers.push({ minutes, message, interval });
         if (shouldSave) localStorage.setItem('jailexTimers', JSON.stringify(activeTimers.map(t => ({ minutes: t.minutes, message: t.message }))));
-        
         const div = document.createElement('div');
         div.className = 'list-item';
         div.innerHTML = `<span>${minutes}m: ${message.substring(0,10)}...</span><button class="delete-btn" onclick="removeTimer(${activeTimers.length-1})">X</button>`;
@@ -361,7 +370,7 @@
                 logMsg(`[Kick] Bot Sent: ${t}`);
                 speak("justquitbro7 says " + t);
             }
-        } catch(e) { logMsg(`[Kick] Send Error: Proxy issues.`); }
+        } catch(e) {}
     }
 
     function logMsg(m) {
