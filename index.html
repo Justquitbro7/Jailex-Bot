@@ -175,7 +175,6 @@
     let isTwitchConnected = false, isKickConnected = false;
     let ttsUnlocked = false, isSpeaking = false, ttsQueue = [];
     
-    // NEW: Duplicate protection for Kick
     let lastKickMsg = "";
     let lastKickUser = "";
 
@@ -271,15 +270,9 @@
                 const m = JSON.parse(data.data);
                 const name = m.sender.username;
                 const content = m.content;
-                
-                // NEW: Duplicate Shield Check
-                if (name === lastKickUser && content === lastKickMsg) {
-                    return; // Stop the double-talk
-                }
-                
+                if (name === lastKickUser && content === lastKickMsg) return;
                 lastKickUser = name;
                 lastKickMsg = content;
-
                 logMsg(`[Kick] ${name}: ${content}`);
                 if (!KNOWN_BOTS.includes(name.toLowerCase())) {
                     speak(`${name} says ${content}`);
@@ -352,6 +345,7 @@
             const user = document.getElementById('twitchUser').value.toLowerCase().trim();
             twitchWs.send(`PRIVMSG #${user} :${t}`); 
             logMsg(`[Twitch] Bot Sent: ${t}`);
+            // FIXED: Your username
             speak("justquitbro7 says " + t);
         }
     }
@@ -368,6 +362,7 @@
             }); 
             if(res.ok) {
                 logMsg(`[Kick] Bot Sent: ${t}`);
+                // FIXED: Your username
                 speak("justquitbro7 says " + t);
             }
         } catch(e) {}
