@@ -5,58 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jailex Overlay</title>
     <style>
-        /* Transparency is key for Lightstream/OBS */
         body {
             background-color: transparent !important;
             margin: 0;
-            padding: 10px;
+            padding: 15px;
             overflow: hidden;
-            font-family: 'Segoe UI', sans-serif;
-            color: white;
-            text-shadow: 1px 1px 2px black;
+            font-family: 'Segoe UI', Arial, sans-serif;
         }
 
         #chat-container {
             display: flex;
-            flex-direction: column-reverse; /* Newest messages at bottom */
+            flex-direction: column;
             height: 100vh;
-            gap: 10px;
+            gap: 12px;
+            justify-content: flex-end; 
         }
 
         .chat-message {
-            background: rgba(11, 22, 42, 0.7); /* Bears Navy Translucent */
-            border-left: 4px solid #00f3ff; /* Neon Blue Accent */
-            padding: 8px 12px;
+            background: rgba(11, 22, 42, 0.85); /* Bears Navy */
+            border-left: 5px solid #ff6a00; /* Neon Orange */
+            padding: 12px;
             border-radius: 0 8px 8px 0;
-            animation: fadeIn 0.5s ease-out forwards;
-            max-width: fit-content;
-        }
-
-        /* Message Fade Out after 20 seconds */
-        .chat-message.fade-out {
-            animation: fadeOut 1s ease-in forwards;
+            color: white;
+            font-size: 22px; /* Slightly larger for easier reading */
+            font-weight: 500;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            max-width: 90%;
         }
 
         .user-name {
+            color: #00f3ff; /* Neon Blue */
             font-weight: bold;
-            margin-right: 5px;
-            color: #ff6a00; /* Neon Orange */
-            text-shadow: 0 0 5px #ff6a00;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            display: block; /* Puts name above message */
+            margin-bottom: 2px;
         }
 
-        .platform-tag {
-            font-size: 0.8em;
-            margin-right: 5px;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateX(-20px); }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-30px); }
             to { opacity: 1; transform: translateX(0); }
-        }
-
-        @keyframes fadeOut {
-            from { opacity: 1; transform: scale(1); }
-            to { opacity: 0; transform: scale(0.9); height: 0; padding: 0; margin: 0; border: 0; }
         }
     </style>
 </head>
@@ -65,60 +55,69 @@
 
     <script>
         const container = document.getElementById('chat-container');
-        
-        // Grab credentials from URL parameters for security
-        // Example: your-url.com/overlay.html?twitch=user&kick=id
         const params = new URLSearchParams(window.location.search);
         const twitchUser = params.get('twitch');
         const kickChatId = params.get('kick');
 
-        function addMessage(platform, user, text) {
+        function addMessage(user, text, platform) {
             const div = document.createElement('div');
             div.className = 'chat-message';
             const icon = platform === 'twitch' ? '🟣' : '🟢';
-            const color = platform === 'twitch' ? '#00f3ff' : '#00ff00';
-            div.style.borderLeftColor = color;
-
-            div.innerHTML = `<span class="platform-tag">${icon}</span><span class="user-name">${user}:</span> ${text}`;
-            container.prepend(div);
-
-            // Auto-cleanup after 20 seconds
+            
+            // Clean up the text (removes trailing spaces/newlines)
+            const cleanText = text.trim();
+            
+            div.innerHTML = `<span class="user-name">${icon} ${user}</span> ${cleanText}`;
+            container.appendChild(div);
+            
+            // Auto-remove old messages to keep screen clear
+            if (container.children.length > 8) container.removeChild(container.firstChild);
+            
+            // Make messages fade out after 25 seconds
             setTimeout(() => {
-                div.classList.add('fade-out');
+                div.style.transition = "opacity 1s";
+                div.style.opacity = "0";
                 setTimeout(() => div.remove(), 1000);
-            }, 20000);
+            }, 25000);
         }
 
-        // --- TWITCH CONNECTION ---
         if(twitchUser) {
             const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
             ws.onopen = () => {
                 ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
-                ws.send('PASS SCHMOOPIIE'); // Anonymous read-only
-                ws.send(`NICK justinfan${Math.floor(Math.random() * 10000)}`);
-                ws.send(`JOIN #${twitchUser}`);
+                ws.send('PASS oauth:anonymous'); 
+                ws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
+                ws.send('JOIN #' + twitchUser.toLowerCase());
             };
             ws.onmessage = (e) => {
                 if(e.data.includes('PRIVMSG')) {
-                    const parts = e.data.split('!');
-                    const name = parts[0].substring(1);
-                    const msg = e.data.split('PRIVMSG')[1].split(':')[1].trim();
-                    addMessage('twitch', name, msg);
+                    // NEW: Smarter parsing to ignore metadata badges
+                    const match = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/);
+                    if (match) {
+                        const name = match[1];
+                        const msg = match[2];
+                        addMessage(name, msg, 'twitch');
+                    } else {
+                        // Fallback for simple messages
+                        const parts = e.data.split('!');
+                        if(parts.length > 1) {
+                            const name = parts[0].substring(1);
+                            const msg = e.data.split('PRIVMSG')[1].split(':')[1];
+                            addMessage(name, msg, 'twitch');
+                        }
+                    }
                 }
             };
         }
 
-        // --- KICK CONNECTION ---
         if(kickChatId) {
             const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-            kws.onopen = () => {
-                kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kickChatId}.v2` } }));
-            };
+            kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kickChatId}.v2` } })); };
             kws.onmessage = (e) => {
                 const data = JSON.parse(e.data);
                 if (data.event === "App\\Events\\ChatMessageEvent") {
                     const m = JSON.parse(data.data);
-                    addMessage('kick', m.sender.username, m.content);
+                    addMessage(m.sender.username, m.content, 'kick');
                 }
             };
         }
