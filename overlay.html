@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jailex Overlay</title>
+    <style>
+        /* Transparency is key for Lightstream/OBS */
+        body {
+            background-color: transparent !important;
+            margin: 0;
+            padding: 10px;
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        #chat-container {
+            display: flex;
+            flex-direction: column-reverse; /* Newest messages at bottom */
+            height: 100vh;
+            gap: 10px;
+        }
+
+        .chat-message {
+            background: rgba(11, 22, 42, 0.7); /* Bears Navy Translucent */
+            border-left: 4px solid #00f3ff; /* Neon Blue Accent */
+            padding: 8px 12px;
+            border-radius: 0 8px 8px 0;
+            animation: fadeIn 0.5s ease-out forwards;
+            max-width: fit-content;
+        }
+
+        /* Message Fade Out after 20 seconds */
+        .chat-message.fade-out {
+            animation: fadeOut 1s ease-in forwards;
+        }
+
+        .user-name {
+            font-weight: bold;
+            margin-right: 5px;
+            color: #ff6a00; /* Neon Orange */
+            text-shadow: 0 0 5px #ff6a00;
+        }
+
+        .platform-tag {
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.9); height: 0; padding: 0; margin: 0; border: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container"></div>
+
+    <script>
+        const container = document.getElementById('chat-container');
+        
+        // Grab credentials from URL parameters for security
+        // Example: your-url.com/overlay.html?twitch=user&kick=id
+        const params = new URLSearchParams(window.location.search);
+        const twitchUser = params.get('twitch');
+        const kickChatId = params.get('kick');
+
+        function addMessage(platform, user, text) {
+            const div = document.createElement('div');
+            div.className = 'chat-message';
+            const icon = platform === 'twitch' ? '🟣' : '🟢';
+            const color = platform === 'twitch' ? '#00f3ff' : '#00ff00';
+            div.style.borderLeftColor = color;
+
+            div.innerHTML = `<span class="platform-tag">${icon}</span><span class="user-name">${user}:</span> ${text}`;
+            container.prepend(div);
+
+            // Auto-cleanup after 20 seconds
+            setTimeout(() => {
+                div.classList.add('fade-out');
+                setTimeout(() => div.remove(), 1000);
+            }, 20000);
+        }
+
+        // --- TWITCH CONNECTION ---
+        if(twitchUser) {
+            const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+            ws.onopen = () => {
+                ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+                ws.send('PASS SCHMOOPIIE'); // Anonymous read-only
+                ws.send(`NICK justinfan${Math.floor(Math.random() * 10000)}`);
+                ws.send(`JOIN #${twitchUser}`);
+            };
+            ws.onmessage = (e) => {
+                if(e.data.includes('PRIVMSG')) {
+                    const parts = e.data.split('!');
+                    const name = parts[0].substring(1);
+                    const msg = e.data.split('PRIVMSG')[1].split(':')[1].trim();
+                    addMessage('twitch', name, msg);
+                }
+            };
+        }
+
+        // --- KICK CONNECTION ---
+        if(kickChatId) {
+            const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
+            kws.onopen = () => {
+                kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kickChatId}.v2` } }));
+            };
+            kws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (data.event === "App\\Events\\ChatMessageEvent") {
+                    const m = JSON.parse(data.data);
+                    addMessage('kick', m.sender.username, m.content);
+                }
+            };
+        }
+    </script>
+</body>
+</html>
