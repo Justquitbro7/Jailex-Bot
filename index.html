@@ -183,6 +183,8 @@
         });
         const savedKWs = localStorage.getItem('jailexKeywords');
         if (savedKWs) { keywords = JSON.parse(savedKWs); updateKeywordList(); }
+        
+        // Load timers and restart them
         const savedTimers = localStorage.getItem('jailexTimers');
         if (savedTimers) { 
             const data = JSON.parse(savedTimers);
@@ -222,51 +224,28 @@
         speechSynthesis.speak(msg);
     }
 
-    /* --- TWITCH CONNECTION --- */
+    /* --- TWITCH --- */
     function connectTwitch() {
         const user = document.getElementById('twitchUser').value.toLowerCase().trim();
         let rawToken = document.getElementById('twitchOAuth').value.trim();
         let cleanToken = rawToken.replace(/^0auth:/i, '').replace(/^oauth:/i, '').trim();
-        
-        if (cleanToken === '') { logMsg("TWITCH: Error - Token is blank."); return; }
+        if (cleanToken === '') return;
         const oauth = 'oauth:' + cleanToken;
 
-        logMsg("Twitch: Attempting Connection...");
-        if (twitchWs) twitchWs.close();
-        
         twitchWs = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-
-        // Safety timeout
-        const timeout = setTimeout(() => {
-            if (!isTwitchConnected) logMsg("Twitch: Connection timed out. Check your internet or token.");
-        }, 5000);
-
         twitchWs.onopen = () => {
-            logMsg("Twitch: Socket Open. Sending credentials...");
             twitchWs.send(`PASS ${oauth}`);
             twitchWs.send(`NICK ${user}`);
             twitchWs.send(`JOIN #${user}`);
         };
-
         twitchWs.onmessage = (e) => {
             const msg = e.data;
             if (msg.includes('PING')) twitchWs.send('PONG :tmi.twitch.tv');
-            
-            // Success detection
             if (msg.includes('366 ' + user)) {
-                clearTimeout(timeout);
                 isTwitchConnected = true;
-                logMsg("Twitch: SUCCESS! Joined #" + user);
-                document.getElementById('connectTwitchBtn').style.background = 'var(--neon-blue)';
-                document.getElementById('connectTwitchBtn').style.color = '#000';
+                logMsg("Twitch: Connected!");
                 document.getElementById('connectTwitchBtn').innerText = "ONLINE";
             }
-
-            if (msg.includes('NOTICE') && (msg.includes('authentication failed') || msg.includes('invalid'))) {
-                logMsg("Twitch: ERROR - Authentication failed. Your token is likely invalid.");
-                twitchWs.close();
-            }
-
             if (msg.includes('PRIVMSG')) {
                 const parts = msg.split('!');
                 const name = parts[0].substring(1);
@@ -278,19 +257,11 @@
                 }
             }
         };
-
-        twitchWs.onclose = () => {
-            isTwitchConnected = false;
-            logMsg("Twitch: Disconnected.");
-            document.getElementById('connectTwitchBtn').style.background = 'transparent';
-            document.getElementById('connectTwitchBtn').style.color = 'var(--neon-blue)';
-            document.getElementById('connectTwitchBtn').innerText = "CONNECT TWITCH";
-        };
     }
 
+    /* --- KICK --- */
     function connectKick() {
         const id = document.getElementById('kickChatroomId').value;
-        logMsg("Kick: Connecting...");
         kickWs = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
         kickWs.onopen = () => { kickWs.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${id}.v2` } })); };
         kickWs.onmessage = (e) => {
@@ -307,6 +278,7 @@
         };
     }
 
+    /* --- AUTOMATIONS --- */
     function handleKeywords(platform, msg) {
         const low = msg.toLowerCase();
         for (let k in keywords) {
@@ -340,22 +312,55 @@
     }
 
     function createTimer(minutes, message, shouldSave) {
-        const interval = setInterval(() => { sendTwitch(message); sendKick(message); }, minutes * 60000);
+        const interval = setInterval(() => {
+            logMsg(`[TIMER] Triggered: ${message.substring(0,10)}...`);
+            sendTwitch(message);
+            sendKick(message);
+        }, minutes * 60000);
+
         activeTimers.push({ minutes, message, interval });
         if (shouldSave) localStorage.setItem('jailexTimers', JSON.stringify(activeTimers.map(t => ({ minutes: t.minutes, message: t.message }))));
+        
         const div = document.createElement('div');
         div.className = 'list-item';
-        div.innerHTML = `<span>${minutes}m: ${message.substring(0,10)}...</span>`;
+        div.innerHTML = `<span>${minutes}m: ${message.substring(0,10)}...</span><button class="delete-btn" onclick="removeTimer(${activeTimers.length-1})">X</button>`;
         document.getElementById('timerList').appendChild(div);
     }
 
-    function sendTwitch(t) { if(isTwitchConnected) twitchWs.send(`PRIVMSG #${document.getElementById('twitchUser').value.toLowerCase()} :${t}`); }
+    function removeTimer(index) {
+        clearInterval(activeTimers[index].interval);
+        activeTimers.splice(index, 1);
+        localStorage.setItem('jailexTimers', JSON.stringify(activeTimers.map(t => ({ minutes: t.minutes, message: t.message }))));
+        // Refresh UI
+        document.getElementById('timerList').innerHTML = "";
+        activeTimers.forEach((t, i) => {
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.innerHTML = `<span>${t.minutes}m: ${t.message.substring(0,10)}...</span><button class="delete-btn" onclick="removeTimer(${i})">X</button>`;
+            document.getElementById('timerList').appendChild(div);
+        });
+    }
+
+    function sendTwitch(t) { 
+        if(isTwitchConnected && twitchWs) {
+            const user = document.getElementById('twitchUser').value.toLowerCase().trim();
+            twitchWs.send(`PRIVMSG #${user} :${t}`); 
+            logMsg(`[Twitch] Bot Sent: ${t}`);
+        }
+    }
     
     async function sendKick(t) {
         const token = document.getElementById('kickToken').value;
         const id = document.getElementById('kickChatroomId').value;
-        if(!token || !id) return;
-        try { await fetch('/api/kick', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ chatroomId: id, token: token, message: t })}); } catch(e) {}
+        if(!token || !id || !isKickConnected) return;
+        try { 
+            const res = await fetch('/api/kick', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ chatroomId: id, token: token, message: t })
+            }); 
+            if(res.ok) logMsg(`[Kick] Bot Sent: ${t}`);
+        } catch(e) { logMsg(`[Kick] Send Error: Proxy issues.`); }
     }
 
     function logMsg(m) {
