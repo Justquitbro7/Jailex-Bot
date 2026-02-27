@@ -3,192 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Ultimate v1.0 - Control Panel</title>
+    <title>Jailex Ultimate v1.1 - Bot & Overlay</title>
     <style>
-        :root {
-            --bears-navy: #0B162A;
-            --bears-orange: #FF6A00;
-            --bears-blue: #00F3FF;
-        }
-
-        body {
-            background-color: var(--bears-navy);
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .container {
-            max-width: 900px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 15px;
-            border: 2px solid var(--bears-orange);
-            box-shadow: 0 0 20px rgba(255, 106, 0, 0.2);
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            color: var(--bears-orange);
-            text-shadow: 0 0 10px var(--bears-orange);
-            margin: 10px 0;
-        }
-
-        .card {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--bears-blue);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .btn {
-            background: var(--bears-orange);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px var(--bears-orange);
-        }
-
-        input, select {
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid var(--bears-blue);
-            background: #111;
-            color: white;
-            margin: 5px 0;
-        }
-
-        #log {
-            height: 150px;
-            overflow-y: auto;
-            background: #000;
-            padding: 10px;
-            font-family: monospace;
-            font-size: 0.9em;
-            border-radius: 5px;
-            color: #00ff00;
-        }
-
-        .slider-group {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .url-box {
-            background: #222;
-            padding: 15px;
-            border-radius: 5px;
-            border-left: 4px solid var(--bears-blue);
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 0.8em;
-            margin-top: 10px;
-        }
+        :root { --bears-navy: #0B162A; --bears-orange: #FF6A00; --bears-blue: #00F3FF; }
+        body { background-color: var(--bears-navy); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 900px; width: 100%; background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 15px; border: 2px solid var(--bears-orange); box-shadow: 0 0 20px rgba(255, 106, 0, 0.2); }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: var(--bears-orange); text-shadow: 0 0 10px var(--bears-orange); margin: 10px 0; }
+        .card { background: rgba(0, 0, 0, 0.4); border: 1px solid var(--bears-blue); padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn { background: var(--bears-orange); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        .btn:hover { box-shadow: 0 0 15px var(--bears-orange); }
+        input, select, textarea { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid var(--bears-blue); background: #111; color: white; box-sizing: border-box; }
+        #log { height: 120px; overflow-y: auto; background: #000; padding: 10px; font-family: monospace; font-size: 0.85em; border-radius: 5px; color: #00ff00; border: 1px solid #333; }
+        .url-box { background: #111; padding: 10px; border-radius: 5px; border-left: 4px solid var(--bears-blue); word-break: break-all; font-family: monospace; font-size: 0.75em; margin: 10px 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <img src="logo.jpg" alt="Jailex Logo" style="width: 100px; border-radius: 50%; border: 2px solid var(--bears-orange);">
-        <h1>JAILEX ULTIMATE v1.0</h1>
-        <p>Streaming Control Panel & Overlay Builder</p>
+        <img src="logo.jpg" alt="Jailex Logo" style="width: 80px; border-radius: 50%; border: 2px solid var(--bears-orange);">
+        <h1>JAILEX ULTIMATE v1.1</h1>
     </div>
 
-    <div class="card">
-        <h2 style="color: var(--bears-orange);">📡 OVERLAY CUSTOMIZER</h2>
-        <p style="font-size: 0.9em; color: #ccc;">Adjust your settings below to create your custom Lightstream link.</p>
-        
-        <div class="slider-group">
-            <div>
-                <label>Text Size: <span id="sizeVal">22</span>px</label><br>
-                <input type="range" id="fontSize" min="16" max="48" value="22" style="width: 100%;" oninput="generateLink()">
+    <div class="grid">
+        <div class="column">
+            <div class="card">
+                <h3 style="color: var(--bears-orange); margin-top:0;">🤖 BOT ENGINE</h3>
+                <button class="btn" onclick="startBot()" id="startBtn">START ALL SERVICES</button>
+                <div style="margin-top:10px; font-size: 0.8em;">
+                    Twitch: <span id="t-status">⚪</span> | Kick: <span id="k-status">⚪</span>
+                </div>
             </div>
 
-            <div>
-                <label>Background Transparency: <span id="alphaVal">80</span>%</label><br>
-                <input type="range" id="bgAlpha" min="0" max="100" value="80" style="width: 100%;" oninput="generateLink()">
+            <div class="card">
+                <h3 style="color: var(--bears-blue); margin-top:0;">🗣️ TTS & VOICE</h3>
+                <label style="font-size: 0.8em;">Voice Volume:</label>
+                <input type="range" id="vol" min="0" max="1" step="0.1" value="0.8">
             </div>
+        </div>
 
-            <div>
-                <label>Neon Accent Color:</label><br>
-                <input type="color" id="neonColor" value="#ff6a00" onchange="generateLink()">
+        <div class="column">
+            <div class="card" style="border-color: var(--bears-orange);">
+                <h3 style="color: var(--bears-orange); margin-top:0;">📡 OVERLAY BUILDER</h3>
+                <label style="font-size: 0.75em;">Text Size: <span id="sizeVal">22</span>px</label>
+                <input type="range" id="fontSize" min="16" max="44" value="22" oninput="generateLink()">
+                
+                <label style="font-size: 0.75em; margin-top:10px; display:block;">Transparency: <span id="alphaVal">85</span>%</label>
+                <input type="range" id="bgAlpha" min="0" max="100" value="85" oninput="generateLink()">
+
+                <div class="url-box" id="finalLink">Loading link...</div>
+                <button class="btn" style="background: var(--bears-blue); color: black;" onclick="copyLink()">COPY LINK</button>
             </div>
-
-            <div class="url-box">
-                <p style="margin: 0; color: var(--bears-blue); font-weight: bold;">LIGHTSTREAM URL:</p>
-                <span id="finalLink">Loading...</span>
-            </div>
-
-            <button class="btn" onclick="copyLink()">COPY OVERLAY LINK</button>
         </div>
     </div>
 
     <div class="card">
-        <h2>🤖 BOT STATUS</h2>
-        <div style="display: flex; gap: 20px;">
-            <p>Twitch: <span id="t-status" style="color: red;">Disconnected</span></p>
-            <p>Kick: <span id="k-status" style="color: red;">Disconnected</span></p>
-        </div>
-        <div id="log">Welcome to Jailex. System Ready.</div>
+        <h3 style="margin-top:0;">📋 SYSTEM LOGS</h3>
+        <div id="log">Systems Standby. Press Start...</div>
     </div>
 </div>
 
 <script>
-    const twitchUser = "justquitbro7";
-    const kickId = "92474944";
+    const CONFIG = {
+        twitch: "justquitbro7",
+        kickId: "92474944",
+        timers: [
+            { name: "Socials", text: "Follow me on Kick and Twitch! !socials", interval: 600000 },
+            { name: "Jailex", text: "Jailex Bot is powered by AI. Type !help for commands!", interval: 900000 }
+        ],
+        keywords: { "!socials": "Twitch: justquitbro7 | Kick: justquitbro7", "!hello": "Welcome to the den! 🐻" }
+    };
 
-    function generateLink() {
-        const size = document.getElementById('fontSize').value;
-        const alpha = (document.getElementById('bgAlpha').value / 100).toFixed(2);
-        const color = encodeURIComponent(document.getElementById('neonColor').value);
-        
-        document.getElementById('sizeVal').innerText = size;
-        document.getElementById('alphaVal').innerText = Math.round(alpha * 100);
-
-        // This builds the dynamic URL
-        const baseUrl = window.location.origin + "/overlay.html";
-        const finalUrl = `${baseUrl}?twitch=${twitchUser}&kick=${kickId}&size=${size}&opacity=${alpha}&color=${color}`;
-        
-        document.getElementById('finalLink').innerText = finalUrl;
-    }
-
-    function copyLink() {
-        const text = document.getElementById('finalLink').innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            alert("Link Copied! Paste this into your Lightstream Browser Source.");
-        });
-    }
-
-    // Initialize on load
-    window.onload = generateLink;
+    let synth = window.speechSynthesis;
 
     function addLog(msg) {
         const log = document.getElementById('log');
         log.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
         log.scrollTop = log.scrollHeight;
     }
-</script>
 
+    function speak(text) {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.volume = document.getElementById('vol').value;
+        synth.speak(utter);
+    }
+
+    // --- OVERLAY BUILDER LOGIC ---
+    function generateLink() {
+        const size = document.getElementById('fontSize').value;
+        const alpha = (document.getElementById('bgAlpha').value / 100).toFixed(2);
+        const color = "%23ff6a00"; // Fixed Bears Orange for now
+        
+        document.getElementById('sizeVal').innerText = size;
+        document.getElementById('alphaVal').innerText = Math.round(alpha * 100);
+
+        const baseUrl = window.location.origin + "/overlay.html";
+        const finalUrl = `${baseUrl}?twitch=${CONFIG.twitch}&kick=${CONFIG.kickId}&size=${size}&opacity=${alpha}&color=${color}`;
+        document.getElementById('finalLink').innerText = finalUrl;
+    }
+
+    function copyLink() {
+        navigator.clipboard.writeText(document.getElementById('finalLink').innerText);
+        addLog("Overlay link copied to clipboard!");
+    }
+
+    // --- BOT CONNECTION LOGIC ---
+    function startBot() {
+        addLog("Starting Jailex Engine...");
+        connectTwitch();
+        connectKick();
+        startTimers();
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('startBtn').innerText = "ENGINE RUNNING";
+    }
+
+    function connectTwitch() {
+        const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+        ws.onopen = () => {
+            ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+            ws.send('PASS oauth:anonymous');
+            ws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
+            ws.send('JOIN #' + CONFIG.twitch);
+            document.getElementById('t-status').innerText = "🟢";
+            addLog("Twitch Connected (Read-Only)");
+        };
+        ws.onmessage = (e) => {
+            if(e.data.includes('PRIVMSG')) {
+                const match = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/);
+                if(match) {
+                    const user = match[1];
+                    const msg = match[2].trim();
+                    addLog(`Twitch | ${user}: ${msg}`);
+                    speak(`${user} says ${msg}`);
+                    checkKeywords(msg);
+                }
+            }
+        };
+    }
+
+    function connectKick() {
+        const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
+        kws.onopen = () => {
+            kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${CONFIG.kickId}.v2` } }));
+            document.getElementById('k-status').innerText = "🟢";
+            addLog("Kick Connected (Read-Only)");
+            setInterval(() => kws.send(JSON.stringify({event: "pusher:ping", data: {}})), 20000);
+        };
+        kws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            if (data.event === "App\\Events\\ChatMessageEvent") {
+                const m = JSON.parse(data.data);
+                addLog(`Kick | ${m.sender.username}: ${m.content}`);
+                speak(`${m.sender.username} says ${m.content}`);
+                checkKeywords(m.content);
+            }
+        };
+    }
+
+    function startTimers() {
+        CONFIG.timers.forEach(t => {
+            setInterval(() => {
+                addLog(`Timer Triggered: ${t.name}`);
+                speak(`Reminder: ${t.text}`);
+            }, t.interval);
+        });
+    }
+
+    function checkKeywords(msg) {
+        const word = msg.toLowerCase().trim();
+        if(CONFIG.keywords[word]) {
+            addLog(`Auto-Response: ${CONFIG.keywords[word]}`);
+            speak(CONFIG.keywords[word]);
+        }
+    }
+
+    window.onload = generateLink;
+</script>
 </body>
 </html>
