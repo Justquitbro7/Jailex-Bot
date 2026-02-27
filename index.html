@@ -184,7 +184,6 @@
         const savedKWs = localStorage.getItem('jailexKeywords');
         if (savedKWs) { keywords = JSON.parse(savedKWs); updateKeywordList(); }
         
-        // Load timers and restart them
         const savedTimers = localStorage.getItem('jailexTimers');
         if (savedTimers) { 
             const data = JSON.parse(savedTimers);
@@ -331,7 +330,6 @@
         clearInterval(activeTimers[index].interval);
         activeTimers.splice(index, 1);
         localStorage.setItem('jailexTimers', JSON.stringify(activeTimers.map(t => ({ minutes: t.minutes, message: t.message }))));
-        // Refresh UI
         document.getElementById('timerList').innerHTML = "";
         activeTimers.forEach((t, i) => {
             const div = document.createElement('div');
@@ -346,6 +344,8 @@
             const user = document.getElementById('twitchUser').value.toLowerCase().trim();
             twitchWs.send(`PRIVMSG #${user} :${t}`); 
             logMsg(`[Twitch] Bot Sent: ${t}`);
+            // NEW: Make the bot speak its own message
+            speak("Broadcasting to Twitch: " + t);
         }
     }
     
@@ -359,7 +359,11 @@
                 headers: {'Content-Type': 'application/json'}, 
                 body: JSON.stringify({ chatroomId: id, token: token, message: t })
             }); 
-            if(res.ok) logMsg(`[Kick] Bot Sent: ${t}`);
+            if(res.ok) {
+                logMsg(`[Kick] Bot Sent: ${t}`);
+                // NEW: Make the bot speak its own message
+                speak("Broadcasting to Kick: " + t);
+            }
         } catch(e) { logMsg(`[Kick] Send Error: Proxy issues.`); }
     }
 
