@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jailex Studio Overlay v2.1</title>
+    <title>Jailex Studio Overlay v2.2</title>
     <style>
         :root { --neon: #ff6a00; --size: 22px; --op: 0.85; }
-        body { background: transparent !important; margin: 0; padding: 15px; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: white; }
+        body { background: transparent !important; margin: 0; padding: 15px; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
         #chat-container { display: flex; flex-direction: column; height: 100vh; gap: 12px; justify-content: flex-end; }
         
         .chat-message { 
@@ -20,7 +20,7 @@
         .user-line { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
         .user-name { color: #00f3ff; font-weight: bold; font-size: 0.9em; }
 
-        /* Solid-State Platform Icons */
+        /* CIRCLE ICONS - Built with CSS, not fonts */
         .dot {
             width: 14px; height: 14px;
             border-radius: 50%;
@@ -48,7 +48,6 @@
             const container = document.getElementById('chat-container');
             const div = document.createElement('div');
             div.className = 'chat-message';
-            
             const dotClass = platform === 'twitch' ? 't-dot' : 'k-dot';
             
             div.innerHTML = `
@@ -69,34 +68,35 @@
             }, stayTime);
         }
 
-        // --- TWITCH RE-ENGINEERED ---
+        // --- TWITCH FIX ---
         const twUser = params.get('twitch');
         if(twUser) {
             const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
             tws.onopen = () => {
-                tws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+                tws.send('CAP REQ :twitch.tv/tags');
                 tws.send('PASS oauth:anonymous');
                 tws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
                 tws.send('JOIN #' + twUser.toLowerCase());
             };
             tws.onmessage = (e) => {
-                // Better parsing for Twitch usernames
                 if(e.data.includes('PRIVMSG')) {
-                    const parts = e.data.split(';');
-                    let name = "User";
-                    parts.forEach(p => { if(p.startsWith('display-name=')) name = p.split('=')[1]; });
+                    // This finds the display name in the Twitch data tags
+                    const nameMatch = e.data.match(/display-name=([^;]+)/);
+                    const user = nameMatch ? nameMatch[1] : "User";
                     
-                    const msgParts = e.data.split('PRIVMSG #' + twUser.toLowerCase() + ' :');
-                    if(msgParts.length > 1) {
-                        addMessage(name, msgParts[1].trim(), 'twitch');
+                    // This finds the actual message content
+                    const msgMatch = e.data.match(/PRIVMSG #[^ ]+ :(.+)/);
+                    if(msgMatch) {
+                        addMessage(user, msgMatch[1].trim(), 'twitch');
                     }
                 }
+                // Keeps Twitch from disconnecting you
                 if(e.data.includes('PING')) tws.send('PONG :tmi.twitch.tv');
             };
             tws.onclose = () => setTimeout(() => location.reload(), 5000);
         }
 
-        // --- KICK RE-ENGINEERED ---
+        // --- KICK FIX ---
         const kiId = params.get('kick');
         if(kiId) {
             const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
@@ -105,7 +105,7 @@
             };
             kws.onmessage = (e) => {
                 const d = JSON.parse(e.data);
-                if(d.event.includes("ChatMessageEvent")) {
+                if(d.event === "App\\Events\\ChatMessageEvent") {
                     const m = JSON.parse(d.data);
                     addMessage(m.sender.username, m.content, 'kick');
                 }
