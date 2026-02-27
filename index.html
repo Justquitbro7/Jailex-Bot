@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jailexbot - Neon HUD</title>
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-green: #00ff00;
+            --dark-bg: #090a0f;
+            --panel-bg: rgba(10, 15, 30, 0.8);
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .hud-container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--panel-bg);
+            border: 2px solid var(--neon-blue);
+            border-radius: 15px;
+            box-shadow: 0 0 15px var(--neon-blue), inset 0 0 10px var(--neon-blue);
+            padding: 25px;
+        }
+
+        h1, h2 {
+            color: var(--neon-pink);
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--neon-pink);
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .connections {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel {
+            border: 1px solid var(--neon-pink);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--neon-blue);
+            font-size: 0.9em;
+        }
+
+        .hint {
+            font-size: 0.75em;
+            color: #aaa;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        input[type="text"], input[type="password"], input[type="number"] {
+            width: calc(100% - 20px);
+            background: #000;
+            border: 1px solid var(--neon-blue);
+            color: #fff;
+            padding: 8px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px var(--neon-blue);
+        }
+
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        button {
+            background: transparent;
+            color: var(--neon-blue);
+            border: 2px solid var(--neon-blue);
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 5px;
+            box-shadow: 0 0 10px var(--neon-blue);
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        .kick-btn {
+            color: var(--neon-green);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+
+        .kick-btn:hover {
+            background: var(--neon-green);
+            box-shadow: 0 0 20px var(--neon-green);
+        }
+
+        .delete-btn {
+            width: auto;
+            margin: 0;
+            padding: 2px 8px;
+            font-size: 10px;
+            border-color: #ff0055;
+            color: #ff0055;
+            box-shadow: none;
+        }
+
+        .delete-btn:hover {
+            background: #ff0055;
+            color: #fff;
+            box-shadow: 0 0 10px #ff0055;
+        }
+
+        .log-box {
+            height: 150px;
+            overflow-y: auto;
+            background: #000;
+            border: 1px solid #444;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #0f0;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .dynamic-list {
+            margin-bottom: 15px;
+        }
+
+        .list-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 0.85em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="hud-container">
+    <h1>Jailexbot Control Panel</h1>
+    
+    <div class="grid">
+        <div class="connections">
+            
+            <div class="panel">
+                <h2>Twitch</h2>
+                <label>Username</label>
+                <input type="text" id="twitchUser" value="justquitbro7">
+                
+                <label>OAuth Token</label>
+                <span class="hint">Get from twitchapps.com/tmi</span>
+                <input type="password" id="twitchOAuth" placeholder="Paste token here">
+                
+                <button id="connectTwitchBtn" onclick="connectTwitch()">Connect to Twitch</button>
+            </div>
+
+            <div class="panel">
+                <h2 style="color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green);">Kick</h2>
+                
+                <label>Username</label>
+                <input type="text" id="kickUser" value="justquitbro7">
+                
+                <label>Chatroom ID</label>
+                <span class="hint">Go to kick.com/api/v2/channels/justquitbro7 and copy the "id" number under "chatroom"</span>
+                <input type="text" id="kickChatroomId" placeholder="e.g., 123456">
+
+                <label>Bearer Token (For sending messages)</label>
+                <span class="hint">Found in your browser's Developer Tools (Network tab) when sending a chat on Kick</span>
+                <input type="password" id="kickToken" placeholder="Bearer xxxxxxxxxxxxxxxxxx">
+                
+                <button id="connectKickBtn" class="kick-btn" onclick="connectKick()">Connect to Kick</button>
+            </div>
+
+        </div>
+
+        <div class="panel">
+            <h2>Automations</h2>
+            
+            <label>Add Keyword Trigger</label>
+            <input type="text" id="kwTrigger" placeholder="Keyword (e.g., !discord)">
+            <input type="text" id="kwResponse" placeholder="Bot Response">
+            <button onclick="addKeyword()">Save Keyword</button>
+            <div id="keywordList" class="dynamic-list"></div>
+
+            <label>Add Timer</label>
+            <input type="number" id="timerMinutes" placeholder="Interval (Minutes)">
+            <input type="text" id="timerMessage" placeholder="Timer Message">
+            <button onclick="addTimer()">Save Timer</button>
+            <div id="timerList" class="dynamic-list"></div>
+        </div>
+    </div>
+
+    <div class="log-box" id="sysLog">
+        > SYSTEM INITIALIZED. WAITING FOR CONNECTIONS...<br>
+    </div>
+</div>
+
+<script>
+    /* =========================================
+       GLOBAL VARIABLES
+       ========================================= */
+    let twitchWs;
+    let kickWs;
+    let keywords = {};
+    let activeTimers = [];
+    let timerIntervals = []; // Keeps track of running clocks so we can delete them
+    let isTwitchConnected = false;
+    let isKickConnected = false;
+
+    /* =========================================
+       LOCAL STORAGE LOGIC (AUTO-SAVE)
+       ========================================= */
+    const inputsToSave = ['twitchUser', 'twitchOAuth', 'kickUser', 'kickChatroomId', 'kickToken'];
+
+    window.onload = () => {
+        // Load Input Fields
+        inputsToSave.forEach(id => {
+            if (localStorage.getItem(id)) {
+                document.getElementById(id).value = localStorage.getItem(id);
+            }
+        });
+
+        // Load Keywords
+        const savedKeywords = localStorage.getItem('jailexKeywords');
+        if (savedKeywords) {
+            keywords = JSON.parse(savedKeywords);
+            updateKeywordList();
+        }
+
+        // Load Timers
+        const savedTimers = localStorage.getItem('jailexTimers');
+        if (savedTimers) {
+            activeTimers = JSON.parse(savedTimers);
+            updateTimerList();
+            // Start the clocks for the loaded timers
+            activeTimers.forEach(t => startTimerInterval(t));
+        }
+    };
+
+    // Auto-save input fields when typing
+    inputsToSave.forEach(id => {
+        document.getElementById(id).addEventListener('input', function() {
+            localStorage.setItem(id, this.value);
+        });
+    });
+
+    function saveKeywordsData() {
+        localStorage.setItem('jailexKeywords', JSON.stringify(keywords));
+    }
+
+    function saveTimersData() {
+        localStorage.setItem('jailexTimers', JSON.stringify(activeTimers));
+    }
+
+    /* =========================================
+       BOT UI & LOGIC
+       ========================================= */
+    function logMsg(msg) {
+        const logBox = document.getElementById('sysLog');
+        logBox.innerHTML += `> ${msg}<br>`;
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // --- KEYWORDS ---
+    function addKeyword() {
+        const trigger = document.getElementById('kwTrigger').value.toLowerCase();
+        const response = document.getElementById('kwResponse').value;
+        if (trigger && response) {
+            keywords[trigger] = response;
+            document.getElementById('kwTrigger').value = '';
+            document.getElementById('kwResponse').value = '';
+            saveKeywordsData();
+            updateKeywordList();
+            logMsg(`Keyword saved: ${trigger}`);
+        }
+    }
+
+    function deleteKeyword(key) {
+        delete keywords[key];
+        saveKeywordsData();
+        updateKeywordList();
+        logMsg(`Keyword deleted: ${key}`);
+    }
+
+    function updateKeywordList() {
+        const list = document.getElementById('keywordList');
+        list.innerHTML = '';
+        for (const [key, val] of Object.entries(keywords)) {
+            list.innerHTML += `<div class="list-item">
+                <span><b>${key}</b>: ${val}</span>
+                <button class="delete-btn" onclick="deleteKeyword('${key}')">X</button>
+            </div>`;
+        }
+    }
+
+    // --- TIMERS ---
+    function startTimerInterval(t) {
+        const intervalId = setInterval(() => {
+            if (isTwitchConnected) sendTwitchMessage(t.message);
+            if (isKickConnected) sendKickMessage(t.message);
+        }, t.intervalMs);
+        timerIntervals.push({ id: t.id, intervalId: intervalId });
+    }
+
+    function addTimer() {
+        const minutes = parseInt(document.getElementById('timerMinutes').value);
+        const message = document.getElementById('timerMessage').value;
+        
+        if (minutes > 0 && message) {
+            const intervalMs = minutes * 60 * 1000;
+            const newTimer = { id: Date.now(), minutes, message, intervalMs }; 
+            
+            activeTimers.push(newTimer);
+            saveTimersData();
+            
+            document.getElementById('timerMinutes').value = '';
+            document.getElementById('timerMessage').value = '';
+            
+            updateTimerList();
+            startTimerInterval(newTimer);
+            logMsg(`Timer saved: "${message}" every ${minutes} min.`);
+        }
+    }
+
+    function deleteTimer(id) {
+        // Remove from saved array
+        activeTimers = activeTimers.filter(t => t.id !== id);
+        saveTimersData();
+        
+        // Stop the actual clock running in the background
+        const timerObj = timerIntervals.find(t => t.id === id);
+        if (timerObj) {
+            clearInterval(timerObj.intervalId);
+            timerIntervals = timerIntervals.filter(t => t.id !== id);
+        }
+
+        updateTimerList();
+        logMsg(`Timer deleted.`);
+    }
+
+    function updateTimerList() {
+        const list = document.getElementById('timerList');
+        list.innerHTML = '';
+        activeTimers.forEach(t => {
+            list.innerHTML += `<div class="list-item">
+                <span><b>${t.minutes}m</b>: ${t.message}</span>
+                <button class="delete-btn" onclick="deleteTimer(${t.id})">X</button>
+            </div>`;
+        });
+    }
+
+    /* =========================================
+       TWITCH LOGIC 
+       ========================================= */
+    function connectTwitch() {
+        const user = document.getElementById('twitchUser').value.toLowerCase().trim();
+        let rawToken = document.getElementById('twitchOAuth').value.trim();
+        let cleanToken = rawToken.replace(/^0auth:/i, '').replace(/^oauth:/i, '').trim();
+        
+        if (cleanToken === '') {
+            logMsg("TWITCH ALERT: Token is blank. Please paste it in.");
+            return;
+        }
+
+        const oauth = 'oauth:' + cleanToken;
+        logMsg("Connecting to Twitch...");
+        twitchWs = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+
+        twitchWs.onopen = () => {
+            twitchWs.send(`PASS ${oauth}`);
+            twitchWs.send(`NICK ${user}`);
+            twitchWs.send(`JOIN #${user}`);
+        };
+
+        twitchWs.onmessage = (event) => {
+            const msg = event.data;
+            if (msg.includes('PING :tmi.twitch.tv')) twitchWs.send('PONG :tmi.twitch.tv');
+
+            if (msg.includes('366 ' + user)) {
+                isTwitchConnected = true;
+                logMsg(`SUCCESS: Joined Twitch #${user}`);
+                document.getElementById('connectTwitchBtn').style.background = 'var(--neon-blue)';
+                document.getElementById('connectTwitchBtn').style.color = '#000';
+                document.getElementById('connectTwitchBtn').innerText = 'Twitch Connected';
+            }
+
+            if (msg.includes('NOTICE')) {
+                let noticeMsg = msg.split(':')[2] || "Login Failed";
+                logMsg(`TWITCH REJECTED: ${noticeMsg.trim()}`);
+                twitchWs.close();
+            }
+
+            if (msg.includes('PRIVMSG')) {
+                const chatText = msg.split('PRIVMSG')[1].split(':')[1].trim().toLowerCase();
+                for (const trigger in keywords) {
+                    if (chatText.includes(trigger)) sendTwitchMessage(keywords[trigger]);
+                }
+            }
+        };
+
+        twitchWs.onclose = () => {
+            isTwitchConnected = false;
+            logMsg("TWITCH DISCONNECTED.");
+            document.getElementById('connectTwitchBtn').style.background = 'transparent';
+            document.getElementById('connectTwitchBtn').style.color = 'var(--neon-blue)';
+            document.getElementById('connectTwitchBtn').innerText = 'Connect to Twitch';
+        };
+    }
+
+    function sendTwitchMessage(text) {
+        if (!isTwitchConnected) return;
+        const channel = document.getElementById('twitchUser').value.toLowerCase();
+        twitchWs.send(`PRIVMSG #${channel} :${text}`);
+        logMsg(`Twitch Sent: ${text}`);
+    }
+
+    /* =========================================
+       KICK LOGIC
+       ========================================= */
+    function connectKick() {
+        const chatroomId = document.getElementById('kickChatroomId').value;
+        if (!chatroomId) {
+            logMsg("KICK ERROR: Chatroom ID is required.");
+            return;
+        }
+
+        logMsg("Connecting to Kick...");
+        kickWs = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0&flash=false');
+
+        kickWs.onopen = () => {
+            kickWs.send(JSON.stringify({
+                event: "pusher:subscribe",
+                data: { auth: "", channel: `chatrooms.${chatroomId}.v2` }
+            }));
+        };
+
+        kickWs.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            
+            if (msg.event === "pusher:connection_established") {
+                isKickConnected = true;
+                logMsg(`SUCCESS: Joined Kick Chatroom.`);
+                document.getElementById('connectKickBtn').style.background = 'var(--neon-green)';
+                document.getElementById('connectKickBtn').style.color = '#000';
+                document.getElementById('connectKickBtn').innerText = 'Kick Connected';
+            }
+
+            if (msg.event === "App\\Events\\ChatMessageEvent") {
+                const chatData = JSON.parse(msg.data);
+                const chatText = chatData.content.toLowerCase();
+                for (const trigger in keywords) {
+                    if (chatText.includes(trigger)) sendKickMessage(keywords[trigger]);
+                }
+            }
+        };
+
+        kickWs.onclose = () => {
+            isKickConnected = false;
+            logMsg("KICK DISCONNECTED.");
+            document.getElementById('connectKickBtn').style.background = 'transparent';
+            document.getElementById('connectKickBtn').style.color = 'var(--neon-green)';
+            document.getElementById('connectKickBtn').innerText = 'Connect to Kick';
+        };
+    }
+
+    async function sendKickMessage(text) {
+        if (!isKickConnected) return;
+        const token = document.getElementById('kickToken').value;
+        const chatroomId = document.getElementById('kickChatroomId').value;
+
+        if (!token) {
+            logMsg("KICK ALERT: Token missing. Cannot post.");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/kick', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chatroomId: chatroomId, token: token, message: text })
+            });
+
+            if (response.ok) {
+                logMsg(`Kick Sent: ${text}`);
+            } else {
+                const errData = await response.json();
+                logMsg(`Kick Send Failed: ${errData.error || response.status}`);
+            }
+        } catch (err) {
+            logMsg(`Kick Send Error: Make sure you are viewing this on your live Vercel link!`);
+        }
+    }
+</script>
+
+</body>
+</html>
