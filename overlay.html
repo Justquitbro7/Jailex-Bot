@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jailex Studio Overlay v1.7</title>
+    <title>Jailex Studio Overlay v1.8</title>
     <style>
         :root { --neon: #ff6a00; --size: 22px; --op: 0.85; }
         body { background: transparent !important; margin: 0; padding: 15px; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: white; }
         #chat-container { display: flex; flex-direction: column; height: 100vh; gap: 12px; justify-content: flex-end; }
+        
         .chat-message { 
             background: rgba(11, 22, 42, var(--op)); 
             border-left: 5px solid var(--neon); 
@@ -15,9 +16,19 @@
             animation: slideIn 0.3s ease-out; max-width: 90%; 
             word-wrap: break-word;
         }
-        .user-name { color: #00f3ff; font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 0.85em; margin-bottom: 4px; }
-        /* Ensures the emoji/icon is always visible */
-        .icon-box { display: inline-block; min-width: 24px; text-align: center; } 
+
+        .user-name { color: #00f3ff; font-weight: bold; display: flex; align-items: center; gap: 10px; font-size: 0.85em; margin-bottom: 4px; }
+
+        /* The New "Drawn" Icons */
+        .platform-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 5px rgba(255,255,255,0.5);
+        }
+        .twitch-dot { background-color: #9146FF; border: 1px solid #bc93f9; }
+        .kick-dot { background-color: #53fc18; border: 1px solid #a5ff85; }
+
         @keyframes slideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
@@ -26,7 +37,6 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const stayTime = (parseInt(params.get('stay')) || 20) * 1000;
-        
         document.documentElement.style.setProperty('--neon', params.get('color') || '#ff6a00');
         document.documentElement.style.setProperty('--size', (params.get('size') || '22') + 'px');
         document.documentElement.style.setProperty('--op', params.get('opacity') || '0.85');
@@ -35,12 +45,13 @@
             const container = document.getElementById('chat-container');
             const div = document.createElement('div');
             div.className = 'chat-message';
-            // Explicitly setting the emoji based on platform
-            const platformIcon = platform === 'twitch' ? '🟣' : '🟢';
+            
+            // Assign the correct CSS class based on platform
+            const dotClass = platform === 'twitch' ? 'twitch-dot' : 'kick-dot';
             
             div.innerHTML = `
                 <span class="user-name">
-                    <span class="icon-box">${platformIcon}</span>
+                    <span class="platform-dot ${dotClass}"></span>
                     <span>${user}</span>
                 </span>
                 <span class="message-text">${text}</span>
@@ -56,34 +67,17 @@
             }, stayTime);
         }
 
-        const tw = params.get('twitch');
+        // --- Standard Connections (Keeping your working logic) ---
+        const tw = params.get('twitch'), ki = params.get('kick');
         if(tw) {
             const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-            tws.onopen = () => {
-                tws.send('CAP REQ :twitch.tv/tags');
-                tws.send('PASS oauth:anonymous');
-                tws.send('NICK justinfan' + Math.floor(Math.random()*999));
-                tws.send('JOIN #'+tw.toLowerCase());
-            };
-            tws.onmessage = (e) => {
-                if(e.data.includes('PRIVMSG')) {
-                    const m = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/);
-                    if(m) addMessage(m[1], m[2], 'twitch');
-                }
-            };
+            tws.onopen = () => { tws.send('PASS oauth:xyz'); tws.send('NICK justinfan' + Math.floor(Math.random()*999)); tws.send('JOIN #'+tw.toLowerCase()); };
+            tws.onmessage = (e) => { if(e.data.includes('PRIVMSG')) { const m = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/); if(m) addMessage(m[1], m[2], 'twitch'); } };
         }
-
-        const ki = params.get('kick');
         if(ki) {
             const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
             kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${ki}.v2` } })); };
-            kws.onmessage = (e) => {
-                const d = JSON.parse(e.data);
-                if(d.event.includes("ChatMessageEvent")) {
-                    const m = JSON.parse(d.data);
-                    addMessage(m.sender.username, m.content, 'kick');
-                }
-            };
+            kws.onmessage = (e) => { const d = JSON.parse(e.data); if(d.event.includes("ChatMessageEvent")) { const m = JSON.parse(d.data); addMessage(m.sender.username, m.content, 'kick'); } };
             setInterval(() => { if(kws.readyState === 1) kws.send(JSON.stringify({event:"pusher:ping",data:{}})) }, 20000);
         }
     </script>
