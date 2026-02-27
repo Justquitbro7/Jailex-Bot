@@ -2,19 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jailex Pro Overlay</title>
+    <title>Jailex Pro Overlay v1.6</title>
     <style>
         :root { --neon: #ff6a00; --size: 22px; --op: 0.85; }
-        body { background: transparent !important; margin: 0; padding: 15px; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        body { background: transparent !important; margin: 0; padding: 15px; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: white; }
         #chat-container { display: flex; flex-direction: column; height: 100vh; gap: 12px; justify-content: flex-end; }
         .chat-message { 
             background: rgba(11, 22, 42, var(--op)); 
             border-left: 5px solid var(--neon); 
-            padding: 12px; border-radius: 0 8px 8px 0; color: white; 
+            padding: 12px; border-radius: 0 8px 8px 0; 
             font-size: var(--size); text-shadow: 2px 2px 4px black; 
             animation: slideIn 0.3s ease-out; max-width: 90%; 
+            word-wrap: break-word;
         }
-        .user-name { color: #00f3ff; font-weight: bold; display: block; font-size: 0.9em; }
+        .user-name { color: #00f3ff; font-weight: bold; display: block; font-size: 0.8em; margin-bottom: 4px; }
         @keyframes slideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
@@ -22,7 +23,7 @@
     <div id="chat-container"></div>
     <script>
         const params = new URLSearchParams(window.location.search);
-        const duration = (parseInt(params.get('stay')) || 20) * 1000; // Convert sec to ms
+        const stayTime = (parseInt(params.get('stay')) || 20) * 1000;
         
         document.documentElement.style.setProperty('--neon', params.get('color') || '#ff6a00');
         document.documentElement.style.setProperty('--size', (params.get('size') || '22') + 'px');
@@ -36,26 +37,50 @@
             div.innerHTML = `<span class="user-name">${icon} ${user}</span> ${text}`;
             container.appendChild(div);
             
-            if (container.children.length > 8) container.removeChild(container.firstChild);
+            if (container.children.length > 10) container.removeChild(container.firstChild);
             
-            // This uses the "stay" parameter from your slider
             setTimeout(() => {
                 div.style.transition = "opacity 1s";
                 div.style.opacity = "0";
                 setTimeout(() => div.remove(), 1000);
-            }, duration);
+            }, stayTime);
         }
 
-        // --- Standard Connections ---
-        if(params.get('twitch')) {
+        // TWITCH STABILITY FIX
+        const twitchChan = params.get('twitch');
+        if(twitchChan) {
             const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-            tws.onopen = () => { tws.send('PASS oauth:xyz'); tws.send('NICK justinfan123'); tws.send('JOIN #' + params.get('twitch').toLowerCase()); };
-            tws.onmessage = (e) => { if(e.data.includes('PRIVMSG')) { const m = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/); if(m) addMessage(m[1], m[2], 'twitch'); } };
+            tws.onopen = () => {
+                tws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+                tws.send('PASS oauth:anonymous');
+                tws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
+                tws.send('JOIN #' + twitchChan.toLowerCase());
+            };
+            tws.onmessage = (e) => {
+                if(e.data.includes('PRIVMSG')) {
+                    const m = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/);
+                    if(m) addMessage(m[1], m[2], 'twitch');
+                }
+            };
+            // Reconnect if connection drops
+            tws.onclose = () => setTimeout(() => location.reload(), 5000);
         }
-        if(params.get('kick')) {
+
+        // KICK STABILITY FIX
+        const kickId = params.get('kick');
+        if(kickId) {
             const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-            kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${params.get('kick')}.v2` } })); };
-            kws.onmessage = (e) => { const d = JSON.parse(e.data); if(d.event.includes("ChatMessageEvent")) { const m = JSON.parse(d.data); addMessage(m.sender.username, m.content, 'kick'); } };
+            kws.onopen = () => {
+                kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kickId}.v2` } }));
+            };
+            kws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if(d.event === "App\\Events\\ChatMessageEvent") {
+                    const m = JSON.parse(d.data);
+                    addMessage(m.sender.username, m.content, 'kick');
+                }
+            };
+            setInterval(() => { if(kws.readyState === 1) kws.send(JSON.stringify({event:"pusher:ping",data:{}})) }, 20000);
         }
     </script>
 </body>
