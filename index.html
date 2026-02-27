@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Pro v1.3 - Universal Stream Suite</title>
+    <title>Jailex Pro v1.4 - Fully Wired</title>
     <style>
         :root { --bears-navy: #0B162A; --bears-orange: #FF6A00; --bears-blue: #00F3FF; }
         body { background-color: var(--bears-navy); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
@@ -13,47 +13,40 @@
         .btn { background: var(--bears-orange); color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .btn:hover { background: var(--bears-blue); color: black; }
         .btn-add { background: #28a745; margin-top: 10px; width: 100%; }
-        input, select, textarea { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #111; color: white; box-sizing: border-box; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #111; color: white; box-sizing: border-box; margin-bottom: 5px; }
         #log { height: 150px; overflow-y: auto; background: #000; padding: 10px; font-family: monospace; font-size: 0.85em; border-radius: 5px; color: #00ff00; border: 1px solid #333; }
         .item-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px; }
         .delete-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        .status-dot { height: 10px; width: 10px; background-color: #bbb; border-radius: 50%; display: inline-block; margin-right: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div style="text-align: center; margin-bottom: 20px;">
-        <h1 style="color: var(--bears-orange); margin:0;">JAILEX PRO v1.3</h1>
-        <p style="color: var(--bears-blue); font-size: 0.9em;">Universal Bot & Overlay Controller</p>
+        <h1 style="color: var(--bears-orange); margin:0;">JAILEX PRO v1.4</h1>
+        <p style="color: var(--bears-blue); font-size: 0.9em;">Master Control Panel</p>
     </div>
 
     <div class="card">
         <h3 style="color: var(--bears-orange); margin-top:0;">👤 CHANNEL SETUP</h3>
         <div style="display: flex; gap: 15px;">
-            <div style="flex:1;">
-                <label style="font-size: 0.8em;">Twitch Username:</label>
-                <input type="text" id="twitchUser" value="justquitbro7" placeholder="e.g. Ninja">
-            </div>
-            <div style="flex:1;">
-                <label style="font-size: 0.8em;">Kick Chatroom ID:</label>
-                <input type="text" id="kickId" value="92474944" placeholder="e.g. 12345678">
-            </div>
+            <div style="flex:1;"><label>Twitch User:</label><input type="text" id="twitchUser" value="justquitbro7"></div>
+            <div style="flex:1;"><label>Kick ID:</label><input type="text" id="kickId" value="92474944"></div>
         </div>
-        <button class="btn" style="width:100%; margin-top:10px;" onclick="saveConfig()">SAVE & REFRESH OVERLAY LINK</button>
+        <button class="btn" style="width:100%; margin-top:10px;" onclick="saveConfig()">UPDATE OVERLAY URL</button>
     </div>
 
     <div class="grid">
         <div class="card">
             <h3>⏰ CUSTOM TIMERS</h3>
             <div id="timersList"></div>
-            <button class="btn btn-add" onclick="addTimerRow()">+ ADD NEW TIMER</button>
-            <p style="font-size: 0.7em; color: #888; margin-top:5px;">*Intervals are in minutes.</p>
+            <button class="btn btn-add" onclick="addTimerRow()">+ ADD TIMER</button>
         </div>
-
         <div class="card">
-            <h3>⚡ KEYWORD RESPONSES</h3>
+            <h3>⚡ KEYWORDS</h3>
             <div id="keywordsList"></div>
-            <button class="btn btn-add" onclick="addKeywordRow()">+ ADD NEW KEYWORD</button>
+            <button class="btn btn-add" onclick="addKeywordRow()">+ ADD KEYWORD</button>
         </div>
     </div>
 
@@ -65,75 +58,21 @@
         </div>
         <div class="card">
             <h3>⚙️ ENGINE CONTROL</h3>
-            <button class="btn" style="width:100%; height: 60px; font-size: 1.2em;" onclick="startBot()" id="startBtn">START BOT SERVICES</button>
+            <div style="margin-bottom:10px;">
+                <span class="status-dot" id="t-dot"></span> Twitch | 
+                <span class="status-dot" id="k-dot"></span> Kick
+            </div>
+            <button class="btn" style="width:100%; height: 50px;" onclick="startBot()" id="startBtn">START BOT SERVICES</button>
         </div>
     </div>
 
     <div class="card">
         <h3>📋 LIVE SYSTEM LOGS</h3>
-        <div id="log">Ready for configuration...</div>
+        <div id="log">Awaiting start...</div>
     </div>
 </div>
 
 <script>
-    // Initial Data
-    let config = {
-        timers: [{ msg: "Follow the stream!", time: 10 }],
-        keywords: [{ trigger: "!hello", response: "Welcome to the den!" }]
-    };
-
-    function addTimerRow(msg = "", time = 10) {
-        const div = document.createElement('div');
-        div.className = 'item-row';
-        div.innerHTML = `
-            <input type="text" placeholder="Message" value="${msg}" class="t-msg">
-            <input type="number" placeholder="Min" value="${time}" style="width:70px;" class="t-time">
-            <button class="delete-btn" onclick="this.parentElement.remove()">X</button>
-        `;
-        document.getElementById('timersList').appendChild(div);
-    }
-
-    function addKeywordRow(trigger = "", resp = "") {
-        const div = document.createElement('div');
-        div.className = 'item-row';
-        div.innerHTML = `
-            <input type="text" placeholder="!command" value="${trigger}" class="k-trigger">
-            <input type="text" placeholder="Response" value="${resp}" class="k-resp">
-            <button class="delete-btn" onclick="this.parentElement.remove()">X</button>
-        `;
-        document.getElementById('keywordsList').appendChild(div);
-    }
-
-    function saveConfig() {
-        const t = document.getElementById('twitchUser').value;
-        const k = document.getElementById('kickId').value;
-        const baseUrl = window.location.origin + "/overlay.html";
-        document.getElementById('finalLink').innerText = `${baseUrl}?twitch=${t}&kick=${k}&size=22&opacity=0.85&color=%23ff6a00`;
-        addLog("Configuration Saved Locally.");
-    }
-
-    function startBot() {
-        const tUser = document.getElementById('twitchUser').value;
-        const kId = document.getElementById('kickId').value;
-        addLog(`Connecting to Twitch: ${tUser}...`);
-        addLog(`Connecting to Kick ID: ${kId}...`);
-        
-        // Timer Logic
-        document.querySelectorAll('.item-row').forEach(row => {
-            const msg = row.querySelector('.t-msg')?.value;
-            const time = row.querySelector('.t-time')?.value;
-            if(msg && time) {
-                setInterval(() => {
-                    addLog(`Timer: ${msg}`);
-                    speak(msg);
-                }, time * 60000);
-            }
-        });
-
-        document.getElementById('startBtn').disabled = true;
-        document.getElementById('startBtn').innerText = "ENGINE ONLINE";
-    }
-
     function addLog(msg) {
         const log = document.getElementById('log');
         log.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
@@ -145,14 +84,94 @@
         window.speechSynthesis.speak(utter);
     }
 
-    function copyLink() {
-        navigator.clipboard.writeText(document.getElementById('finalLink').innerText);
-        alert("Copied!");
+    function addTimerRow(msg = "", time = 10) {
+        const div = document.createElement('div');
+        div.className = 'item-row';
+        div.innerHTML = `<input type="text" placeholder="Msg" value="${msg}" class="t-msg"><input type="number" value="${time}" style="width:60px;" class="t-time">min <button class="delete-btn" onclick="this.parentElement.remove()">X</button>`;
+        document.getElementById('timersList').appendChild(div);
     }
 
-    // Load defaults
+    function addKeywordRow(trigger = "", resp = "") {
+        const div = document.createElement('div');
+        div.className = 'item-row';
+        div.innerHTML = `<input type="text" placeholder="!cmd" value="${trigger}" class="k-trigger"><input type="text" placeholder="Response" value="${resp}" class="k-resp"><button class="delete-btn" onclick="this.parentElement.remove()">X</button>`;
+        document.getElementById('keywordsList').appendChild(div);
+    }
+
+    function saveConfig() {
+        const t = document.getElementById('twitchUser').value;
+        const k = document.getElementById('kickId').value;
+        document.getElementById('finalLink').innerText = `${window.location.origin}/overlay.html?twitch=${t}&kick=${k}&size=22&opacity=0.85&color=%23ff6a00`;
+        addLog("URL Updated with current credentials.");
+    }
+
+    function startBot() {
+        const tUser = document.getElementById('twitchUser').value;
+        const kId = document.getElementById('kickId').value;
+
+        // TWITCH
+        const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+        tws.onopen = () => {
+            tws.send('CAP REQ :twitch.tv/tags');
+            tws.send('PASS oauth:anonymous');
+            tws.send('NICK justinfan12345');
+            tws.send('JOIN #' + tUser.toLowerCase());
+            document.getElementById('t-dot').style.backgroundColor = '#00ff00';
+            addLog(`Twitch Connected: ${tUser}`);
+        };
+        tws.onmessage = (e) => {
+            if(e.data.includes('PRIVMSG')) {
+                const match = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/);
+                if(match) handleMsg(match[1], match[2], 'Twitch');
+            }
+        };
+
+        // KICK
+        const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
+        kws.onopen = () => {
+            kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kId}.v2` } }));
+            document.getElementById('k-dot').style.backgroundColor = '#00ff00';
+            addLog(`Kick Connected: ${kId}`);
+            setInterval(() => kws.send(JSON.stringify({event: "pusher:ping", data: {}})), 20000);
+        };
+        kws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            if (data.event === "App\\Events\\ChatMessageEvent") {
+                const m = JSON.parse(data.data);
+                handleMsg(m.sender.username, m.content, 'Kick');
+            }
+        };
+
+        // TIMERS
+        document.querySelectorAll('#timersList .item-row').forEach(row => {
+            const msg = row.querySelector('.t-msg').value;
+            const time = row.querySelector('.t-time').value;
+            if(msg) setInterval(() => { addLog(`Timer: ${msg}`); speak(msg); }, time * 60000);
+        });
+
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('startBtn').innerText = "ENGINE ONLINE";
+    }
+
+    function handleMsg(user, msg, platform) {
+        addLog(`${platform} | ${user}: ${msg}`);
+        speak(`${user} says ${msg}`);
+        
+        // Check Keywords
+        document.querySelectorAll('#keywordsList .item-row').forEach(row => {
+            const trigger = row.querySelector('.k-trigger').value.toLowerCase();
+            const resp = row.querySelector('.k-resp').value;
+            if(msg.toLowerCase().includes(trigger)) {
+                addLog(`Keyword Matched: ${trigger}`);
+                speak(resp);
+            }
+        });
+    }
+
+    function copyLink() { navigator.clipboard.writeText(document.getElementById('finalLink').innerText); alert("Link Copied!"); }
+
     window.onload = () => {
-        addTimerRow("Follow me on Kick and Twitch! !socials", 10);
+        addTimerRow("Follow me on Kick and Twitch!", 10);
         addKeywordRow("!socials", "Twitch: justquitbro7 | Kick: justquitbro7");
         saveConfig();
     };
