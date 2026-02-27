@@ -2,224 +2,83 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Studio v1.8</title>
+    <title>Jailex Studio Overlay v1.9</title>
     <style>
-        :root { --navy: #0B162A; --orange: #FF6A00; --blue: #00F3FF; }
-        body { background-color: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        :root { --neon: #ff6a00; --size: 22px; --op: 0.85; }
+        body { background: transparent !important; margin: 0; padding: 15px; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: white; }
+        #chat-container { display: flex; flex-direction: column; height: 100vh; gap: 12px; justify-content: flex-end; }
         
-        /* Sidebar Navigation */
-        .sidebar { width: 220px; background: rgba(0,0,0,0.5); border-right: 1px solid var(--orange); display: flex; flex-direction: column; padding: 20px 0; }
-        .sidebar-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; }
-        .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; color: #ccc; font-weight: bold; font-size: 0.9em; }
-        .nav-item:hover { background: rgba(255, 106, 0, 0.1); color: var(--orange); }
-        .nav-item.active { background: rgba(255, 106, 0, 0.2); color: var(--orange); border-left: 4px solid var(--orange); }
+        .chat-message { 
+            background: rgba(11, 22, 42, var(--op)); 
+            border-left: 5px solid var(--neon); 
+            padding: 12px; border-radius: 0 8px 8px 0; 
+            font-size: var(--size); text-shadow: 2px 2px 4px black; 
+            animation: slideIn 0.3s ease-out; max-width: 90%; 
+            word-wrap: break-word;
+            display: flex; flex-direction: column;
+        }
 
-        /* Main Content */
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .user-line { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+        .user-name { color: #00f3ff; font-weight: bold; font-size: 0.85em; }
 
-        /* UI Cards & Elements */
-        .card { background: rgba(255,255,255,0.05); border: 1px solid var(--blue); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        .btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
-        .btn:hover { box-shadow: 0 0 15px var(--orange); transform: translateY(-2px); }
-        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #333; background: #111; color: white; margin-bottom: 10px; box-sizing: border-box; }
+        /* The SVG Icon Container */
+        .icon-svg { width: 14px; height: 14px; display: block; }
         
-        #log { height: 180px; overflow-y: auto; background: #000; padding: 10px; font-family: monospace; font-size: 0.85em; color: #00ff00; border-radius: 8px; border: 1px solid #333; }
-        .item-row { display: flex; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px; align-items: center; }
-        .del-btn { background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-        
-        /* Status Indicators */
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: #555; margin-right: 5px; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
 <body>
-
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h2 style="color: var(--orange); margin:0;">JAILEX</h2>
-            <span style="font-size:0.75em; color: var(--blue);">STUDIO v1.8</span>
-        </div>
-        <div class="nav-item active" onclick="showTab('setup')">👤 Channel Setup</div>
-        <div class="nav-item" onclick="showTab('overlay')">📡 Overlay Builder</div>
-        <div class="nav-item" onclick="showTab('tts')">🔊 TTS Audio Engine</div>
-        <div class="nav-item" onclick="showTab('timers')">⏰ Auto-Timers</div>
-        <div class="nav-item" onclick="showTab('keywords')">⚡ Keyword Tasks</div>
-    </div>
-
-    <div class="main-content">
-        <div id="setup" class="tab-content active">
-            <h2>User Credentials</h2>
-            <div class="card">
-                <label>Twitch Username</label><input type="text" id="tw" value="justquitbro7" oninput="saveConfig()">
-                <label>Kick Chatroom ID</label><input type="text" id="ki" value="92474944" oninput="saveConfig()">
-                <button class="btn" onclick="saveConfig()">Save & Lock Config</button>
-            </div>
-        </div>
-
-        <div id="overlay" class="tab-content">
-            <h2>Custom Chat Overlay</h2>
-            <div class="card">
-                <label>Font Size: <span id="sV">22</span>px</label><input type="range" id="fS" min="16" max="48" value="22" oninput="saveConfig()">
-                <label>Stay Time: <span id="tV">20</span>s</label><input type="range" id="sT" min="5" max="60" value="20" oninput="saveConfig()">
-                <label>Background Opacity: <span id="oV">85</span>%</label><input type="range" id="oP" min="0" max="100" value="85" oninput="saveConfig()">
-                
-                <div id="fL" class="card" style="background:#000; color:var(--blue); font-size:0.7em; word-break:break-all; border-left: 4px solid var(--orange);">URL Ready...</div>
-                <button class="btn" onclick="copyLink()">Copy Link for Lightstream</button>
-            </div>
-        </div>
-
-        <div id="tts" class="tab-content">
-            <h2>TTS & Voice Control</h2>
-            <div class="card">
-                <div style="margin-bottom: 20px;">
-                    <span class="status-dot" id="t-dot"></span> Twitch Status | 
-                    <span class="status-dot" id="k-dot"></span> Kick Status
-                </div>
-                <label>Master Voice Volume</label><input type="range" id="vol" min="0" max="1" step="0.1" value="0.8">
-                <button class="btn" id="sB" onclick="startBot()" style="height:60px; font-size: 1.2em;">ACTIVATE JAILEX ENGINE</button>
-                <div id="log" style="margin-top:20px;">Standby... Press Activate to start the bot.</div>
-            </div>
-        </div>
-
-        <div id="timers" class="tab-content">
-            <h2>Stream Timers</h2>
-            <div class="card">
-                <div id="tL"></div>
-                <button class="btn" onclick="addTimerRow()" style="background:#28a745">+ Add Timer Message</button>
-            </div>
-        </div>
-
-        <div id="keywords" class="tab-content">
-            <h2>Keyword Automations</h2>
-            <div class="card">
-                <div id="kL"></div>
-                <button class="btn" onclick="addKeywordRow()" style="background:#28a745">+ Add !Command Trigger</button>
-            </div>
-        </div>
-    </div>
-
+    <div id="chat-container"></div>
     <script>
-        function showTab(id) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
+        const params = new URLSearchParams(window.location.search);
+        const stayTime = (parseInt(params.get('stay')) || 20) * 1000;
+        document.documentElement.style.setProperty('--neon', params.get('color') || '#ff6a00');
+        document.documentElement.style.setProperty('--size', (params.get('size') || '22') + 'px');
+        document.documentElement.style.setProperty('--op', params.get('opacity') || '0.85');
 
-        function saveConfig() {
-            const t = document.getElementById('tw').value;
-            const k = document.getElementById('ki').value;
-            const s = document.getElementById('fS').value;
-            const st = document.getElementById('sT').value;
-            const op = (document.getElementById('oP').value / 100).toFixed(2);
-            
-            document.getElementById('sV').innerText = s;
-            document.getElementById('tV').innerText = st;
-            document.getElementById('oV').innerText = Math.round(op * 100);
-            
-            document.getElementById('fL').innerText = `${window.location.origin}/overlay.html?twitch=${t}&kick=${k}&size=${s}&stay=${st}&opacity=${op}`;
-        }
-
-        function startBot() {
-            const tUser = document.getElementById('tw').value;
-            const kId = document.getElementById('ki').value;
-            addLog("Initializing Voice Engine...");
-
-            // Twitch Connection
-            const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-            tws.onopen = () => {
-                tws.send('PASS oauth:xyz');
-                tws.send('NICK justinfan' + Math.floor(Math.random()*9999));
-                tws.send('JOIN #' + tUser.toLowerCase());
-                document.getElementById('t-dot').style.background = '#9146FF';
-                addLog("Twitch Voice Feed: ACTIVE");
-            };
-            tws.onmessage = (e) => {
-                if(e.data.includes('PRIVMSG')) {
-                    const match = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/);
-                    if(match) handleMessage(match[1], match[2], 'Twitch');
-                }
-            };
-
-            // Kick Connection
-            const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-            kws.onopen = () => {
-                kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kId}.v2` } }));
-                document.getElementById('k-dot').style.background = '#53fc18';
-                addLog("Kick Voice Feed: ACTIVE");
-                setInterval(() => kws.send(JSON.stringify({event:"pusher:ping",data:{}})), 20000);
-            };
-            kws.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                if (data.event.includes("ChatMessageEvent")) {
-                    const m = JSON.parse(data.data);
-                    handleMessage(m.sender.username, m.content, 'Kick');
-                }
-            };
-
-            // Process Timers
-            document.querySelectorAll('#tL .item-row').forEach(row => {
-                const msg = row.querySelector('.t-m').value;
-                const min = row.querySelector('.t-t').value;
-                if(msg) setInterval(() => { addLog("Timer Trigger: " + msg); speak(msg); }, min * 60000);
-            });
-
-            document.getElementById('sB').disabled = true;
-            document.getElementById('sB').innerText = "ENGINE ONLINE";
-        }
-
-        function handleMessage(user, msg, platform) {
-            addLog(`${platform} | ${user}: ${msg}`);
-            speak(`${user} says ${msg}`);
-            
-            // Keyword Processing
-            document.querySelectorAll('#kL .item-row').forEach(row => {
-                const trigger = row.querySelector('.k-t').value.toLowerCase();
-                const response = row.querySelector('.k-r').value;
-                if(trigger && msg.toLowerCase().includes(trigger)) {
-                    addLog("Automation: " + trigger);
-                    speak(response);
-                }
-            });
-        }
-
-        function speak(text) {
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.volume = document.getElementById('vol').value;
-            window.speechSynthesis.speak(utter);
-        }
-
-        function addLog(msg) {
-            const log = document.getElementById('log');
-            log.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
-            log.scrollTop = log.scrollHeight;
-        }
-
-        function copyLink() {
-            navigator.clipboard.writeText(document.getElementById('fL').innerText);
-            alert("Overlay URL Copied!");
-        }
-
-        function addTimerRow(m="", t=10) {
-            const div = document.createElement('div'); div.className = 'item-row';
-            div.innerHTML = `<input type="text" value="${m}" class="t-m" placeholder="Reminder Message"><input type="number" value="${t}" class="t-t" style="width:60px">min <button class="del-btn" onclick="this.parentElement.remove()">X</button>`;
-            document.getElementById('tL').appendChild(div);
-        }
-
-        function addKeywordRow(k="", r="") {
-            const div = document.createElement('div'); div.className = 'item-row';
-            div.innerHTML = `<input type="text" value="${k}" class="k-t" placeholder="!command"><input type="text" value="${r}" class="k-r" placeholder="Voice Response"> <button class="del-btn" onclick="this.parentElement.remove()">X</button>`;
-            document.getElementById('kL').appendChild(div);
-        }
-
-        window.onload = () => {
-            addTimerRow("Don't forget to follow the stream!", 15);
-            addKeywordRow("!socials", "Follow me on Kick and Twitch at Just Quit Bro 7!");
-            saveConfig();
+        // SVG Icons for Twitch (Purple) and Kick (Green)
+        const icons = {
+            twitch: `<svg class="icon-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#9146FF" stroke="white" stroke-width="5"/></svg>`,
+            kick: `<svg class="icon-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#53fc18" stroke="white" stroke-width="5"/></svg>`
         };
+
+        function addMessage(user, text, platform) {
+            const container = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.className = 'chat-message';
+            
+            const iconHtml = platform === 'twitch' ? icons.twitch : icons.kick;
+            
+            div.innerHTML = `
+                <div class="user-line">
+                    ${iconHtml}
+                    <span class="user-name">${user}</span>
+                </div>
+                <div class="message-text">${text}</div>
+            `;
+            
+            container.appendChild(div);
+            if (container.children.length > 10) container.removeChild(container.firstChild);
+            
+            setTimeout(() => {
+                div.style.transition = "opacity 1s";
+                div.style.opacity = "0";
+                setTimeout(() => div.remove(), 1000);
+            }, stayTime);
+        }
+
+        const tw = params.get('twitch'), ki = params.get('kick');
+        if(tw) {
+            const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+            tws.onopen = () => { tws.send('PASS oauth:xyz'); tws.send('NICK justinfan' + Math.floor(Math.random()*999)); tws.send('JOIN #'+tw.toLowerCase()); };
+            tws.onmessage = (e) => { if(e.data.includes('PRIVMSG')) { const m = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/); if(m) addMessage(m[1], m[2], 'twitch'); } };
+        }
+        if(ki) {
+            const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
+            kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${ki}.v2` } })); };
+            kws.onmessage = (e) => { const d = JSON.parse(e.data); if(d.event.includes("ChatMessageEvent")) { const m = JSON.parse(d.data); addMessage(m.sender.username, m.content, 'kick'); } };
+            setInterval(() => { if(kws.readyState === 1) kws.send(JSON.stringify({event:"pusher:ping",data:{}})) }, 20000);
+        }
     </script>
 </body>
 </html>
