@@ -3,415 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex v1.0</title>
+    <title>Jailex Ultimate v1.0 - Control Panel</title>
     <style>
         :root {
             --bears-navy: #0B162A;
-            --bears-orange: #C83803;
-            --neon-blue: #00f3ff;
-            --neon-orange: #ff6a00;
-            --panel-bg: rgba(11, 22, 42, 0.9);
+            --bears-orange: #FF6A00;
+            --bears-blue: #00F3FF;
         }
 
         body {
-            background-color: #050a14;
-            background-image: linear-gradient(135deg, #050a14 0%, var(--bears-navy) 100%);
-            color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bears-navy);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             padding: 20px;
             display: flex;
-            justify-content: center;
-        }
-
-        .hud-container {
-            width: 100%;
-            max-width: 1000px;
-            background: var(--panel-bg);
-            border: 2px solid var(--neon-blue);
-            border-radius: 20px;
-            box-shadow: 0 0 20px var(--neon-blue), inset 0 0 15px rgba(0, 243, 255, 0.2);
-            padding: 30px;
-            position: relative;
-        }
-
-        .header-section {
-            display: flex;
             flex-direction: column;
             align-items: center;
-            margin-bottom: 25px;
         }
 
-        .logo {
-            width: 120px;
-            height: 120px;
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
             border-radius: 15px;
-            box-shadow: 0 0 25px var(--neon-orange);
-            margin-bottom: 15px;
-            border: 2px solid var(--neon-orange);
-            object-fit: cover;
+            border: 2px solid var(--bears-orange);
+            box-shadow: 0 0 20px rgba(255, 106, 0, 0.2);
         }
 
-        h1 {
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
             color: var(--bears-orange);
-            text-transform: uppercase;
-            text-shadow: 0 0 15px var(--neon-orange);
-            margin: 0;
-            letter-spacing: 3px;
-            font-size: 2em;
+            text-shadow: 0 0 10px var(--bears-orange);
+            margin: 10px 0;
         }
 
-        .version-tag {
-            font-size: 0.7em;
-            color: var(--neon-blue);
-            text-shadow: 0 0 5px var(--neon-blue);
-            margin-top: 5px;
+        .card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--bears-blue);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .panel {
-            border: 1px solid var(--neon-orange);
-            border-radius: 12px;
-            padding: 18px;
-            background: rgba(0, 0, 0, 0.6);
-            box-shadow: 0 0 10px rgba(255, 106, 0, 0.2);
-        }
-
-        h2 {
-            color: var(--neon-blue);
-            font-size: 1.1em;
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--neon-blue);
-            padding-bottom: 8px;
-            margin-top: 0;
-        }
-
-        label { color: #aaa; font-size: 0.8em; display: block; margin-bottom: 5px; }
-
-        input, select {
-            width: calc(100% - 20px);
-            background: #000;
-            border: 1px solid var(--neon-blue);
-            color: #fff;
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 6px;
-            outline: none;
-        }
-
-        button {
-            background: transparent;
-            color: var(--neon-blue);
-            border: 2px solid var(--neon-blue);
-            padding: 12px;
+        .btn {
+            background: var(--bears-orange);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
-            text-transform: uppercase;
-            border-radius: 6px;
-            transition: all 0.3s;
-            width: 100%;
+            transition: 0.3s;
         }
 
-        button:hover {
-            background: var(--neon-blue);
-            color: #000;
-            box-shadow: 0 0 20px var(--neon-blue);
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--bears-orange);
         }
 
-        .enable-tts-btn {
-            background: var(--bears-orange);
-            color: #fff;
-            border-color: #fff;
-            box-shadow: 0 0 15px var(--neon-orange);
-            margin-bottom: 25px;
+        input, select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--bears-blue);
+            background: #111;
+            color: white;
+            margin: 5px 0;
         }
 
-        .log-box {
-            height: 200px;
+        #log {
+            height: 150px;
             overflow-y: auto;
             background: #000;
-            border: 1px solid var(--neon-blue);
-            padding: 12px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            color: var(--neon-blue);
-            margin-top: 20px;
-            border-radius: 8px;
-        }
-
-        .list-item {
-            background: rgba(255, 255, 255, 0.05);
             padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            border-left: 3px solid var(--neon-orange);
+            font-family: monospace;
+            font-size: 0.9em;
+            border-radius: 5px;
+            color: #00ff00;
         }
 
-        .delete-btn { width: auto; padding: 2px 10px; border-color: #ff4444; color: #ff4444; }
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .url-box {
+            background: #222;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid var(--bears-blue);
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
-<div class="hud-container">
-    <div class="header-section">
-        <img src="logo.jpg" class="logo" alt="Jailex Logo">
-        <h1>Jailex Ultimate</h1>
-        <div class="version-tag">SYSTEM v1.0 // BEARS EDITION</div>
+<div class="container">
+    <div class="header">
+        <img src="logo.jpg" alt="Jailex Logo" style="width: 100px; border-radius: 50%; border: 2px solid var(--bears-orange);">
+        <h1>JAILEX ULTIMATE v1.0</h1>
+        <p>Streaming Control Panel & Overlay Builder</p>
     </div>
-    
-    <button id="unlock-tts" class="enable-tts-btn" onclick="unlockTTS()">📢 ACTIVATE NEON AUDIO</button>
 
-    <div class="grid">
-        <div class="left-col">
-            <div class="panel">
-                <h2>Channel Matrix</h2>
-                <label>Twitch Identity</label>
-                <input type="text" id="twitchUser">
-                <input type="password" id="twitchOAuth" placeholder="oauth:xxxxxx">
-                <button onclick="connectTwitch()">Link Twitch</button>
-                <hr style="border:0; border-top:1px solid #222; margin: 15px 0;">
-                <label>Kick Data</label>
-                <input type="text" id="kickChatroomId" placeholder="Chatroom ID">
-                <input type="password" id="kickToken" placeholder="Bearer Token">
-                <button onclick="connectKick()" style="border-color: var(--neon-orange); color: var(--neon-orange);">Link Kick</button>
+    <div class="card">
+        <h2 style="color: var(--bears-orange);">📡 OVERLAY CUSTOMIZER</h2>
+        <p style="font-size: 0.9em; color: #ccc;">Adjust your settings below to create your custom Lightstream link.</p>
+        
+        <div class="slider-group">
+            <div>
+                <label>Text Size: <span id="sizeVal">22</span>px</label><br>
+                <input type="range" id="fontSize" min="16" max="48" value="22" style="width: 100%;" oninput="generateLink()">
             </div>
-        </div>
 
-        <div class="right-col">
-            <div class="panel">
-                <h2>Speech & Logic</h2>
-                <label>Voice Core</label>
-                <select id="voice-select"></select>
-                <div style="display:flex; gap:10px;">
-                    <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1">
-                    <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1">
-                </div>
-
-                <label style="margin-top:10px;">Automations</label>
-                <div style="display:flex; gap:5px;">
-                    <input type="text" id="kwTrigger" placeholder="!discord">
-                    <input type="text" id="kwResponse" placeholder="Response">
-                </div>
-                <button onclick="addKeyword()">Add Trigger</button>
-                <div id="keywordList"></div>
-
-                <div style="display:flex; gap:5px; margin-top:10px;">
-                    <input type="number" id="timerMinutes" placeholder="Mins">
-                    <input type="text" id="timerMessage" placeholder="Message">
-                </div>
-                <button onclick="addTimer()">Add Timer</button>
-                <div id="timerList"></div>
+            <div>
+                <label>Background Transparency: <span id="alphaVal">80</span>%</label><br>
+                <input type="range" id="bgAlpha" min="0" max="100" value="80" style="width: 100%;" oninput="generateLink()">
             </div>
+
+            <div>
+                <label>Neon Accent Color:</label><br>
+                <input type="color" id="neonColor" value="#ff6a00" onchange="generateLink()">
+            </div>
+
+            <div class="url-box">
+                <p style="margin: 0; color: var(--bears-blue); font-weight: bold;">LIGHTSTREAM URL:</p>
+                <span id="finalLink">Loading...</span>
+            </div>
+
+            <button class="btn" onclick="copyLink()">COPY OVERLAY LINK</button>
         </div>
     </div>
 
-    <div class="log-box" id="sysLog">> NEON HUD v1.0 INITIALIZED.<br></div>
+    <div class="card">
+        <h2>🤖 BOT STATUS</h2>
+        <div style="display: flex; gap: 20px;">
+            <p>Twitch: <span id="t-status" style="color: red;">Disconnected</span></p>
+            <p>Kick: <span id="k-status" style="color: red;">Disconnected</span></p>
+        </div>
+        <div id="log">Welcome to Jailex. System Ready.</div>
+    </div>
 </div>
 
 <script>
-    const KNOWN_BOTS = ['nightbot', 'streamelements', 'moobot', 'fossabot', 'wizebot', 'streamlabs', 'botrix', 'kickbot'];
-    let twitchWs, kickWs, keywords = {}, activeTimers = [];
-    let isTwitchConnected = false, isKickConnected = false;
-    let ttsUnlocked = false, isSpeaking = false, ttsQueue = [];
-    let lastKickMsg = "", lastKickUser = "";
+    const twitchUser = "justquitbro7";
+    const kickId = "92474944";
 
-    window.onload = () => {
-        ['twitchUser', 'twitchOAuth', 'kickChatroomId', 'kickToken'].forEach(id => {
-            const val = localStorage.getItem(id);
-            if (val) document.getElementById(id).value = val;
-            document.getElementById(id).addEventListener('input', (e) => localStorage.setItem(id, e.target.value));
-        });
-        const savedKWs = localStorage.getItem('jailexKeywords');
-        if (savedKWs) { keywords = JSON.parse(savedKWs); updateKeywordList(); }
-        const savedTimers = localStorage.getItem('jailexTimers');
-        if (savedTimers) { 
-            const data = JSON.parse(savedTimers);
-            data.forEach(t => createTimer(t.minutes, t.message, false));
-        }
-        loadVoices();
-        if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
-    };
+    function generateLink() {
+        const size = document.getElementById('fontSize').value;
+        const alpha = (document.getElementById('bgAlpha').value / 100).toFixed(2);
+        const color = encodeURIComponent(document.getElementById('neonColor').value);
+        
+        document.getElementById('sizeVal').innerText = size;
+        document.getElementById('alphaVal').innerText = Math.round(alpha * 100);
 
-    function loadVoices() {
-        const voices = speechSynthesis.getVoices();
-        document.getElementById('voice-select').innerHTML = voices.map(v => `<option value="${v.name}">${v.name}</option>`).join('');
+        // This builds the dynamic URL
+        const baseUrl = window.location.origin + "/overlay.html";
+        const finalUrl = `${baseUrl}?twitch=${twitchUser}&kick=${kickId}&size=${size}&opacity=${alpha}&color=${color}`;
+        
+        document.getElementById('finalLink').innerText = finalUrl;
     }
 
-    function unlockTTS() {
-        ttsUnlocked = true;
-        speechSynthesis.cancel();
-        speechSynthesis.speak(new SpeechSynthesisUtterance("Neon Audio Ready"));
-        document.getElementById('unlock-tts').innerText = "✅ AUDIO ACTIVE";
-        document.getElementById('unlock-tts').style.background = "#222";
-    }
-
-    function speak(text) {
-        if (!ttsUnlocked) return;
-        ttsQueue.push(text);
-        if (!isSpeaking) processQueue();
-    }
-
-    function processQueue() {
-        if (ttsQueue.length === 0) { isSpeaking = false; return; }
-        isSpeaking = true;
-        const msg = new SpeechSynthesisUtterance(ttsQueue.shift());
-        const voices = speechSynthesis.getVoices();
-        msg.voice = voices.find(v => v.name === document.getElementById('voice-select').value);
-        msg.rate = document.getElementById('rate').value;
-        msg.pitch = document.getElementById('pitch').value;
-        msg.onend = () => processQueue();
-        speechSynthesis.speak(msg);
-    }
-
-    function connectTwitch() {
-        const user = document.getElementById('twitchUser').value.toLowerCase().trim();
-        let rawToken = document.getElementById('twitchOAuth').value.trim();
-        let cleanToken = rawToken.replace(/^0auth:/i, '').replace(/^oauth:/i, '').trim();
-        if (!cleanToken) return;
-        const oauth = 'oauth:' + cleanToken;
-        logMsg("Connecting to Twitch IRC...");
-        twitchWs = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-        twitchWs.onopen = () => {
-            twitchWs.send(`PASS ${oauth}`);
-            twitchWs.send(`NICK ${user}`);
-            twitchWs.send(`JOIN #${user}`);
-        };
-        twitchWs.onmessage = (e) => {
-            const msg = e.data;
-            if (msg.includes('PING')) twitchWs.send('PONG :tmi.twitch.tv');
-            if (msg.includes('366 ' + user)) {
-                isTwitchConnected = true;
-                logMsg("Twitch Connection Established.");
-            }
-            if (msg.includes('PRIVMSG')) {
-                const parts = msg.split('!');
-                const name = parts[0].substring(1);
-                const chatMsg = msg.split('PRIVMSG')[1].split(':')[1].trim();
-                logMsg(`[Twitch] ${name}: ${chatMsg}`);
-                if (!KNOWN_BOTS.includes(name.toLowerCase())) {
-                    speak(`${name} says ${chatMsg}`);
-                    handleKeywords('twitch', chatMsg);
-                }
-            }
-        };
-    }
-
-    function connectKick() {
-        const id = document.getElementById('kickChatroomId').value;
-        logMsg("Connecting to Kick Pusher...");
-        kickWs = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-        kickWs.onopen = () => { kickWs.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${id}.v2` } })); };
-        kickWs.onmessage = (e) => {
-            const data = JSON.parse(e.data);
-            if (data.event === "pusher:connection_established") { isKickConnected = true; logMsg("Kick Connection Established."); }
-            if (data.event === "App\\Events\\ChatMessageEvent") {
-                const m = JSON.parse(data.data);
-                const name = m.sender.username;
-                const content = m.content;
-                if (name === lastKickUser && content === lastKickMsg) return;
-                lastKickUser = name;
-                lastKickMsg = content;
-                logMsg(`[Kick] ${name}: ${content}`);
-                if (!KNOWN_BOTS.includes(name.toLowerCase())) {
-                    speak(`${name} says ${content}`);
-                    handleKeywords('kick', content);
-                }
-            }
-        };
-    }
-
-    function handleKeywords(platform, msg) {
-        const low = msg.toLowerCase();
-        for (let k in keywords) {
-            if (low.includes(k.toLowerCase())) {
-                platform === 'twitch' ? sendTwitch(keywords[k]) : sendKick(keywords[k]);
-            }
-        }
-    }
-
-    function addKeyword() {
-        const k = document.getElementById('kwTrigger').value.trim();
-        const r = document.getElementById('kwResponse').value.trim();
-        if (k && r) {
-            keywords[k] = r;
-            localStorage.setItem('jailexKeywords', JSON.stringify(keywords));
-            updateKeywordList();
-        }
-    }
-
-    function updateKeywordList() {
-        document.getElementById('keywordList').innerHTML = Object.entries(keywords).map(([k,v]) => `
-            <div class="list-item"><span>${k}</span><button class="delete-btn" onclick="removeKW('${k}')">X</button></div>
-        `).join('');
-    }
-    function removeKW(k) { delete keywords[k]; localStorage.setItem('jailexKeywords', JSON.stringify(keywords)); updateKeywordList(); }
-
-    function addTimer() {
-        const m = document.getElementById('timerMinutes').value;
-        const msg = document.getElementById('timerMessage').value;
-        if (m > 0 && msg) { createTimer(m, msg, true); }
-    }
-
-    function createTimer(minutes, message, shouldSave) {
-        const interval = setInterval(() => {
-            sendTwitch(message);
-            sendKick(message);
-        }, minutes * 60000);
-        activeTimers.push({ minutes, message, interval });
-        if (shouldSave) localStorage.setItem('jailexTimers', JSON.stringify(activeTimers.map(t => ({ minutes: t.minutes, message: t.message }))));
-        const div = document.createElement('div');
-        div.className = 'list-item';
-        div.innerHTML = `<span>${minutes}m Timer</span><button class="delete-btn" onclick="removeTimer(${activeTimers.length-1})">X</button>`;
-        document.getElementById('timerList').appendChild(div);
-    }
-
-    function removeTimer(index) {
-        clearInterval(activeTimers[index].interval);
-        activeTimers.splice(index, 1);
-        localStorage.setItem('jailexTimers', JSON.stringify(activeTimers.map(t => ({ minutes: t.minutes, message: t.message }))));
-        document.getElementById('timerList').innerHTML = "";
-        activeTimers.forEach((t, i) => {
-            const div = document.createElement('div');
-            div.className = 'list-item';
-            div.innerHTML = `<span>${t.minutes}m Timer</span><button class="delete-btn" onclick="removeTimer(${i})">X</button>`;
-            document.getElementById('timerList').appendChild(div);
+    function copyLink() {
+        const text = document.getElementById('finalLink').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Link Copied! Paste this into your Lightstream Browser Source.");
         });
     }
 
-    function sendTwitch(t) { 
-        if(isTwitchConnected && twitchWs) {
-            const user = document.getElementById('twitchUser').value.toLowerCase().trim();
-            twitchWs.send(`PRIVMSG #${user} :${t}`); 
-            speak("justquitbro7 says " + t);
-        }
-    }
-    
-    async function sendKick(t) {
-        const token = document.getElementById('kickToken').value;
-        const id = document.getElementById('kickChatroomId').value;
-        if(!token || !id || !isKickConnected) return;
-        try { 
-            const res = await fetch('/api/kick', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ chatroomId: id, token: token, message: t })
-            }); 
-            if(res.ok) { speak("justquitbro7 says " + t); }
-        } catch(e) {}
-    }
+    // Initialize on load
+    window.onload = generateLink;
 
-    function logMsg(m) {
-        const lb = document.getElementById('sysLog');
-        lb.innerHTML += `> ${m}<br>`;
-        lb.scrollTop = lb.scrollHeight;
+    function addLog(msg) {
+        const log = document.getElementById('log');
+        log.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+        log.scrollTop = log.scrollHeight;
     }
 </script>
+
 </body>
 </html>
