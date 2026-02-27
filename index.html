@@ -166,7 +166,7 @@
         </div>
     </div>
 
-    <div class="log-box" id="sysLog">> SYSTEM READY.<br></div>
+    <div class="log-box" id="sysLog">> SYSTEM READY. CLICK ENABLE AUDIO TO START.<br></div>
 </div>
 
 <script>
@@ -183,7 +183,6 @@
         });
         const savedKWs = localStorage.getItem('jailexKeywords');
         if (savedKWs) { keywords = JSON.parse(savedKWs); updateKeywordList(); }
-        
         const savedTimers = localStorage.getItem('jailexTimers');
         if (savedTimers) { 
             const data = JSON.parse(savedTimers);
@@ -230,6 +229,7 @@
         if (cleanToken === '') return;
         const oauth = 'oauth:' + cleanToken;
 
+        logMsg("Twitch: Connecting WebSocket...");
         twitchWs = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
         twitchWs.onopen = () => {
             twitchWs.send(`PASS ${oauth}`);
@@ -241,15 +241,15 @@
             if (msg.includes('PING')) twitchWs.send('PONG :tmi.twitch.tv');
             if (msg.includes('366 ' + user)) {
                 isTwitchConnected = true;
-                logMsg("Twitch: Connected!");
-                document.getElementById('connectTwitchBtn').innerText = "ONLINE";
+                logMsg("Twitch: JOINED CHANNEL SUCCESSFUL.");
+                document.getElementById('connectTwitchBtn').innerText = "TWITCH ONLINE";
             }
             if (msg.includes('PRIVMSG')) {
                 const parts = msg.split('!');
                 const name = parts[0].substring(1);
                 const chatMsg = msg.split('PRIVMSG')[1].split(':')[1].trim();
+                logMsg(`[Twitch] ${name}: ${chatMsg}`);
                 if (!KNOWN_BOTS.includes(name.toLowerCase())) {
-                    logMsg(`[Twitch] ${name}: ${chatMsg}`);
                     speak(`${name} says ${chatMsg}`);
                     handleKeywords('twitch', chatMsg);
                 }
@@ -259,17 +259,20 @@
 
     function connectKick() {
         const id = document.getElementById('kickChatroomId').value;
+        logMsg("Kick: Connecting Pusher...");
         kickWs = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
         kickWs.onopen = () => { kickWs.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${id}.v2` } })); };
         kickWs.onmessage = (e) => {
             const data = JSON.parse(e.data);
-            if (data.event === "pusher:connection_established") { isKickConnected = true; logMsg("Kick: Connected!"); }
+            if (data.event === "pusher:connection_established") { isKickConnected = true; logMsg("Kick: WEBSOCKET CONNECTED."); }
             if (data.event === "App\\Events\\ChatMessageEvent") {
                 const m = JSON.parse(data.data);
-                if (!KNOWN_BOTS.includes(m.sender.username.toLowerCase())) {
-                    logMsg(`[Kick] ${m.sender.username}: ${m.content}`);
-                    speak(`${m.sender.username} says ${m.content}`);
-                    handleKeywords('kick', m.content);
+                const name = m.sender.username;
+                const content = m.content;
+                logMsg(`[Kick] ${name}: ${content}`);
+                if (!KNOWN_BOTS.includes(name.toLowerCase())) {
+                    speak(`${name} says ${content}`);
+                    handleKeywords('kick', content);
                 }
             }
         };
@@ -309,7 +312,6 @@
 
     function createTimer(minutes, message, shouldSave) {
         const interval = setInterval(() => {
-            logMsg(`[TIMER] Triggered: ${message.substring(0,10)}...`);
             sendTwitch(message);
             sendKick(message);
         }, minutes * 60000);
@@ -341,7 +343,6 @@
             const user = document.getElementById('twitchUser').value.toLowerCase().trim();
             twitchWs.send(`PRIVMSG #${user} :${t}`); 
             logMsg(`[Twitch] Bot Sent: ${t}`);
-            // FIX: Uses your actual username now
             speak("justquitbro7 says " + t);
         }
     }
@@ -358,7 +359,6 @@
             }); 
             if(res.ok) {
                 logMsg(`[Kick] Bot Sent: ${t}`);
-                // FIX: Uses your actual username now
                 speak("justquitbro7 says " + t);
             }
         } catch(e) { logMsg(`[Kick] Send Error: Proxy issues.`); }
