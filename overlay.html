@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jailex Studio Overlay</title>
+    <title>Jailex Studio Overlay v1.7</title>
     <style>
         :root { --neon: #ff6a00; --size: 22px; --op: 0.85; }
         body { background: transparent !important; margin: 0; padding: 15px; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: white; }
@@ -16,7 +16,8 @@
             word-wrap: break-word;
         }
         .user-name { color: #00f3ff; font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 0.85em; margin-bottom: 4px; }
-        .icon { font-style: normal; font-size: 1.1em; }
+        /* Ensures the emoji/icon is always visible */
+        .icon-box { display: inline-block; min-width: 24px; text-align: center; } 
         @keyframes slideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
@@ -25,6 +26,7 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const stayTime = (parseInt(params.get('stay')) || 20) * 1000;
+        
         document.documentElement.style.setProperty('--neon', params.get('color') || '#ff6a00');
         document.documentElement.style.setProperty('--size', (params.get('size') || '22') + 'px');
         document.documentElement.style.setProperty('--op', params.get('opacity') || '0.85');
@@ -33,10 +35,20 @@
             const container = document.getElementById('chat-container');
             const div = document.createElement('div');
             div.className = 'chat-message';
-            const icon = platform === 'twitch' ? '🟣' : '🟢';
-            div.innerHTML = `<span class="user-name"><i class="icon">${icon}</i> ${user}</span> ${text}`;
+            // Explicitly setting the emoji based on platform
+            const platformIcon = platform === 'twitch' ? '🟣' : '🟢';
+            
+            div.innerHTML = `
+                <span class="user-name">
+                    <span class="icon-box">${platformIcon}</span>
+                    <span>${user}</span>
+                </span>
+                <span class="message-text">${text}</span>
+            `;
+            
             container.appendChild(div);
             if (container.children.length > 10) container.removeChild(container.firstChild);
+            
             setTimeout(() => {
                 div.style.transition = "opacity 1s";
                 div.style.opacity = "0";
@@ -47,14 +59,32 @@
         const tw = params.get('twitch');
         if(tw) {
             const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-            tws.onopen = () => { tws.send('PASS oauth:xyz'); tws.send('NICK justinfan' + Math.floor(Math.random()*999)); tws.send('JOIN #'+tw.toLowerCase()); };
-            tws.onmessage = (e) => { if(e.data.includes('PRIVMSG')) { const m = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/); if(m) addMessage(m[1], m[2], 'twitch'); } };
+            tws.onopen = () => {
+                tws.send('CAP REQ :twitch.tv/tags');
+                tws.send('PASS oauth:anonymous');
+                tws.send('NICK justinfan' + Math.floor(Math.random()*999));
+                tws.send('JOIN #'+tw.toLowerCase());
+            };
+            tws.onmessage = (e) => {
+                if(e.data.includes('PRIVMSG')) {
+                    const m = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/);
+                    if(m) addMessage(m[1], m[2], 'twitch');
+                }
+            };
         }
+
         const ki = params.get('kick');
         if(ki) {
             const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
             kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${ki}.v2` } })); };
-            kws.onmessage = (e) => { const d = JSON.parse(e.data); if(d.event.includes("ChatMessageEvent")) { const m = JSON.parse(d.data); addMessage(m.sender.username, m.content, 'kick'); } };
+            kws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if(d.event.includes("ChatMessageEvent")) {
+                    const m = JSON.parse(d.data);
+                    addMessage(m.sender.username, m.content, 'kick');
+                }
+            };
+            setInterval(() => { if(kws.readyState === 1) kws.send(JSON.stringify({event:"pusher:ping",data:{}})) }, 20000);
         }
     </script>
 </body>
