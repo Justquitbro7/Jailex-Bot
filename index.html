@@ -28,15 +28,19 @@
     <div class="sidebar">
         <div class="sidebar-header"><h2 style="color: var(--orange); margin:0;">JAILEX</h2><span style="font-size:0.7em;">v3.0 MASTER</span></div>
         <div class="nav-item active" onclick="showTab('setup', this)">👤 Setup</div>
-        <div class="nav-item" onclick="onclick=showTab('overlay', this)">📡 Overlay</div>
-        <div class="nav-item" onclick="onclick=showTab('tts', this)">🔊 TTS Audio</div>
-        <div class="nav-item" onclick="onclick=showTab('timers', this)">⏰ Timers</div>
-        <div class="nav-item" onclick="onclick=showTab('keywords', this)">⚡ Keywords</div>
+        <div class="nav-item" onclick="showTab('overlay', this)">📡 Overlay</div>
+        <div class="nav-item" onclick="showTab('tts', this)">🔊 TTS Audio</div>
+        <div class="nav-item" onclick="showTab('timers', this)">⏰ Timers</div>
+        <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
     </div>
     <div class="main-content">
         <div id="setup" class="tab-content active">
             <h2>Config</h2>
-            <div class="card"><input type="text" id="tw" value="justquitbro7"><input type="text" id="ki" value="92474944"><button class="btn" onclick="save()">SAVE</button></div>
+            <div class="card">
+                <label>Twitch</label><input type="text" id="tw" value="justquitbro7">
+                <label>Kick ID</label><input type="text" id="ki" value="92474944">
+                <button class="btn" onclick="save()">SAVE CONFIG</button>
+            </div>
         </div>
         <div id="overlay" class="tab-content">
             <h2>Overlay</h2>
@@ -54,8 +58,14 @@
                 <div id="log" style="margin-top:20px;">Ready.</div>
             </div>
         </div>
-        <div id="timers" class="tab-content"><h2>Timers</h2><div class="card"><div id="tL"></div><button class="btn" onclick="addTimerRow()" style="background:#28a745">+ Add</button></div></div>
-        <div id="keywords" class="tab-content"><h2>Keywords</h2><div class="card"><div id="kL"></div><button class="btn" onclick="addKeywordRow()" style="background:#28a745">+ Add</button></div></div>
+        <div id="timers" class="tab-content">
+            <h2>Timers</h2>
+            <div class="card"><div id="tL"></div><button class="btn" onclick="addTimerRow()" style="background:#28a745">+ Add</button></div>
+        </div>
+        <div id="keywords" class="tab-content">
+            <h2>Keywords</h2>
+            <div class="card"><div id="kL"></div><button class="btn" onclick="addKeywordRow()" style="background:#28a745">+ Add</button></div>
+        </div>
     </div>
     <script>
         function showTab(id, el) {
@@ -89,13 +99,21 @@
                     const m = e.data.substring(e.data.indexOf(':', 1) + 1);
                     handle(u, m, 'Twitch');
                 }
+                if(e.data.includes('PING')) tws.send('PONG :tmi.twitch.tv');
             };
             const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-            kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kI}.v2` } })); addLog("Kick OK."); };
+            kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kI}.v2` } })); addLog("Kick OK."); setInterval(() => kws.send(JSON.stringify({event:"pusher:ping",data:{}})), 20000); };
             kws.onmessage = (e) => { const d = JSON.parse(e.data); if (d.event.includes("ChatMessageEvent")) { const m = JSON.parse(d.data); handle(m.sender.username, m.content, 'Kick'); } };
             document.getElementById('sB').disabled = true;
         }
-        function handle(u, m, p) { addLog(`${p} | ${u}: ${m}`); window.speechSynthesis.speak(new SpeechSynthesisUtterance(u + " says " + m)); document.querySelectorAll('#kL .item-row').forEach(row => { const trig = row.querySelector('.k-t').value.toLowerCase(); if(trig && m.toLowerCase().includes(trig)) window.speechSynthesis.speak(new SpeechSynthesisUtterance(row.querySelector('.k-r').value)); }); }
+        function handle(u, m, p) { 
+            addLog(`${p} | ${u}: ${m}`); 
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(u + " says " + m)); 
+            document.querySelectorAll('#kL .item-row').forEach(row => { 
+                const trig = row.querySelector('.k-t').value.toLowerCase(); 
+                if(trig && m.toLowerCase().includes(trig)) window.speechSynthesis.speak(new SpeechSynthesisUtterance(row.querySelector('.k-r').value)); 
+            }); 
+        }
         function addLog(m) { const l = document.getElementById('log'); l.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${m}</div>`; l.scrollTop = l.scrollHeight; }
         function copy() { navigator.clipboard.writeText(document.getElementById('fL').innerText); alert("URL Copied!"); }
         function addTimerRow(m="", t=15) { const d = document.createElement('div'); d.className = 'item-row'; d.innerHTML = `<input type="text" value="${m}" class="t-m"><input type="number" value="${t}" class="t-t" style="width:50px">m <button onclick="this.parentElement.remove(); save()">X</button>`; document.getElementById('tL').appendChild(d); }
