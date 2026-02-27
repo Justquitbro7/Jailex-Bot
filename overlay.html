@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jailex Studio Overlay v2.3</title>
+    <title>Jailex Studio Overlay v2.4 - Full Build</title>
     <style>
         :root { --neon: #ff6a00; --size: 22px; --op: 0.85; }
-        body { background: transparent !important; margin: 0; padding: 15px; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: white; }
+        body { background: transparent !important; margin: 0; padding: 15px; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; color: white; }
         #chat-container { display: flex; flex-direction: column; height: 100vh; gap: 12px; justify-content: flex-end; }
         
+        /* The Chat Message Box */
         .chat-message { 
             background: rgba(11, 22, 42, var(--op)); 
             border-left: 5px solid var(--neon); 
@@ -17,11 +18,12 @@
             word-wrap: break-word;
         }
 
+        /* Username Styling */
         .user-name { font-weight: bold; font-size: 0.9em; margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* Platform Colors */
-        .twitch-user { color: #bf94ff; text-shadow: 0 0 10px rgba(145, 70, 255, 0.5); }
-        .kick-user { color: #53fc18; text-shadow: 0 0 10px rgba(83, 252, 24, 0.5); }
+        /* Matching Your Ideas: Specific Platform Colors */
+        .t-user { color: #bf94ff; text-shadow: 0 0 10px rgba(145, 70, 255, 0.6); } /* Twitch Purple */
+        .k-user { color: #53fc18; text-shadow: 0 0 10px rgba(83, 252, 24, 0.6); }  /* Kick Green */
 
         @keyframes slideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
     </style>
@@ -32,6 +34,7 @@
         const params = new URLSearchParams(window.location.search);
         const stayTime = (parseInt(params.get('stay')) || 20) * 1000;
         
+        // Apply Builder Settings
         document.documentElement.style.setProperty('--neon', params.get('color') || '#ff6a00');
         document.documentElement.style.setProperty('--size', (params.get('size') || '22') + 'px');
         document.documentElement.style.setProperty('--op', params.get('opacity') || '0.85');
@@ -41,16 +44,20 @@
             const div = document.createElement('div');
             div.className = 'chat-message';
             
-            const userClass = platform === 'twitch' ? 'twitch-user' : 'kick-user';
+            // Apply the Purple or Green class based on the platform
+            const colorClass = platform === 'twitch' ? 't-user' : 'k-user';
             
             div.innerHTML = `
-                <span class="user-name ${userClass}">${user}</span>
-                <span class="message-text">${text}</span>
+                <span class="user-name ${colorClass}">${user}</span>
+                <span class="msg-text">${text}</span>
             `;
             
             container.appendChild(div);
+            
+            // Auto-clean old messages (keeps performance high)
             if (container.children.length > 10) container.removeChild(container.firstChild);
             
+            // Fade out and remove based on "Stay Time" slider
             setTimeout(() => {
                 div.style.transition = "opacity 1s";
                 div.style.opacity = "0";
@@ -58,39 +65,43 @@
             }, stayTime);
         }
 
-        // --- TWITCH ENGINE ---
+        // --- TWITCH ENGINE (IRC PROTOCOL) ---
         const twUser = params.get('twitch');
         if(twUser) {
             const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
             tws.onopen = () => {
-                tws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
                 tws.send('PASS oauth:anonymous');
                 tws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
                 tws.send('JOIN #' + twUser.toLowerCase());
             };
             tws.onmessage = (e) => {
+                // Keep-alive: If Twitch pings, we must pong or they disconnect us
+                if(e.data.includes('PING')) {
+                    tws.send('PONG :tmi.twitch.tv');
+                }
+                
+                // Parsing the message
                 if(e.data.includes('PRIVMSG')) {
-                    // Optimized parsing to ensure name and message match
-                    const parts = e.data.split(';');
-                    let displayName = "User";
-                    parts.forEach(p => { if(p.startsWith('display-name=')) displayName = p.split('=')[1]; });
-                    
-                    const msgContent = e.data.substring(e.data.lastIndexOf(':') + 1);
-                    if(displayName && msgContent) {
-                        addMessage(displayName, msgContent.trim(), 'twitch');
+                    const match = e.data.match(/:([^!]+)![^@]+@[^.]+\.tmi\.twitch\.tv PRIVMSG #[^ ]+ :(.+)/);
+                    if(match) {
+                        const user = match[1];
+                        const message = match[2].trim();
+                        addMessage(user, message, 'twitch');
                     }
                 }
-                if(e.data.includes('PING')) tws.send('PONG :tmi.twitch.tv');
             };
             tws.onclose = () => setTimeout(() => location.reload(), 5000);
         }
 
-        // --- KICK ENGINE ---
+        // --- KICK ENGINE (PUSHER PROTOCOL) ---
         const kiId = params.get('kick');
         if(kiId) {
             const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
             kws.onopen = () => {
-                kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kiId}.v2` } }));
+                kws.send(JSON.stringify({ 
+                    event: "pusher:subscribe", 
+                    data: { channel: `chatrooms.${kiId}.v2` } 
+                }));
             };
             kws.onmessage = (e) => {
                 const d = JSON.parse(e.data);
@@ -99,7 +110,10 @@
                     addMessage(m.sender.username, m.content, 'kick');
                 }
             };
-            setInterval(() => { if(kws.readyState === 1) kws.send(JSON.stringify({event:"pusher:ping",data:{}})) }, 20000);
+            // Keep Kick connection alive
+            setInterval(() => { 
+                if(kws.readyState === 1) kws.send(JSON.stringify({event:"pusher:ping",data:{}}));
+            }, 20000);
         }
     </script>
 </body>
