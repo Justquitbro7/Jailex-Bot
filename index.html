@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailexbot - Neon HUD + TTS</title>
+    <title>Jailexbot - Neon HUD + TTS FIXED</title>
     <style>
         :root {
             --neon-blue: #00f3ff;
@@ -56,12 +56,7 @@
             margin-bottom: 20px;
         }
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: var(--neon-blue);
-            font-size: 0.9em;
-        }
+        label { display: block; margin-bottom: 5px; color: var(--neon-blue); font-size: 0.9em; }
 
         input, select {
             width: calc(100% - 20px);
@@ -71,7 +66,6 @@
             padding: 8px;
             margin-bottom: 15px;
             border-radius: 5px;
-            box-shadow: 0 0 5px var(--neon-blue);
         }
 
         button {
@@ -84,23 +78,13 @@
             text-transform: uppercase;
             border-radius: 5px;
             box-shadow: 0 0 10px var(--neon-blue);
-            transition: all 0.3s ease;
             width: 100%;
             margin-bottom: 10px;
         }
 
-        button:hover {
-            background: var(--neon-blue);
-            color: #000;
-        }
+        button:hover { background: var(--neon-blue); color: #000; }
 
-        .enable-tts-btn {
-            background: var(--neon-green);
-            color: #000;
-            border-color: var(--neon-green);
-            box-shadow: 0 0 15px var(--neon-green);
-            margin-bottom: 20px;
-        }
+        .enable-tts-btn { background: var(--neon-green); color: #000; border-color: var(--neon-green); margin-bottom: 20px; }
 
         .log-box {
             height: 150px;
@@ -115,7 +99,6 @@
             border-radius: 5px;
         }
 
-        .dynamic-list { margin-bottom: 15px; }
         .list-item {
             background: rgba(255, 255, 255, 0.1);
             padding: 8px;
@@ -126,7 +109,6 @@
             justify-content: space-between;
             align-items: center;
         }
-        .delete-btn { width: auto; padding: 2px 8px; font-size: 10px; border-color: #ff0055; color: #ff0055; }
     </style>
 </head>
 <body>
@@ -143,16 +125,16 @@
                 <label>Username</label>
                 <input type="text" id="twitchUser" value="justquitbro7">
                 <label>OAuth Token</label>
-                <input type="password" id="twitchOAuth" placeholder="Paste oauth: token here">
+                <input type="password" id="twitchOAuth" placeholder="oauth:xxxxxx">
                 <button id="connectTwitchBtn" onclick="connectTwitch()">Connect to Twitch</button>
             </div>
 
             <div class="panel">
                 <h2 style="color: var(--neon-green);">Kick</h2>
                 <label>Chatroom ID</label>
-                <input type="text" id="kickChatroomId" placeholder="e.g., 123456">
+                <input type="text" id="kickChatroomId">
                 <label>Bearer Token</label>
-                <input type="password" id="kickToken" placeholder="Bearer xxxxx">
+                <input type="password" id="kickToken">
                 <button id="connectKickBtn" onclick="connectKick()" style="border-color: var(--neon-green); color: var(--neon-green);">Connect to Kick</button>
             </div>
         </div>
@@ -174,29 +156,27 @@
                 <input type="text" id="kwTrigger" placeholder="!trigger">
                 <input type="text" id="kwResponse" placeholder="Response">
                 <button onclick="addKeyword()">Save Keyword</button>
-                <div id="keywordList" class="dynamic-list"></div>
+                <div id="keywordList"></div>
 
                 <input type="number" id="timerMinutes" placeholder="Minutes">
                 <input type="text" id="timerMessage" placeholder="Timer Message">
                 <button onclick="addTimer()">Save Timer</button>
-                <div id="timerList" class="dynamic-list"></div>
+                <div id="timerList"></div>
             </div>
         </div>
     </div>
 
-    <div class="log-box" id="sysLog">> SYSTEM INITIALIZED...<br></div>
+    <div class="log-box" id="sysLog">> SYSTEM READY. CHECKING TOKEN STATUS...<br></div>
 </div>
 
 <script>
     const KNOWN_BOTS = ['nightbot', 'streamelements', 'moobot', 'fossabot', 'wizebot', 'streamlabs', 'botrix', 'kickbot'];
-    let twitchWs, kickWs, keywords = {}, activeTimers = [], timerIntervals = [];
-    let isTwitchConnected = false, isKickConnected = false;
-    let ttsUnlocked = false, isSpeaking = false, ttsQueue = [];
+    let twitchWs, kickWs, keywords = {}, activeTimers = [];
+    let isTwitchConnected = false, ttsUnlocked = false, isSpeaking = false, ttsQueue = [];
 
-    /* --- AUTO-SAVE LOGIC --- */
-    const inputsToSave = ['twitchUser', 'twitchOAuth', 'kickChatroomId', 'kickToken'];
+    /* --- AUTO-SAVE --- */
     window.onload = () => {
-        inputsToSave.forEach(id => {
+        ['twitchUser', 'twitchOAuth', 'kickChatroomId', 'kickToken'].forEach(id => {
             if (localStorage.getItem(id)) document.getElementById(id).value = localStorage.getItem(id);
             document.getElementById(id).addEventListener('input', function() { localStorage.setItem(id, this.value); });
         });
@@ -208,7 +188,7 @@
         if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
     };
 
-    /* --- TTS LOGIC --- */
+    /* --- TTS ENGINE --- */
     function loadVoices() {
         const voices = speechSynthesis.getVoices();
         const select = document.getElementById('voice-select');
@@ -243,36 +223,54 @@
         speechSynthesis.speak(utterance);
     }
 
-    /* --- TWITCH --- */
+    /* --- TWITCH CONNECTION (UPDATED 2026) --- */
     function connectTwitch() {
         const user = document.getElementById('twitchUser').value.toLowerCase().trim();
         let rawToken = document.getElementById('twitchOAuth').value.trim();
-        let cleanToken = rawToken.replace(/^0auth:/i, '').replace(/^oauth:/i, '').trim();
+        let cleanToken = rawToken.replace(/^oauth:/i, '').trim();
         
-        if (cleanToken === '') { logMsg("TWITCH ALERT: Token is blank."); return; }
-
+        if (!cleanToken) { logMsg("TWITCH: Error - Token is missing."); return; }
         const oauth = 'oauth:' + cleanToken;
-        logMsg("Connecting to Twitch...");
+
+        logMsg("Twitch: Opening Secure WebSocket...");
         twitchWs = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
 
         twitchWs.onopen = () => {
+            logMsg("Twitch: WebSocket Open. Sending Handshake...");
+            // Handshake order is critical
             twitchWs.send(`PASS ${oauth}`);
             twitchWs.send(`NICK ${user}`);
-            twitchWs.send(`JOIN #${user}`);
         };
 
         twitchWs.onmessage = (event) => {
             const msg = event.data;
-            if (msg.includes('PING :tmi.twitch.tv')) twitchWs.send('PONG :tmi.twitch.tv');
 
-            if (msg.includes('366 ' + user)) {
-                isTwitchConnected = true;
-                logMsg(`SUCCESS: Joined Twitch #${user}`);
-                document.getElementById('connectTwitchBtn').style.background = 'var(--neon-blue)';
-                document.getElementById('connectTwitchBtn').style.color = '#000';
-                document.getElementById('connectTwitchBtn').innerText = 'Twitch Connected';
+            // Respond to PING immediately
+            if (msg.includes('PING :tmi.twitch.tv')) {
+                twitchWs.send('PONG :tmi.twitch.tv');
             }
 
+            // Successful Auth
+            if (msg.includes(':tmi.twitch.tv 001')) {
+                logMsg("Twitch: Authenticated! Joining channel...");
+                twitchWs.send(`JOIN #${user}`);
+            }
+
+            // Join Success
+            if (msg.includes('366 ' + user)) {
+                isTwitchConnected = true;
+                logMsg(`Twitch: Successfully joined #${user}`);
+                document.getElementById('connectTwitchBtn').style.background = 'var(--neon-blue)';
+                document.getElementById('connectTwitchBtn').innerText = 'Twitch Online';
+            }
+
+            // Auth Failure
+            if (msg.includes('NOTICE') && msg.includes('authentication failed')) {
+                logMsg("Twitch: LOGIN FAILED. Token may be expired or invalid.");
+                twitchWs.close();
+            }
+
+            // Handle Chat
             if (msg.includes('PRIVMSG')) {
                 const parts = msg.split('!');
                 const username = parts[0].substring(1);
@@ -281,108 +279,81 @@
                 if (!KNOWN_BOTS.includes(username.toLowerCase())) {
                     logMsg(`[Twitch] ${username}: ${chatText}`);
                     speak(`${username} says ${chatText}`);
-                    const lowText = chatText.toLowerCase();
-                    for (const trigger in keywords) {
-                        if (lowText.includes(trigger)) sendTwitchMessage(keywords[trigger]);
+                    // Trigger automations
+                    for (const kw in keywords) {
+                        if (chatText.toLowerCase().includes(kw)) sendTwitchMessage(keywords[kw]);
                     }
                 }
             }
+        };
+
+        twitchWs.onclose = () => {
+            isTwitchConnected = false;
+            logMsg("Twitch: Connection Closed.");
+            document.getElementById('connectTwitchBtn').style.background = 'transparent';
+            document.getElementById('connectTwitchBtn').innerText = 'Connect Twitch';
         };
     }
 
     function sendTwitchMessage(text) {
         if (!isTwitchConnected) return;
-        const channel = document.getElementById('twitchUser').value.toLowerCase();
-        twitchWs.send(`PRIVMSG #${channel} :${text}`);
+        const user = document.getElementById('twitchUser').value.toLowerCase();
+        twitchWs.send(`PRIVMSG #${user} :${text}`);
     }
 
     /* --- KICK --- */
     function connectKick() {
-        const chatroomId = document.getElementById('kickChatroomId').value;
-        if (!chatroomId) { logMsg("KICK ERROR: Chatroom ID required."); return; }
-        logMsg("Connecting to Kick...");
+        const roomId = document.getElementById('kickChatroomId').value;
+        logMsg("Kick: Connecting...");
         kickWs = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-        
         kickWs.onopen = () => {
-            kickWs.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${chatroomId}.v2` } }));
+            kickWs.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${roomId}.v2` } }));
         };
-
-        kickWs.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.event === "pusher:connection_established") {
-                isKickConnected = true;
-                logMsg("SUCCESS: Joined Kick.");
-                document.getElementById('connectKickBtn').style.background = 'var(--neon-green)';
-                document.getElementById('connectKickBtn').style.color = '#000';
-                document.getElementById('connectKickBtn').innerText = 'Kick Connected';
-            }
+        kickWs.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            if (data.event === "pusher:connection_established") logMsg("Kick: Connected.");
             if (data.event === "App\\Events\\ChatMessageEvent") {
-                const msgData = JSON.parse(data.data);
-                const user = msgData.sender.username;
-                const chatText = msgData.content;
-                if (!KNOWN_BOTS.includes(user.toLowerCase())) {
-                    logMsg(`[Kick] ${user}: ${chatText}`);
-                    speak(`${user} says ${chatText}`);
-                    const lowText = chatText.toLowerCase();
-                    for (const trigger in keywords) {
-                        if (lowText.includes(trigger)) sendKickMessage(keywords[trigger]);
-                    }
+                const m = JSON.parse(data.data);
+                if (!KNOWN_BOTS.includes(m.sender.username.toLowerCase())) {
+                    logMsg(`[Kick] ${m.sender.username}: ${m.content}`);
+                    speak(`${m.sender.username} says ${m.content}`);
                 }
             }
         };
     }
 
-    async function sendKickMessage(text) {
-        const token = document.getElementById('kickToken').value;
-        const roomId = document.getElementById('kickChatroomId').value;
-        if (!token) return;
-        try {
-            await fetch('/api/kick', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chatroomId: roomId, token: token, message: text })
-            });
-        } catch(e) {}
-    }
-
+    /* --- HELPERS --- */
     function logMsg(msg) {
-        const logBox = document.getElementById('sysLog');
-        logBox.innerHTML += `> ${msg}<br>`;
-        logBox.scrollTop = logBox.scrollHeight;
+        const lb = document.getElementById('sysLog');
+        lb.innerHTML += `> ${msg}<br>`;
+        lb.scrollTop = lb.scrollHeight;
     }
 
     function addKeyword() {
-        const trigger = document.getElementById('kwTrigger').value.toLowerCase();
-        const response = document.getElementById('kwResponse').value;
-        if (trigger && response) {
-            keywords[trigger] = response;
+        const t = document.getElementById('kwTrigger').value.toLowerCase();
+        const r = document.getElementById('kwResponse').value;
+        if (t && r) {
+            keywords[t] = r;
             localStorage.setItem('jailexKeywords', JSON.stringify(keywords));
             updateKeywordList();
         }
     }
 
     function updateKeywordList() {
-        const list = document.getElementById('keywordList');
-        list.innerHTML = Object.entries(keywords).map(([k,v]) => `
-            <div class="list-item"><span><b>${k}</b>: ${v}</span><button class="delete-btn" onclick="removeKW('${k}')">X</button></div>
+        document.getElementById('keywordList').innerHTML = Object.entries(keywords).map(([k,v]) => `
+            <div class="list-item"><span>${k}: ${v}</span><button onclick="removeKW('${k}')" class="delete-btn">X</button></div>
         `).join('');
     }
     function removeKW(k) { delete keywords[k]; localStorage.setItem('jailexKeywords', JSON.stringify(keywords)); updateKeywordList(); }
 
     function addTimer() {
-        const minutes = parseInt(document.getElementById('timerMinutes').value);
-        const message = document.getElementById('timerMessage').value;
-        if (minutes > 0 && message) {
-            const id = setInterval(() => { sendTwitchMessage(message); sendKickMessage(message); }, minutes * 60000);
-            activeTimers.push({ minutes, message, id });
-            updateTimerList();
+        const m = parseInt(document.getElementById('timerMinutes').value);
+        const msg = document.getElementById('timerMessage').value;
+        if (m > 0 && msg) {
+            setInterval(() => { sendTwitchMessage(msg); }, m * 60000);
+            activeTimers.push({ m, msg });
+            document.getElementById('timerList').innerHTML += `<div class="list-item">Every ${m}m: ${msg}</div>`;
         }
-    }
-
-    function updateTimerList() {
-        document.getElementById('timerList').innerHTML = activeTimers.map((t) => `
-            <div class="list-item"><span>Every ${t.minutes}m: ${t.message}</span></div>
-        `).join('');
     }
 </script>
 </body>
