@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jailex Studio Overlay v2.2</title>
+    <title>Jailex Studio Overlay v2.3</title>
     <style>
         :root { --neon: #ff6a00; --size: 22px; --op: 0.85; }
-        body { background: transparent !important; margin: 0; padding: 15px; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
+        body { background: transparent !important; margin: 0; padding: 15px; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: white; }
         #chat-container { display: flex; flex-direction: column; height: 100vh; gap: 12px; justify-content: flex-end; }
         
         .chat-message { 
@@ -17,19 +17,11 @@
             word-wrap: break-word;
         }
 
-        .user-line { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
-        .user-name { color: #00f3ff; font-weight: bold; font-size: 0.9em; }
-
-        /* CIRCLE ICONS - Built with CSS, not fonts */
-        .dot {
-            width: 14px; height: 14px;
-            border-radius: 50%;
-            display: inline-block;
-            border: 2px solid white;
-            flex-shrink: 0;
-        }
-        .t-dot { background-color: #9146FF; box-shadow: 0 0 8px #9146FF; }
-        .k-dot { background-color: #53fc18; box-shadow: 0 0 8px #53fc18; }
+        .user-name { font-weight: bold; font-size: 0.9em; margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* Platform Colors */
+        .twitch-user { color: #bf94ff; text-shadow: 0 0 10px rgba(145, 70, 255, 0.5); }
+        .kick-user { color: #53fc18; text-shadow: 0 0 10px rgba(83, 252, 24, 0.5); }
 
         @keyframes slideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
     </style>
@@ -48,14 +40,12 @@
             const container = document.getElementById('chat-container');
             const div = document.createElement('div');
             div.className = 'chat-message';
-            const dotClass = platform === 'twitch' ? 't-dot' : 'k-dot';
+            
+            const userClass = platform === 'twitch' ? 'twitch-user' : 'kick-user';
             
             div.innerHTML = `
-                <div class="user-line">
-                    <span class="dot ${dotClass}"></span>
-                    <span class="user-name">${user}</span>
-                </div>
-                <div class="message-text">${text}</div>
+                <span class="user-name ${userClass}">${user}</span>
+                <span class="message-text">${text}</span>
             `;
             
             container.appendChild(div);
@@ -68,35 +58,34 @@
             }, stayTime);
         }
 
-        // --- TWITCH FIX ---
+        // --- TWITCH ENGINE ---
         const twUser = params.get('twitch');
         if(twUser) {
             const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
             tws.onopen = () => {
-                tws.send('CAP REQ :twitch.tv/tags');
+                tws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
                 tws.send('PASS oauth:anonymous');
                 tws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
                 tws.send('JOIN #' + twUser.toLowerCase());
             };
             tws.onmessage = (e) => {
                 if(e.data.includes('PRIVMSG')) {
-                    // This finds the display name in the Twitch data tags
-                    const nameMatch = e.data.match(/display-name=([^;]+)/);
-                    const user = nameMatch ? nameMatch[1] : "User";
+                    // Optimized parsing to ensure name and message match
+                    const parts = e.data.split(';');
+                    let displayName = "User";
+                    parts.forEach(p => { if(p.startsWith('display-name=')) displayName = p.split('=')[1]; });
                     
-                    // This finds the actual message content
-                    const msgMatch = e.data.match(/PRIVMSG #[^ ]+ :(.+)/);
-                    if(msgMatch) {
-                        addMessage(user, msgMatch[1].trim(), 'twitch');
+                    const msgContent = e.data.substring(e.data.lastIndexOf(':') + 1);
+                    if(displayName && msgContent) {
+                        addMessage(displayName, msgContent.trim(), 'twitch');
                     }
                 }
-                // Keeps Twitch from disconnecting you
                 if(e.data.includes('PING')) tws.send('PONG :tmi.twitch.tv');
             };
             tws.onclose = () => setTimeout(() => location.reload(), 5000);
         }
 
-        // --- KICK FIX ---
+        // --- KICK ENGINE ---
         const kiId = params.get('kick');
         if(kiId) {
             const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
