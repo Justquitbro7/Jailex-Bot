@@ -223,7 +223,6 @@
         speechSynthesis.speak(msg);
     }
 
-    /* --- TWITCH --- */
     function connectTwitch() {
         const user = document.getElementById('twitchUser').value.toLowerCase().trim();
         let rawToken = document.getElementById('twitchOAuth').value.trim();
@@ -258,7 +257,6 @@
         };
     }
 
-    /* --- KICK --- */
     function connectKick() {
         const id = document.getElementById('kickChatroomId').value;
         kickWs = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
@@ -277,7 +275,6 @@
         };
     }
 
-    /* --- AUTOMATIONS --- */
     function handleKeywords(platform, msg) {
         const low = msg.toLowerCase();
         for (let k in keywords) {
@@ -344,8 +341,8 @@
             const user = document.getElementById('twitchUser').value.toLowerCase().trim();
             twitchWs.send(`PRIVMSG #${user} :${t}`); 
             logMsg(`[Twitch] Bot Sent: ${t}`);
-            // NEW: Make the bot speak its own message
-            speak("Broadcasting to Twitch: " + t);
+            // FIX: Uses your actual username now
+            speak("justquitbro7 says " + t);
         }
     }
     
@@ -361,8 +358,8 @@
             }); 
             if(res.ok) {
                 logMsg(`[Kick] Bot Sent: ${t}`);
-                // NEW: Make the bot speak its own message
-                speak("Broadcasting to Kick: " + t);
+                // FIX: Uses your actual username now
+                speak("justquitbro7 says " + t);
             }
         } catch(e) { logMsg(`[Kick] Send Error: Proxy issues.`); }
     }
