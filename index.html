@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailexbot - Bears Ultimate HUD</title>
+    <title>Jailexbot - Neon HUD + TTS</title>
     <style>
         :root {
-            --bears-navy: #0B162A;
-            --bears-orange: #C83803;
-            --bears-white: #FFFFFF;
-            --kick-green: #53fc18;
-            --twitch-purple: #6441a5;
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-green: #00ff00;
+            --dark-bg: #090a0f;
+            --panel-bg: rgba(10, 15, 30, 0.8);
         }
 
         body {
-            background: linear-gradient(135deg, #050a14 0%, var(--bears-navy) 100%);
+            background-color: var(--dark-bg);
             color: #fff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -25,21 +25,20 @@
 
         .hud-container {
             width: 100%;
-            max-width: 1100px;
-            background: rgba(11, 22, 42, 0.9);
-            border: 2px solid var(--bears-orange);
+            max-width: 1000px;
+            background: var(--panel-bg);
+            border: 2px solid var(--neon-blue);
             border-radius: 15px;
-            box-shadow: 0 0 25px rgba(200, 56, 3, 0.5);
+            box-shadow: 0 0 15px var(--neon-blue), inset 0 0 10px var(--neon-blue);
             padding: 25px;
         }
 
-        h1 {
-            color: var(--bears-orange);
+        h1, h2 {
+            color: var(--neon-pink);
             text-transform: uppercase;
-            text-shadow: 0 0 10px var(--bears-orange);
+            text-shadow: 0 0 10px var(--neon-pink);
             text-align: center;
             margin-top: 0;
-            letter-spacing: 2px;
         }
 
         .grid {
@@ -49,171 +48,167 @@
         }
 
         .panel {
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--neon-pink);
             border-radius: 10px;
             padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+            background: rgba(0, 0, 0, 0.5);
             margin-bottom: 20px;
         }
 
-        h2 { font-size: 1.2em; margin-bottom: 15px; border-bottom: 1px solid var(--bears-orange); padding-bottom: 5px; }
-
-        .status-bar { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; flex-wrap: wrap; }
-        .badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; display: flex; align-items: center; gap: 8px; background: #000; border: 1px solid #333; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
-        .dot.active { background: var(--bears-orange); box-shadow: 0 0 8px var(--bears-orange); animation: pulse 2s infinite; }
-        
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--neon-blue);
+            font-size: 0.9em;
+        }
 
         input, select {
-            width: 100%;
+            width: calc(100% - 20px);
             background: #000;
-            border: 1px solid var(--bears-orange);
+            border: 1px solid var(--neon-blue);
             color: #fff;
             padding: 8px;
             margin-bottom: 15px;
             border-radius: 5px;
+            box-shadow: 0 0 5px var(--neon-blue);
         }
-
-        .hint { font-size: 10px; color: #888; display: block; margin-top: -10px; margin-bottom: 10px; }
 
         button {
             background: transparent;
-            color: var(--bears-orange);
-            border: 2px solid var(--bears-orange);
-            padding: 10px;
+            color: var(--neon-blue);
+            border: 2px solid var(--neon-blue);
+            padding: 10px 20px;
             cursor: pointer;
             font-weight: bold;
             text-transform: uppercase;
             border-radius: 5px;
+            box-shadow: 0 0 10px var(--neon-blue);
+            transition: all 0.3s ease;
             width: 100%;
-            transition: 0.3s;
             margin-bottom: 10px;
         }
 
-        button:hover { background: var(--bears-orange); color: white; }
-
-        .unlock-btn { background: var(--bears-orange); color: white; margin-bottom: 20px; font-size: 1.1em; border-color: white; }
-        .unlock-btn.active { background: white; color: var(--bears-navy); }
-
-        .log-box {
-            height: 250px;
-            overflow-y: auto;
-            background: #000;
-            border: 1px solid #333;
-            padding: 10px;
-            font-family: monospace;
-            font-size: 13px;
-            border-radius: 5px;
-            margin-top: 10px;
-            color: #0f0;
+        button:hover {
+            background: var(--neon-blue);
+            color: #000;
         }
 
-        .log-entry { margin-bottom: 5px; padding: 4px; border-left: 3px solid #333; color: white; }
-        .log-entry.twitch { border-color: var(--twitch-purple); }
-        .log-entry.kick { border-color: var(--kick-green); }
-        .log-entry.system { border-color: var(--bears-orange); color: var(--bears-orange); }
-        .username { color: var(--bears-orange); font-weight: bold; }
+        .enable-tts-btn {
+            background: var(--neon-green);
+            color: #000;
+            border-color: var(--neon-green);
+            box-shadow: 0 0 15px var(--neon-green);
+            margin-bottom: 20px;
+        }
 
-        .dynamic-list { margin-top: 10px; max-height: 120px; overflow-y: auto; }
-        .list-item { font-size: 12px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 5px; margin-bottom: 5px; border-radius: 4px; }
-        .delete-btn { width: auto; padding: 2px 8px; border-color: #ff4444; color: #ff4444; font-size: 10px; margin: 0; }
+        .log-box {
+            height: 150px;
+            overflow-y: auto;
+            background: #000;
+            border: 1px solid #444;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #0f0;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .dynamic-list { margin-bottom: 15px; }
+        .list-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 0.85em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-btn { width: auto; padding: 2px 8px; font-size: 10px; border-color: #ff0055; color: #ff0055; }
     </style>
 </head>
 <body>
 
 <div class="hud-container">
-    <h1>🐻 Jailex Ultimate HUD</h1>
-
-    <div class="status-bar">
-        <div class="badge"><div id="twitch-dot" class="dot"></div> Twitch: <span id="twitch-status">Offline</span></div>
-        <div class="badge"><div id="kick-dot" class="dot"></div> Kick: <span id="kick-status">Offline</span></div>
-        <div class="badge"><div id="tts-dot" class="dot"></div> TTS: <span id="tts-status">Locked</span></div>
-    </div>
-
-    <button id="unlock-btn" class="unlock-btn" onclick="unlockTTS()">📢 Enable Team Audio (TTS)</button>
+    <h1>Jailexbot Control Panel</h1>
+    
+    <button id="unlock-tts" class="enable-tts-btn" onclick="unlockTTS()">📢 Enable Audio (Required for TTS)</button>
 
     <div class="grid">
         <div class="left-col">
             <div class="panel">
-                <h2>Twitch Config</h2>
+                <h2>Twitch</h2>
                 <label>Username</label>
-                <input type="text" id="twitchUser" placeholder="justquitbro7">
+                <input type="text" id="twitchUser" value="justquitbro7">
                 <label>OAuth Token</label>
-                <span class="hint">From twitchapps.com/tmi</span>
-                <input type="password" id="twitchOAuth" placeholder="Paste token here">
-                <button id="connectTwitchBtn" onclick="connectTwitch()">Connect Twitch</button>
+                <input type="password" id="twitchOAuth" placeholder="Paste oauth: token here">
+                <button id="connectTwitchBtn" onclick="connectTwitch()">Connect to Twitch</button>
             </div>
 
             <div class="panel">
-                <h2 style="color: var(--kick-green);">Kick Config</h2>
+                <h2 style="color: var(--neon-green);">Kick</h2>
                 <label>Chatroom ID</label>
-                <input type="text" id="kickChatroomId" placeholder="e.g. 123456">
+                <input type="text" id="kickChatroomId" placeholder="e.g., 123456">
                 <label>Bearer Token</label>
-                <span class="hint">For sending bot responses</span>
-                <input type="password" id="kickToken" placeholder="Bearer xxx">
-                <button id="connectKickBtn" onclick="connectKick()" style="border-color:var(--kick-green); color:var(--kick-green);">Connect Kick</button>
-            </div>
-
-            <div class="panel">
-                <h2>TTS Audio</h2>
-                <label>Voice Selection</label>
-                <select id="voice-select"></select>
-                <div style="display:flex; gap:10px;">
-                    <div style="flex:1;"><label>Rate</label><input type="range" id="rate" min="0.5" max="2" step="0.1" value="1"></div>
-                    <div style="flex:1;"><label>Pitch</label><input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1"></div>
-                </div>
+                <input type="password" id="kickToken" placeholder="Bearer xxxxx">
+                <button id="connectKickBtn" onclick="connectKick()" style="border-color: var(--neon-green); color: var(--neon-green);">Connect to Kick</button>
             </div>
         </div>
 
         <div class="right-col">
             <div class="panel">
-                <h2>Automations</h2>
-                <label>Keyword Trigger</label>
-                <input type="text" id="kwTrigger" placeholder="!discord">
-                <input type="text" id="kwResponse" placeholder="Join here: discord.gg/...">
-                <button onclick="addKeyword()">Save Keyword</button>
-                <div id="keywordList" class="dynamic-list"></div>
+                <h2>TTS Settings</h2>
+                <label>Voice</label>
+                <select id="voice-select"></select>
+                <label>Rate/Pitch</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1">
+                    <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1">
+                </div>
             </div>
 
             <div class="panel">
-                <h2>Timed Messages</h2>
-                <input type="number" id="timerMinutes" placeholder="Minutes (e.g. 10)">
-                <input type="text" id="timerMessage" placeholder="Check out my Kick/Twitch!">
-                <button onclick="addTimer()">Start Timer</button>
+                <h2>Automations</h2>
+                <input type="text" id="kwTrigger" placeholder="!trigger">
+                <input type="text" id="kwResponse" placeholder="Response">
+                <button onclick="addKeyword()">Save Keyword</button>
+                <div id="keywordList" class="dynamic-list"></div>
+
+                <input type="number" id="timerMinutes" placeholder="Minutes">
+                <input type="text" id="timerMessage" placeholder="Timer Message">
+                <button onclick="addTimer()">Save Timer</button>
                 <div id="timerList" class="dynamic-list"></div>
-            </div>
-            
-            <div class="log-box" id="sysLog">
-                > SYSTEM INITIALIZED. WAITING FOR CONNECTIONS...
             </div>
         </div>
     </div>
+
+    <div class="log-box" id="sysLog">> SYSTEM INITIALIZED...<br></div>
 </div>
 
 <script>
     const KNOWN_BOTS = ['nightbot', 'streamelements', 'moobot', 'fossabot', 'wizebot', 'streamlabs', 'botrix', 'kickbot'];
-    let twitchWs, kickWs, ttsUnlocked = false, isSpeaking = false, ttsQueue = [];
-    let keywords = {}, activeTimers = [], timerIntervals = [];
+    let twitchWs, kickWs, keywords = {}, activeTimers = [], timerIntervals = [];
     let isTwitchConnected = false, isKickConnected = false;
+    let ttsUnlocked = false, isSpeaking = false, ttsQueue = [];
 
+    /* --- AUTO-SAVE LOGIC --- */
+    const inputsToSave = ['twitchUser', 'twitchOAuth', 'kickChatroomId', 'kickToken'];
     window.onload = () => {
-        const toSave = ['twitchUser', 'twitchOAuth', 'kickChatroomId', 'kickToken'];
-        toSave.forEach(id => {
-            if(localStorage.getItem(id)) document.getElementById(id).value = localStorage.getItem(id);
-            document.getElementById(id).addEventListener('input', (e) => localStorage.setItem(id, e.target.value));
+        inputsToSave.forEach(id => {
+            if (localStorage.getItem(id)) document.getElementById(id).value = localStorage.getItem(id);
+            document.getElementById(id).addEventListener('input', function() { localStorage.setItem(id, this.value); });
         });
-
-        if(localStorage.getItem('jailexKeywords')) {
+        if (localStorage.getItem('jailexKeywords')) {
             keywords = JSON.parse(localStorage.getItem('jailexKeywords'));
             updateKeywordList();
         }
-        
         loadVoices();
         if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
     };
 
-    /* --- TTS ENGINE --- */
+    /* --- TTS LOGIC --- */
     function loadVoices() {
         const voices = speechSynthesis.getVoices();
         const select = document.getElementById('voice-select');
@@ -225,10 +220,9 @@
         speechSynthesis.cancel();
         const s = new SpeechSynthesisUtterance("Audio active");
         speechSynthesis.speak(s);
-        document.getElementById('unlock-btn').innerText = "🐻 Audio Ready";
-        document.getElementById('unlock-btn').classList.add('active');
-        document.getElementById('tts-dot').classList.add('active');
-        document.getElementById('tts-status').innerText = "Active";
+        document.getElementById('unlock-tts').innerText = "✅ Audio Ready";
+        document.getElementById('unlock-tts').style.background = "#444";
+        document.getElementById('unlock-tts').style.color = "#fff";
     }
 
     function speak(text) {
@@ -240,40 +234,25 @@
     function processQueue() {
         if (isSpeaking || ttsQueue.length === 0) return;
         isSpeaking = true;
-        const msg = new SpeechSynthesisUtterance(ttsQueue.shift());
+        const utterance = new SpeechSynthesisUtterance(ttsQueue.shift());
         const voices = speechSynthesis.getVoices();
-        msg.voice = voices.find(v => v.name === document.getElementById('voice-select').value);
-        msg.rate = document.getElementById('rate').value;
-        msg.pitch = document.getElementById('pitch').value;
-        msg.onend = () => { isSpeaking = false; processQueue(); };
-        speechSynthesis.speak(msg);
+        utterance.voice = voices.find(v => v.name === document.getElementById('voice-select').value);
+        utterance.rate = document.getElementById('rate').value;
+        utterance.pitch = document.getElementById('pitch').value;
+        utterance.onend = () => { isSpeaking = false; processQueue(); };
+        speechSynthesis.speak(utterance);
     }
 
-    /* --- LOGGING --- */
-    function logMsg(platform, user, msg) {
-        const log = document.getElementById('sysLog');
-        const entry = document.createElement('div');
-        entry.className = `log-entry ${platform}`;
-        entry.innerHTML = `> [${platform.toUpperCase()}] <span class="username">${user}</span>: ${msg}`;
-        log.prepend(entry);
-        if(log.children.length > 50) log.lastChild.remove();
-    }
-
-    /* --- TWITCH CONNECTION (FIXED) --- */
+    /* --- TWITCH --- */
     function connectTwitch() {
         const user = document.getElementById('twitchUser').value.toLowerCase().trim();
         let rawToken = document.getElementById('twitchOAuth').value.trim();
-        
-        // Scrubbing logic from the working version
         let cleanToken = rawToken.replace(/^0auth:/i, '').replace(/^oauth:/i, '').trim();
-        if (cleanToken === '') {
-            logMsg('system', 'TWITCH', "Error: Token is blank.");
-            return;
-        }
+        
+        if (cleanToken === '') { logMsg("TWITCH ALERT: Token is blank."); return; }
 
         const oauth = 'oauth:' + cleanToken;
-        logMsg('system', 'TWITCH', "Connecting...");
-
+        logMsg("Connecting to Twitch...");
         twitchWs = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
 
         twitchWs.onopen = () => {
@@ -282,121 +261,103 @@
             twitchWs.send(`JOIN #${user}`);
         };
 
-        twitchWs.onmessage = (e) => {
-            const msg = e.data;
-            if(msg.includes('PING :tmi.twitch.tv')) twitchWs.send('PONG :tmi.twitch.tv');
+        twitchWs.onmessage = (event) => {
+            const msg = event.data;
+            if (msg.includes('PING :tmi.twitch.tv')) twitchWs.send('PONG :tmi.twitch.tv');
 
-            if(msg.includes('366 ' + user)) {
+            if (msg.includes('366 ' + user)) {
                 isTwitchConnected = true;
-                document.getElementById('twitch-dot').classList.add('active');
-                document.getElementById('twitch-status').innerText = "Connected";
-                document.getElementById('connectTwitchBtn').innerText = "Twitch Linked";
-                logMsg('system', 'TWITCH', `Success! Joined #${user}`);
+                logMsg(`SUCCESS: Joined Twitch #${user}`);
+                document.getElementById('connectTwitchBtn').style.background = 'var(--neon-blue)';
+                document.getElementById('connectTwitchBtn').style.color = '#000';
+                document.getElementById('connectTwitchBtn').innerText = 'Twitch Connected';
             }
 
-            if (msg.includes('NOTICE')) {
-                let noticeMsg = msg.split(':')[2] || "Login Failed";
-                logMsg('system', 'TWITCH REJECTED', noticeMsg.trim());
-                twitchWs.close();
-            }
-
-            if(msg.includes('PRIVMSG')) {
+            if (msg.includes('PRIVMSG')) {
                 const parts = msg.split('!');
                 const username = parts[0].substring(1);
                 const chatText = msg.split('PRIVMSG')[1].split(':')[1].trim();
                 
-                if(!KNOWN_BOTS.includes(username.toLowerCase())) {
-                    logMsg('twitch', username, chatText);
+                if (!KNOWN_BOTS.includes(username.toLowerCase())) {
+                    logMsg(`[Twitch] ${username}: ${chatText}`);
                     speak(`${username} says ${chatText}`);
-                    handleAutomations('twitch', chatText);
+                    const lowText = chatText.toLowerCase();
+                    for (const trigger in keywords) {
+                        if (lowText.includes(trigger)) sendTwitchMessage(keywords[trigger]);
+                    }
                 }
             }
         };
-
-        twitchWs.onclose = () => {
-            isTwitchConnected = false;
-            document.getElementById('twitch-dot').classList.remove('active');
-            document.getElementById('twitch-status').innerText = "Offline";
-            document.getElementById('connectTwitchBtn').innerText = "Connect Twitch";
-        };
     }
 
-    /* --- KICK CONNECTION --- */
+    function sendTwitchMessage(text) {
+        if (!isTwitchConnected) return;
+        const channel = document.getElementById('twitchUser').value.toLowerCase();
+        twitchWs.send(`PRIVMSG #${channel} :${text}`);
+    }
+
+    /* --- KICK --- */
     function connectKick() {
-        const roomId = document.getElementById('kickChatroomId').value.trim();
-        if(!roomId) { logMsg('system', 'KICK', 'Error: Room ID required.'); return; }
-        
-        logMsg('system', 'KICK', 'Connecting...');
+        const chatroomId = document.getElementById('kickChatroomId').value;
+        if (!chatroomId) { logMsg("KICK ERROR: Chatroom ID required."); return; }
+        logMsg("Connecting to Kick...");
         kickWs = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
         
         kickWs.onopen = () => {
-            kickWs.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${roomId}.v2` } }));
+            kickWs.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${chatroomId}.v2` } }));
         };
 
-        kickWs.onmessage = (e) => {
-            const data = JSON.parse(e.data);
-            if(data.event === "pusher:connection_established") {
+        kickWs.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.event === "pusher:connection_established") {
                 isKickConnected = true;
-                document.getElementById('kick-dot').classList.add('active');
-                document.getElementById('kick-status').innerText = "Connected";
-                logMsg('system', 'KICK', 'Success! Connected.');
+                logMsg("SUCCESS: Joined Kick.");
+                document.getElementById('connectKickBtn').style.background = 'var(--neon-green)';
+                document.getElementById('connectKickBtn').style.color = '#000';
+                document.getElementById('connectKickBtn').innerText = 'Kick Connected';
             }
-            if(data.event === "App\\Events\\ChatMessageEvent") {
+            if (data.event === "App\\Events\\ChatMessageEvent") {
                 const msgData = JSON.parse(data.data);
                 const user = msgData.sender.username;
-                const message = msgData.content;
-
-                if(!KNOWN_BOTS.includes(user.toLowerCase())) {
-                    logMsg('kick', user, message);
-                    speak(`${user} says ${message}`);
-                    handleAutomations('kick', message);
+                const chatText = msgData.content;
+                if (!KNOWN_BOTS.includes(user.toLowerCase())) {
+                    logMsg(`[Kick] ${user}: ${chatText}`);
+                    speak(`${user} says ${chatText}`);
+                    const lowText = chatText.toLowerCase();
+                    for (const trigger in keywords) {
+                        if (lowText.includes(trigger)) sendKickMessage(keywords[trigger]);
+                    }
                 }
             }
         };
     }
 
-    /* --- AUTOMATIONS --- */
-    function handleAutomations(platform, msg) {
-        const text = msg.toLowerCase();
-        for (let kw in keywords) {
-            if(text.includes(kw)) {
-                if(platform === 'twitch') sendTwitch(keywords[kw]);
-                if(platform === 'kick') sendKick(keywords[kw]);
-            }
-        }
-    }
-
-    function sendTwitch(txt) {
-        if(isTwitchConnected) {
-            const channel = document.getElementById('twitchUser').value.toLowerCase();
-            twitchWs.send(`PRIVMSG #${channel} :${txt}`);
-            logMsg('system', 'TWITCH BOT', `Sent: ${txt}`);
-        }
-    }
-
-    async function sendKick(txt) {
+    async function sendKickMessage(text) {
         const token = document.getElementById('kickToken').value;
         const roomId = document.getElementById('kickChatroomId').value;
-        if(!token) return;
+        if (!token) return;
         try {
             await fetch('/api/kick', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chatroomId: roomId, token: token, message: txt })
+                body: JSON.stringify({ chatroomId: roomId, token: token, message: text })
             });
-            logMsg('system', 'KICK BOT', `Sent: ${txt}`);
-        } catch(e) { console.error("Kick post failed"); }
+        } catch(e) {}
+    }
+
+    function logMsg(msg) {
+        const logBox = document.getElementById('sysLog');
+        logBox.innerHTML += `> ${msg}<br>`;
+        logBox.scrollTop = logBox.scrollHeight;
     }
 
     function addKeyword() {
-        const k = document.getElementById('kwTrigger').value.toLowerCase().trim();
-        const r = document.getElementById('kwResponse').value.trim();
-        if(k && r) {
-            keywords[k] = r;
+        const trigger = document.getElementById('kwTrigger').value.toLowerCase();
+        const response = document.getElementById('kwResponse').value;
+        if (trigger && response) {
+            keywords[trigger] = response;
             localStorage.setItem('jailexKeywords', JSON.stringify(keywords));
             updateKeywordList();
-            document.getElementById('kwTrigger').value = '';
-            document.getElementById('kwResponse').value = '';
         }
     }
 
@@ -406,24 +367,21 @@
             <div class="list-item"><span><b>${k}</b>: ${v}</span><button class="delete-btn" onclick="removeKW('${k}')">X</button></div>
         `).join('');
     }
-
     function removeKW(k) { delete keywords[k]; localStorage.setItem('jailexKeywords', JSON.stringify(keywords)); updateKeywordList(); }
 
     function addTimer() {
-        const mins = document.getElementById('timerMinutes').value;
-        const msg = document.getElementById('timerMessage').value;
-        if(mins > 0 && msg) {
-            const id = setInterval(() => { sendTwitch(msg); sendKick(msg); }, mins * 60000);
-            activeTimers.push({ mins, msg, id });
+        const minutes = parseInt(document.getElementById('timerMinutes').value);
+        const message = document.getElementById('timerMessage').value;
+        if (minutes > 0 && message) {
+            const id = setInterval(() => { sendTwitchMessage(message); sendKickMessage(message); }, minutes * 60000);
+            activeTimers.push({ minutes, message, id });
             updateTimerList();
-            document.getElementById('timerMinutes').value = '';
-            document.getElementById('timerMessage').value = '';
         }
     }
 
     function updateTimerList() {
-        document.getElementById('timerList').innerHTML = activeTimers.map((t, i) => `
-            <div class="list-item"><span>Every ${t.mins}m: ${t.msg}</span></div>
+        document.getElementById('timerList').innerHTML = activeTimers.map((t) => `
+            <div class="list-item"><span>Every ${t.minutes}m: ${t.message}</span></div>
         `).join('');
     }
 </script>
