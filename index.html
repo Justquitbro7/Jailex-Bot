@@ -3,31 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Studio v1.6</title>
+    <title>Jailex Studio v1.7</title>
     <style>
-        :root { --navy: #0B162A; --orange: #FF6A00; --blue: #00F3FF; --card-bg: rgba(255, 255, 255, 0.05); }
+        :root { --navy: #0B162A; --orange: #FF6A00; --blue: #00F3FF; }
         body { background-color: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        
-        /* Sidebar Navigation */
         .sidebar { width: 220px; background: rgba(0,0,0,0.5); border-right: 1px solid var(--orange); display: flex; flex-direction: column; padding: 20px 0; }
         .sidebar-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; }
-        .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; color: #ccc; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; color: #ccc; font-weight: bold; }
         .nav-item:hover { background: rgba(255, 106, 0, 0.1); color: var(--orange); }
         .nav-item.active { background: rgba(255, 106, 0, 0.2); color: var(--orange); border-left: 4px solid var(--orange); }
-
-        /* Main Content Area */
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
-        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .tab-content { display: none; }
         .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* UI Elements */
-        .card { background: var(--card-bg); border: 1px solid var(--blue); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        .btn { background: var(--orange); color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
-        .btn:hover { box-shadow: 0 0 15px var(--orange); transform: translateY(-2px); }
-        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #333; background: #111; color: white; margin-bottom: 10px; }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid var(--blue); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #333; background: #111; color: white; margin-bottom: 10px; box-sizing: border-box; }
         #log { height: 150px; overflow-y: auto; background: #000; padding: 10px; font-family: monospace; font-size: 0.85em; color: #00ff00; border-radius: 8px; border: 1px solid #333; }
-        
         .item-row { display: flex; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px; align-items: center; }
         .del-btn { background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
     </style>
@@ -35,190 +26,106 @@
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-header">
-            <h2 style="color: var(--orange); margin: 0; font-size: 1.2em;">JAILEX STUDIO</h2>
-            <span style="font-size: 0.7em; color: var(--blue);">v1.6 PRO</span>
-        </div>
+        <div class="sidebar-header"><h2 style="color: var(--orange); margin:0;">JAILEX</h2><span style="font-size:0.7em;">STUDIO v1.7</span></div>
         <div class="nav-item active" onclick="showTab('setup')">👤 Setup</div>
         <div class="nav-item" onclick="showTab('overlay')">📡 Overlay</div>
-        <div class="nav-item" onclick="showTab('bot')">🤖 Bot Control</div>
-        <div class="nav-item" onclick="showTab('automation')">⏰ Automations</div>
+        <div class="nav-item" onclick="showTab('bot')">🤖 Bot Engine</div>
+        <div class="nav-item" onclick="showTab('timers')">⏰ Timers</div>
+        <div class="nav-item" onclick="showTab('keywords')">⚡ Keywords</div>
     </div>
 
     <div class="main-content">
-        
         <div id="setup" class="tab-content active">
-            <h2 style="color: var(--orange);">Channel Configuration</h2>
-            <div class="card">
-                <label>Twitch Username</label>
-                <input type="text" id="twitchUser" value="justquitbro7" placeholder="e.g. yourname">
-                <label>Kick Chatroom ID</label>
-                <input type="text" id="kickId" value="92474944" placeholder="e.g. 12345678">
-                <button class="btn" onclick="saveConfig()">Save & Apply Settings</button>
-            </div>
-            <p style="color: #888; font-size: 0.8em;">*Credentials are stored locally in this browser.</p>
+            <h2>Channel Setup</h2>
+            <div class="card"><label>Twitch Name</label><input type="text" id="tw" value="justquitbro7"><label>Kick ID</label><input type="text" id="ki" value="92474944"><button class="btn" onclick="saveConfig()">Save Settings</button></div>
         </div>
 
         <div id="overlay" class="tab-content">
-            <h2 style="color: var(--orange);">Visual Overlay Builder</h2>
+            <h2>Overlay Builder</h2>
             <div class="card">
-                <label>Text Size: <span id="sizeVal">22</span>px</label>
-                <input type="range" id="fontSize" min="16" max="48" value="22" style="width:100%" oninput="saveConfig()">
-                
-                <label style="margin-top:15px; display:block;">Transparency: <span id="alphaVal">85</span>%</label>
-                <input type="range" id="bgAlpha" min="0" max="100" value="85" style="width:100%" oninput="saveConfig()">
-
-                <label style="margin-top:15px; display:block;">Message Stay Time: <span id="stayVal">20</span>s</label>
-                <input type="range" id="stayTime" min="5" max="60" value="20" style="width:100%" oninput="saveConfig()">
-
-                <div id="finalLink" style="background:#000; padding:15px; border-radius:8px; color: var(--blue); font-family: monospace; font-size: 0.8em; margin: 20px 0; border-left: 4px solid var(--orange);">Generating...</div>
-                <button class="btn" onclick="copyLink()">Copy URL for Lightstream</button>
+                <label>Size: <span id="sV">22</span>px</label><input type="range" id="fS" min="16" max="48" value="22" oninput="saveConfig()">
+                <label>Stay: <span id="tV">20</span>s</label><input type="range" id="sT" min="5" max="60" value="20" oninput="saveConfig()">
+                <div id="fL" style="background:#000; padding:10px; color:var(--blue); font-size:0.7em; margin:15px 0;">URL...</div>
+                <button class="btn" onclick="copyLink()">Copy URL</button>
             </div>
         </div>
 
         <div id="bot" class="tab-content">
-            <h2 style="color: var(--orange);">Bot Engine</h2>
+            <h2>Bot Control</h2>
             <div class="card">
-                <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-                    <div id="t-status">Twitch: ⚪ Disconnected</div>
-                    <div id="k-status">Kick: ⚪ Disconnected</div>
-                </div>
-                <label>TTS Volume</label>
-                <input type="range" id="vol" min="0" max="1" step="0.1" value="0.8">
-                <button class="btn" id="startBtn" onclick="startBot()" style="height: 60px; font-size: 1.1em;">Activate Bot & Voice</button>
-            </div>
-            <div id="log">Awaiting activation...</div>
-        </div>
-
-        <div id="automation" class="tab-content">
-            <h2 style="color: var(--orange);">Keywords & Timers</h2>
-            <div class="card">
-                <h3>⏰ Auto-Timers</h3>
-                <div id="timersList"></div>
-                <button class="btn" onclick="addTimerRow()" style="background: #28a745;">+ Add New Timer</button>
-            </div>
-            <div class="card">
-                <h3>⚡ Keywords</h3>
-                <div id="keywordsList"></div>
-                <button class="btn" onclick="addKeywordRow()" style="background: #28a745;">+ Add New Keyword</button>
+                <button class="btn" id="sB" onclick="startBot()" style="height:60px;">Activate Engine</button>
+                <div id="log" style="margin-top:15px;">Ready...</div>
             </div>
         </div>
 
+        <div id="timers" class="tab-content">
+            <h2>Auto-Timers</h2>
+            <div class="card"><div id="tL"></div><button class="btn" onclick="addTimerRow()" style="background:#28a745">+ Add Timer</button></div>
+        </div>
+
+        <div id="keywords" class="tab-content">
+            <h2>Keywords</h2>
+            <div class="card"><div id="kL"></div><button class="btn" onclick="addKeywordRow()" style="background:#28a745">+ Add Keyword</button></div>
+        </div>
     </div>
 
     <script>
-        // Tab Navigation Logic
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
+        function showTab(id) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
             event.currentTarget.classList.add('active');
         }
 
-        // Global State & Functions (Keeping your working logic)
         function saveConfig() {
-            const t = document.getElementById('twitchUser').value;
-            const k = document.getElementById('kickId').value;
-            const size = document.getElementById('fontSize').value;
-            const alpha = (document.getElementById('bgAlpha').value / 100).toFixed(2);
-            const stay = document.getElementById('stayTime').value;
-
-            document.getElementById('sizeVal').innerText = size;
-            document.getElementById('alphaVal').innerText = Math.round(alpha * 100);
-            document.getElementById('stayVal').innerText = stay;
-
-            const url = `${window.location.origin}/overlay.html?twitch=${t}&kick=${k}&size=${size}&opacity=${alpha}&stay=${stay}&color=%23ff6a00`;
-            document.getElementById('finalLink').innerText = url;
+            const t = document.getElementById('tw').value, k = document.getElementById('ki').value, s = document.getElementById('fS').value, st = document.getElementById('sT').value;
+            document.getElementById('sV').innerText = s; document.getElementById('tV').innerText = st;
+            document.getElementById('fL').innerText = `${window.location.origin}/overlay.html?twitch=${t}&kick=${k}&size=${s}&stay=${st}&opacity=0.85`;
         }
 
         function startBot() {
-            const tUser = document.getElementById('twitchUser').value;
-            const kId = document.getElementById('kickId').value;
-            
-            // Twitch Connection
+            const t = document.getElementById('tw').value, k = document.getElementById('ki').value;
+            addLog("Connecting...");
             const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-            tws.onopen = () => {
-                tws.send('PASS oauth:xyz'); tws.send('NICK justinfan' + Math.floor(Math.random()*999)); tws.send('JOIN #' + tUser.toLowerCase());
-                document.getElementById('t-status').innerHTML = "Twitch: 🟢 Connected";
-                addLog("Twitch Online.");
-            };
-            tws.onmessage = (e) => {
-                if(e.data.includes('PRIVMSG')) {
-                    const match = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/);
-                    if(match) handleMessage(match[1], match[2], 'Twitch');
-                }
-            };
-
-            // Kick Connection
+            tws.onopen = () => { tws.send('PASS oauth:xyz'); tws.send('NICK justinfan123'); tws.send('JOIN #'+t.toLowerCase()); addLog("Twitch Connected."); };
+            tws.onmessage = (e) => { if(e.data.includes('PRIVMSG')) { const m = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/); if(m) handle(m[1], m[2]); } };
+            
             const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-            kws.onopen = () => {
-                kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kId}.v2` } }));
-                document.getElementById('k-status').innerHTML = "Kick: 🟢 Connected";
-                addLog("Kick Online.");
-                setInterval(() => kws.send(JSON.stringify({event: "pusher:ping", data: {}})), 20000);
-            };
-            kws.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                if (data.event === "App\\Events\\ChatMessageEvent") {
-                    const m = JSON.parse(data.data);
-                    handleMessage(m.sender.username, m.content, 'Kick');
-                }
-            };
+            kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${k}.v2` } })); addLog("Kick Connected."); };
+            kws.onmessage = (e) => { const d = JSON.parse(e.data); if(d.event.includes("ChatMessageEvent")) { const m = JSON.parse(d.data); handle(m.sender.username, m.content); } };
 
-            // Start Timers
-            document.querySelectorAll('#timersList .item-row').forEach(row => {
-                const msg = row.querySelector('.t-msg').value;
-                const min = row.querySelector('.t-time').value;
-                if(msg) setInterval(() => { addLog(`Timer: ${msg}`); speak(msg); }, min * 60000);
+            document.querySelectorAll('#tL .item-row').forEach(r => {
+                const msg = r.querySelector('.t-m').value, min = r.querySelector('.t-t').value;
+                if(msg) setInterval(() => { addLog("Timer: " + msg); speak(msg); }, min * 60000);
             });
-
-            document.getElementById('startBtn').disabled = true;
-            document.getElementById('startBtn').innerText = "ENGINE ACTIVE";
+            document.getElementById('sB').disabled = true;
         }
 
-        function handleMessage(user, msg, platform) {
-            addLog(`${platform} | ${user}: ${msg}`);
-            speak(`${user} says ${msg}`);
-            document.querySelectorAll('#keywordsList .item-row').forEach(row => {
-                const trigger = row.querySelector('.k-trigger').value.toLowerCase();
-                if(msg.toLowerCase().includes(trigger)) speak(row.querySelector('.k-resp').value);
+        function handle(u, m) {
+            addLog(`${u}: ${m}`); speak(`${u} says ${m}`);
+            document.querySelectorAll('#kL .item-row').forEach(r => {
+                const trig = r.querySelector('.k-t').value.toLowerCase();
+                if(m.toLowerCase().includes(trig)) speak(r.querySelector('.k-r').value);
             });
         }
 
-        function speak(text) {
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.volume = document.getElementById('vol').value;
-            window.speechSynthesis.speak(utter);
-        }
-
-        function addLog(msg) {
-            const log = document.getElementById('log');
-            log.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
-            log.scrollTop = log.scrollHeight;
-        }
-
-        function copyLink() {
-            navigator.clipboard.writeText(document.getElementById('finalLink').innerText);
-            alert("Copied!");
-        }
-
+        function speak(t) { window.speechSynthesis.speak(new SpeechSynthesisUtterance(t)); }
+        function addLog(m) { const l = document.getElementById('log'); l.innerHTML += `<div>${m}</div>`; l.scrollTop = l.scrollHeight; }
+        function copyLink() { navigator.clipboard.writeText(document.getElementById('fL').innerText); alert("Copied!"); }
+        
         function addTimerRow(m="", t=10) {
-            const div = document.createElement('div'); div.className = 'item-row';
-            div.innerHTML = `<input type="text" value="${m}" class="t-msg" placeholder="Msg"><input type="number" value="${t}" class="t-time" style="width:60px">m <button class="del-btn" onclick="this.parentElement.remove()">X</button>`;
-            document.getElementById('timersList').appendChild(div);
+            const d = document.createElement('div'); d.className = 'item-row';
+            d.innerHTML = `<input type="text" value="${m}" class="t-m" placeholder="Msg"><input type="number" value="${t}" class="t-t" style="width:50px">m <button class="del-btn" onclick="this.parentElement.remove()">X</button>`;
+            document.getElementById('tL').appendChild(d);
         }
 
         function addKeywordRow(k="", r="") {
-            const div = document.createElement('div'); div.className = 'item-row';
-            div.innerHTML = `<input type="text" value="${k}" class="k-trigger" placeholder="!cmd"><input type="text" value="${r}" class="k-resp" placeholder="Resp"> <button class="del-btn" onclick="this.parentElement.remove()">X</button>`;
-            document.getElementById('keywordsList').appendChild(div);
+            const d = document.createElement('div'); d.className = 'item-row';
+            d.innerHTML = `<input type="text" value="${k}" class="k-t" placeholder="!cmd"><input type="text" value="${r}" class="k-r" placeholder="Resp"> <button class="del-btn" onclick="this.parentElement.remove()">X</button>`;
+            document.getElementById('kL').appendChild(d);
         }
 
-        window.onload = () => {
-            addTimerRow("Follow me on Kick and Twitch!", 10);
-            addKeywordRow("!socials", "Twitch: justquitbro7 | Kick: justquitbro7");
-            saveConfig();
-        };
+        window.onload = () => { addTimerRow("Follow me!", 10); addKeywordRow("!socials", "Twitch & Kick: justquitbro7"); saveConfig(); };
     </script>
 </body>
 </html>
