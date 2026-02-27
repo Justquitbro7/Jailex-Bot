@@ -16,9 +16,10 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .card { background: rgba(255,255,255,0.05); border: 1px solid var(--blue); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        .btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+        .btn:hover { box-shadow: 0 0 10px var(--orange); }
         input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #333; background: #111; color: white; margin-bottom: 10px; box-sizing: border-box; }
-        #log { height: 150px; overflow-y: auto; background: #000; padding: 10px; font-family: monospace; font-size: 0.85em; color: #00ff00; border-radius: 8px; border: 1px solid #333; }
+        #log { height: 180px; overflow-y: auto; background: #000; padding: 10px; font-family: monospace; font-size: 0.85em; color: #00ff00; border-radius: 8px; border: 1px solid #333; }
         .item-row { display: flex; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px; align-items: center; }
         .del-btn { background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
     </style>
@@ -26,35 +27,43 @@
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-header"><h2 style="color: var(--orange); margin:0;">JAILEX</h2><span style="font-size:0.7em;">STUDIO v1.7</span></div>
+        <div class="sidebar-header">
+            <h2 style="color: var(--orange); margin:0;">JAILEX</h2>
+            <span style="font-size:0.7em; color: var(--blue);">STUDIO v1.7</span>
+        </div>
         <div class="nav-item active" onclick="showTab('setup')">👤 Setup</div>
         <div class="nav-item" onclick="showTab('overlay')">📡 Overlay</div>
-        <div class="nav-item" onclick="showTab('bot')">🤖 Bot Engine</div>
+        <div class="nav-item" onclick="showTab('tts')">🔊 TTS Audio</div>
         <div class="nav-item" onclick="showTab('timers')">⏰ Timers</div>
         <div class="nav-item" onclick="showTab('keywords')">⚡ Keywords</div>
     </div>
 
     <div class="main-content">
         <div id="setup" class="tab-content active">
-            <h2>Channel Setup</h2>
-            <div class="card"><label>Twitch Name</label><input type="text" id="tw" value="justquitbro7"><label>Kick ID</label><input type="text" id="ki" value="92474944"><button class="btn" onclick="saveConfig()">Save Settings</button></div>
+            <h2>Channel Configuration</h2>
+            <div class="card">
+                <label>Twitch Username</label><input type="text" id="tw" value="justquitbro7" oninput="saveConfig()">
+                <label>Kick ID</label><input type="text" id="ki" value="92474944" oninput="saveConfig()">
+                <button class="btn" onclick="saveConfig()">Save Credentials</button>
+            </div>
         </div>
 
         <div id="overlay" class="tab-content">
             <h2>Overlay Builder</h2>
             <div class="card">
-                <label>Size: <span id="sV">22</span>px</label><input type="range" id="fS" min="16" max="48" value="22" oninput="saveConfig()">
-                <label>Stay: <span id="tV">20</span>s</label><input type="range" id="sT" min="5" max="60" value="20" oninput="saveConfig()">
-                <div id="fL" style="background:#000; padding:10px; color:var(--blue); font-size:0.7em; margin:15px 0;">URL...</div>
-                <button class="btn" onclick="copyLink()">Copy URL</button>
+                <label>Text Size: <span id="sV">22</span>px</label><input type="range" id="fS" min="16" max="48" value="22" oninput="saveConfig()">
+                <label>Stay Time: <span id="tV">20</span>s</label><input type="range" id="sT" min="5" max="60" value="20" oninput="saveConfig()">
+                <div id="fL" class="card" style="background:#000; color:var(--blue); font-size:0.75em; word-break:break-all;">URL Generating...</div>
+                <button class="btn" onclick="copyLink()">Copy URL for Lightstream</button>
             </div>
         </div>
 
-        <div id="bot" class="tab-content">
-            <h2>Bot Control</h2>
+        <div id="tts" class="tab-content">
+            <h2>TTS Audio Engine</h2>
             <div class="card">
-                <button class="btn" id="sB" onclick="startBot()" style="height:60px;">Activate Engine</button>
-                <div id="log" style="margin-top:15px;">Ready...</div>
+                <label>Voice Volume</label><input type="range" id="vol" min="0" max="1" step="0.1" value="0.8">
+                <button class="btn" id="sB" onclick="startBot()" style="height:60px; font-size: 1.1em;">Activate Bot & Voice</button>
+                <div id="log" style="margin-top:20px;">Ready for session...</div>
             </div>
         </div>
 
@@ -64,7 +73,7 @@
         </div>
 
         <div id="keywords" class="tab-content">
-            <h2>Keywords</h2>
+            <h2>Keyword Responses</h2>
             <div class="card"><div id="kL"></div><button class="btn" onclick="addKeywordRow()" style="background:#28a745">+ Add Keyword</button></div>
         </div>
     </div>
@@ -85,33 +94,39 @@
 
         function startBot() {
             const t = document.getElementById('tw').value, k = document.getElementById('ki').value;
-            addLog("Connecting...");
+            addLog("Initializing connections...");
             const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-            tws.onopen = () => { tws.send('PASS oauth:xyz'); tws.send('NICK justinfan123'); tws.send('JOIN #'+t.toLowerCase()); addLog("Twitch Connected."); };
-            tws.onmessage = (e) => { if(e.data.includes('PRIVMSG')) { const m = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/); if(m) handle(m[1], m[2]); } };
+            tws.onopen = () => { tws.send('PASS oauth:xyz'); tws.send('NICK justinfan123'); tws.send('JOIN #'+t.toLowerCase()); addLog("Twitch Active."); };
+            tws.onmessage = (e) => { if(e.data.includes('PRIVMSG')) { const m = e.data.match(/display-name=([^;]+).*PRIVMSG #[^ ]+ :(.+)/); if(m) handle(m[1], m[2], 'Twitch'); } };
             
             const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-            kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${k}.v2` } })); addLog("Kick Connected."); };
-            kws.onmessage = (e) => { const d = JSON.parse(e.data); if(d.event.includes("ChatMessageEvent")) { const m = JSON.parse(d.data); handle(m.sender.username, m.content); } };
+            kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${k}.v2` } })); addLog("Kick Active."); };
+            kws.onmessage = (e) => { const d = JSON.parse(e.data); if(d.event.includes("ChatMessageEvent")) { const m = JSON.parse(d.data); handle(m.sender.username, m.content, 'Kick'); } };
 
             document.querySelectorAll('#tL .item-row').forEach(r => {
                 const msg = r.querySelector('.t-m').value, min = r.querySelector('.t-t').value;
-                if(msg) setInterval(() => { addLog("Timer: " + msg); speak(msg); }, min * 60000);
+                if(msg) setInterval(() => { addLog("Timer Triggered: " + msg); speak(msg); }, min * 60000);
             });
             document.getElementById('sB').disabled = true;
+            document.getElementById('sB').innerText = "ENGINE ONLINE";
         }
 
-        function handle(u, m) {
-            addLog(`${u}: ${m}`); speak(`${u} says ${m}`);
+        function handle(u, m, p) {
+            addLog(`${p} | ${u}: ${m}`); 
+            speak(`${u} says ${m}`);
             document.querySelectorAll('#kL .item-row').forEach(r => {
                 const trig = r.querySelector('.k-t').value.toLowerCase();
                 if(m.toLowerCase().includes(trig)) speak(r.querySelector('.k-r').value);
             });
         }
 
-        function speak(t) { window.speechSynthesis.speak(new SpeechSynthesisUtterance(t)); }
-        function addLog(m) { const l = document.getElementById('log'); l.innerHTML += `<div>${m}</div>`; l.scrollTop = l.scrollHeight; }
-        function copyLink() { navigator.clipboard.writeText(document.getElementById('fL').innerText); alert("Copied!"); }
+        function speak(t) { 
+            const u = new SpeechSynthesisUtterance(t);
+            u.volume = document.getElementById('vol').value;
+            window.speechSynthesis.speak(u); 
+        }
+        function addLog(m) { const l = document.getElementById('log'); l.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${m}</div>`; l.scrollTop = l.scrollHeight; }
+        function copyLink() { navigator.clipboard.writeText(document.getElementById('fL').innerText); alert("URL Copied!"); }
         
         function addTimerRow(m="", t=10) {
             const d = document.createElement('div'); d.className = 'item-row';
@@ -121,11 +136,11 @@
 
         function addKeywordRow(k="", r="") {
             const d = document.createElement('div'); d.className = 'item-row';
-            d.innerHTML = `<input type="text" value="${k}" class="k-t" placeholder="!cmd"><input type="text" value="${r}" class="k-r" placeholder="Resp"> <button class="del-btn" onclick="this.parentElement.remove()">X</button>`;
+            d.innerHTML = `<input type="text" value="${k}" class="k-t" placeholder="!cmd"><input type="text" value="${r}" class="k-r" placeholder="Response"> <button class="del-btn" onclick="this.parentElement.remove()">X</button>`;
             document.getElementById('kL').appendChild(d);
         }
 
-        window.onload = () => { addTimerRow("Follow me!", 10); addKeywordRow("!socials", "Twitch & Kick: justquitbro7"); saveConfig(); };
+        window.onload = () => { addTimerRow("Follow me on socials!", 10); addKeywordRow("!socials", "Check my bio for links!"); saveConfig(); };
     </script>
 </body>
 </html>
