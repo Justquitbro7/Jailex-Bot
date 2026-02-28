@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAILEX STUDIO | v9.7.5</title>
+    <title>JAILEX STUDIO | v9.7.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --navy: #020617; --orange: #C83803; --blue: #00F3FF; }
@@ -16,10 +16,12 @@
         .tab-content { display: none; max-width: 1000px; margin: 0 auto; animation: slideUp 0.4s ease-out; }
         .tab-content.active { display: block; }
         .hud-card { background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(0, 243, 255, 0.15); padding: 28px; border-radius: 20px; margin-bottom: 24px; backdrop-filter: blur(10px); }
-        .hud-btn { background: var(--orange); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: 900; transition: 0.3s; text-transform: uppercase; }
+        .hud-btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 900; transition: 0.3s; text-transform: uppercase; font-size: 0.7rem; }
         .status-pill { background: #1e293b; padding: 4px 10px; border-radius: 6px; font-size: 9px; font-weight: 900; border: 1px solid #334155; }
         .status-on { color: var(--blue); border-color: var(--blue); box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); }
-        .version-tag { margin-top: auto; padding: 20px; background: rgba(0, 243, 255, 0.05); border-top: 1px solid rgba(0, 243, 255, 0.1); text-align: center; }
+        input { background: rgba(0,0,0,0.4); border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; width: 100%; font-size: 0.8rem; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--blue); }
+        .keyword-item { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
@@ -34,9 +36,9 @@
             <div class="nav-item" onclick="showTab('engine', this)">🔊 Engine Master</div>
             <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
         </nav>
-        <div class="version-tag">
-            <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Active Build</p>
-            <p class="text-lg font-black text-white italic">v9.7.5</p>
+        <div class="p-5 text-center bg-blue-900/10 border-t border-white/5">
+            <p class="text-[8px] font-black text-slate-500 uppercase">System Build</p>
+            <p class="text-xs font-black text-white italic">v9.7.6</p>
         </div>
     </div>
 
@@ -50,7 +52,7 @@
                 </div>
                 <div id="t-user-area" class="mt-4 opacity-0 transition-opacity">
                     <p id="t-user" class="text-blue-400 font-bold italic mb-4"></p>
-                    <button class="text-[10px] text-slate-500 underline uppercase font-bold hover:text-red-400" onclick="logout()">Disconnect Account</button>
+                    <button class="text-[10px] text-slate-500 underline uppercase font-bold" onclick="logout()">Disconnect</button>
                 </div>
             </div>
         </div>
@@ -59,7 +61,22 @@
             <div class="hud-card border-orange-600/30">
                 <h2 class="text-xl font-black mb-6 uppercase italic">Engine Master</h2>
                 <button class="hud-btn w-full bg-blue-600 py-4 mb-4" onclick="sendTestChat()">🚀 Send Test Chat Message</button>
-                <div id="log" class="mt-4 bg-black/40 p-5 rounded-xl border border-slate-800 h-48 overflow-y-auto font-mono text-xs text-green-500">> Engine Ready.</div>
+                <div id="log" class="mt-4 bg-black/40 p-5 rounded-xl border border-slate-800 h-32 overflow-y-auto font-mono text-xs text-green-500">> Standing by.</div>
+            </div>
+        </div>
+
+        <div id="keywords" class="tab-content">
+            <div class="hud-card border-blue-500/20">
+                <h2 class="text-xl font-black mb-6 uppercase italic text-blue-400">Keyword Triggers</h2>
+                
+                <div class="grid grid-cols-5 gap-3 mb-8">
+                    <div class="col-span-2"><input type="text" id="k-cmd" placeholder="!command"></div>
+                    <div class="col-span-2"><input type="text" id="k-resp" placeholder="Bot response..."></div>
+                    <button class="hud-btn bg-emerald-700" onclick="addKeyword()">Save</button>
+                </div>
+
+                <div id="keyword-list" class="space-y-2">
+                    </div>
             </div>
         </div>
     </div>
@@ -75,6 +92,7 @@
             el.classList.add('active');
         }
 
+        // --- AUTH LOGIC ---
         function startTwitchSync() {
             const scope = encodeURIComponent('chat:read chat:edit user:write:chat');
             const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=${scope}`;
@@ -98,17 +116,11 @@
                     localStorage.setItem('jailex_user', data.data[0].display_name);
                     localStorage.setItem('jailex_user_id', data.data[0].id);
                     syncUI();
-                } else {
-                    // Token might be expired
-                    logout();
                 }
-            } catch (err) { logout(); }
+            } catch (err) { console.error(err); }
         }
 
-        function logout() {
-            localStorage.clear();
-            location.reload();
-        }
+        function logout() { localStorage.clear(); location.reload(); }
 
         function syncUI() {
             const tkn = localStorage.getItem('jailex_t_token');
@@ -119,33 +131,68 @@
                 document.getElementById('t-user').innerText = `LIVE AS: ${user.toUpperCase()}`;
                 document.getElementById('t-user-area').classList.remove('opacity-0');
                 document.getElementById('sync-controls').classList.add('hidden');
-                
-                // Voice notification for auto-login
-                window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Welcome back, ${user}. Jailex is active.`));
             }
+            renderKeywords();
+        }
+
+        // --- KEYWORD LOGIC ---
+        function addKeyword() {
+            const cmd = document.getElementById('k-cmd').value.trim();
+            const resp = document.getElementById('k-resp').value.trim();
+            if(!cmd || !resp) return;
+
+            let keywords = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
+            keywords.push({ cmd, resp });
+            localStorage.setItem('jailex_keywords', JSON.stringify(keywords));
+            
+            document.getElementById('k-cmd').value = '';
+            document.getElementById('k-resp').value = '';
+            renderKeywords();
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Trigger ${cmd} added.`));
+        }
+
+        function deleteKeyword(index) {
+            let keywords = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
+            keywords.splice(index, 1);
+            localStorage.setItem('jailex_keywords', JSON.stringify(keywords));
+            renderKeywords();
+        }
+
+        function renderKeywords() {
+            const list = document.getElementById('keyword-list');
+            const keywords = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
+            list.innerHTML = keywords.length ? '' : '<p class="text-center text-slate-600 text-[10px] uppercase italic py-4">No Active Triggers</p>';
+            
+            keywords.forEach((k, i) => {
+                list.innerHTML += `
+                    <div class="keyword-item">
+                        <div>
+                            <span class="text-blue-400 font-black mr-4">${k.cmd}</span>
+                            <span class="text-slate-400 text-xs">${k.resp}</span>
+                        </div>
+                        <button onclick="deleteKeyword(${i})" class="text-red-500 text-[10px] font-black uppercase">Remove</button>
+                    </div>
+                `;
+            });
         }
 
         async function sendTestChat() {
             const token = localStorage.getItem('jailex_t_token');
             const uid = localStorage.getItem('jailex_user_id');
             if(!token) return;
-            
             try {
                 await fetch('https://api.twitch.tv/helix/chat/messages', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Client-Id': CLIENT_ID, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ broadcaster_id: uid, sender_id: uid, message: "JAILEX ENGINE ONLINE: Persistence Locked." })
+                    body: JSON.stringify({ broadcaster_id: uid, sender_id: uid, message: "JAILEX ENGINE ONLINE: Triggers Ready." })
                 });
-                document.getElementById('log').innerHTML += `<div class="text-blue-400">> Message Sent!</div>`;
+                document.getElementById('log').innerHTML += `<div class="text-blue-400">> Signal Sent.</div>`;
             } catch (err) { console.error(err); }
         }
 
-        // AUTO-CHECK ON LOAD
         window.onload = () => {
             const savedToken = localStorage.getItem('jailex_t_token');
-            if (savedToken) {
-                validateTwitch(savedToken);
-            }
+            if (savedToken) validateTwitch(savedToken);
         };
     </script>
 </body>
