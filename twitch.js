@@ -1,39 +1,25 @@
-const TWITCH_CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz'; 
-const REDIRECT_URI = 'https://jailex-bot.vercel.app'; 
+const CHANNEL_NAME = 'justquitbro7';
 
-function loginWithTwitch() {
-    // We are building the link manually to ensure NO extra slashes or spaces
-    const authUrl = "https://id.twitch.tv/oauth2/authorize" +
-                    "?client_id=" + TWITCH_CLIENT_ID +
-                    "&redirect_uri=" + REDIRECT_URI +
-                    "&response_type=token" +
-                    "&scope=chat:read+chat:edit";
-    
-    window.location.href = authUrl;
-}
+function connectToTwitch() {
+    // Note: To read chat anonymously without a token, we use a simple WebSocket
+    const socket = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
 
-async function checkAuth() {
-    const hash = window.location.hash;
-    if (hash.includes('access_token=')) {
-        const params = new URLSearchParams(hash.substring(1));
-        const token = params.get('access_token');
+    socket.onopen = () => {
+        socket.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+        socket.send('PASS SCHMOOPIE'); // Anonymous pass
+        socket.send(`NICK justinfan${Math.floor(Math.random() * 10000)}`);
+        socket.send(`JOIN #${CHANNEL_NAME}`);
+        console.log("Twitch Hardwired!");
+    };
 
-        // Kill the loop immediately
-        window.history.replaceState({}, document.title, "/");
-
-        const response = await fetch('https://api.twitch.tv/helix/users', {
-            headers: {
-                'Client-ID': TWITCH_CLIENT_ID,
-                'Authorization': 'Bearer ' + token
-            }
-        });
-        const data = await response.json();
-        if (data.data && data.data[0]) {
-            const user = data.data[0];
-            addMessage('Jailex', `SUCCESS! Linked to: ${user.display_name} (ID: ${user.id})`);
-            document.getElementById('login-btn').style.display = 'none';
+    socket.onmessage = (event) => {
+        if (event.data.includes('PRIVMSG')) {
+            const parts = event.data.split('!');
+            const username = parts[0].substring(1);
+            const message = event.data.split('PRIVMSG')[1].split(':')[1];
+            addMessage('twitch', username, message, '#9146ff');
         }
-    }
+    };
 }
 
-checkAuth();
+connectToTwitch();
