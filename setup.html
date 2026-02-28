@@ -1,13 +1,40 @@
-<script>
-  const hash = window.location.hash;
-  if (hash) {
-    const params = new URLSearchParams(hash.substring(1));
-    const token = params.get('access_token');
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jailex Handshake</title>
+    <style>
+        body { background: #020617; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; }
+        .loader { border: 4px solid #1e293b; border-top: 4px solid #00F3FF; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="loader"></div>
+        <h2 id="msg">SECURE HANDSHAKE IN PROGRESS...</h2>
+        <p style="color: #64748b; font-size: 12px;">Sending token to JAILEX Dashboard</p>
+    </div>
 
-    if (token) {
-      // Send the token back to the main Jailex window
-      window.opener.postMessage({ type: 'TWITCH_TOKEN', token: token }, window.location.origin);
-      window.close(); // Close the popup automatically
-    }
-  }
-</script>
+    <script>
+        // 1. Grab the token from the URL
+        const hash = window.location.hash;
+        if (hash) {
+            const params = new URLSearchParams(hash.substring(1));
+            const token = params.get('access_token');
+
+            if (token) {
+                // 2. The "Handshake" - Throw the ball to the main window
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'TWITCH_TOKEN', token: token }, "*");
+                    document.getElementById('msg').innerText = "TOKEN SENT! CLOSING...";
+                    
+                    // 3. Close the popup automatically after a tiny delay
+                    setTimeout(() => { window.close(); }, 1000);
+                } else {
+                    document.getElementById('msg').innerText = "ERROR: DASHBOARD NOT FOUND";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
