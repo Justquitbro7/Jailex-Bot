@@ -2,147 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Studio | Easy Setup</title>
+    <title>Jailex Studio | Final Fix</title>
     <style>
-        body { 
-            background: #0B162A; 
-            color: white; 
-            font-family: 'Segoe UI', sans-serif; 
-            text-align: center; 
-            padding: 40px 20px; 
-        }
-        .container { max-width: 600px; margin: auto; }
-        .box { 
-            border: 2px solid #C83803; 
-            padding: 30px; 
-            border-radius: 20px; 
-            background: #12213a; 
-            margin-bottom: 25px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-        h1 { color: #C83803; }
-        .btn { 
-            background: #6441a5; 
-            color: white; 
-            border: none; 
-            padding: 15px 30px; 
-            border-radius: 10px; 
-            font-size: 18px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            width: 100%;
-            margin-top: 10px;
-        }
-        .btn-kick { background: #00E701; color: black; }
-        input { 
-            padding: 12px; 
-            border-radius: 8px; 
-            border: 2px solid #444; 
-            width: 90%; 
-            margin-top: 10px; 
-            background: #000; 
-            color: #00FF00; 
-            text-align: center;
-        }
-        code { 
-            background: #000; 
-            padding: 15px; 
-            display: block; 
-            margin: 20px 0; 
-            border-radius: 8px; 
-            color: #00FF00; 
-            word-break: break-all;
-            border: 1px solid #333;
-        }
-        .hidden { display: none; }
+        body { background: #0B162A; color: white; font-family: sans-serif; text-align: center; padding: 50px; }
+        .box { border: 2px solid #C83803; padding: 20px; background: #12213a; border-radius: 15px; }
+        .btn { padding: 15px; width: 80%; cursor: pointer; font-weight: bold; border-radius: 8px; border: none; background: #6441a5; color: white; font-size: 1.2rem; }
+        code { background: black; color: #00FF00; padding: 10px; display: block; margin-top: 20px; word-break: break-all; }
     </style>
 </head>
 <body>
-
-    <div class="container">
-        <h1>JAILEX STUDIO SETUP</h1>
+    <h1>JAILEX SETUP (FINAL FIX)</h1>
+    <div class="box">
+        <p>Click the button below to authorize Twitch.</p>
+        <button class="btn" onclick="forceTwitch()">CONNECT TWITCH</button>
         
-        <div class="box">
-            <h3>1. Twitch Authorization</h3>
-            <button class="btn" id="twitchBtn" onclick="startTwitch()">Connect Twitch</button>
-            <div id="twitchResult" class="hidden">
-                <p>✅ Twitch Token Generated:</p>
-                <code id="twitchToken"></code>
-            </div>
-        </div>
-
-        <div class="box" style="border-color: #00E701;">
-            <h3>2. Kick Room Finder</h3>
-            <input type="text" id="kickUser" placeholder="Enter Kick Username">
-            <button class="btn btn-kick" onclick="findKickID()">Find Kick ID</button>
-            <div id="kickResult" class="hidden">
-                <p>✅ Kick Room ID Found:</p>
-                <code id="kickIDText"></code>
-            </div>
-        </div>
-
-        <div class="box" style="border-color: #ffffff;">
-            <h3>3. Your Overlay Link</h3>
-            <button class="btn" style="background: white; color: black;" onclick="generateLink()">Generate Final URL</button>
-            <div id="launcherResult" class="hidden">
-                <code id="finalURL"></code>
-                <button class="btn" style="background: #444;" onclick="copyURL()">Copy to Clipboard</button>
-            </div>
+        <div id="result" style="display:none;">
+            <p>✅ YOUR TOKEN IS HERE:</p>
+            <code id="token"></code>
+            <p style="font-size: 0.8rem; color: #888;">Copy this for your overlay!</p>
         </div>
     </div>
 
     <script>
-        const MY_CLIENT_ID = 'rgarrgd2h205le1962c5g9goywdrcn'; 
-        const MY_REDIRECT = 'https://jailex-bot.vercel.app/setup.html';
-
-        function startTwitch() {
-            const scope = 'chat:read+chat:edit';
-            window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${MY_CLIENT_ID}&redirect_uri=${MY_REDIRECT}&response_type=token&scope=${scope}`;
+        function forceTwitch() {
+            // WE ARE REMOVING ALL VARIABLES AND JUST USING THE RAW LINK
+            const url = "https://id.twitch.tv/oauth2/authorize" +
+                        "?client_id=rgarrgd2h205le1962c5g9goywdrcn" +
+                        "&redirect_uri=https://jailex-bot.vercel.app/setup.html" +
+                        "&response_type=token" +
+                        "&scope=chat:read+chat:edit" +
+                        "&force_verify=true";
+            
+            window.location.href = url;
         }
 
-        // Check if we just came back from Twitch
         window.onload = function() {
-            if (window.location.hash) {
-                const params = new URLSearchParams(window.location.hash.substring(1));
+            // Check if Twitch sent us back with a token
+            const hash = window.location.hash;
+            if (hash) {
+                const params = new URLSearchParams(hash.substring(1));
                 const token = params.get('access_token');
                 if (token) {
-                    document.getElementById('twitchBtn').classList.add('hidden');
-                    document.getElementById('twitchResult').classList.remove('hidden');
-                    document.getElementById('twitchToken').innerText = token;
+                    document.getElementById('token').innerText = token;
+                    document.getElementById('result').style.display = 'block';
                 }
             }
         };
-
-        async function findKickID() {
-            const user = document.getElementById('kickUser').value.trim().toLowerCase();
-            if(!user) return alert("Please enter a username!");
-            try {
-                const response = await fetch(`https://kick.com/api/v1/channels/${user}`);
-                const data = await response.json();
-                document.getElementById('kickIDText').innerText = data.chatroom.id;
-                document.getElementById('kickResult').classList.remove('hidden');
-            } catch (err) {
-                alert("Could not find user. Make sure the name is correct!");
-            }
-        }
-
-        function generateLink() {
-            const t = document.getElementById('twitchToken').innerText;
-            const k = document.getElementById('kickIDText').innerText;
-            const u = document.getElementById('kickUser').value.trim();
-            if (!t || !k) return alert("Please finish Steps 1 and 2!");
-
-            const final = `${window.location.origin}/overlay.html?kick_id=${k}&kick_user=${u}&token=${t}`;
-            document.getElementById('finalURL').innerText = final;
-            document.getElementById('launcherResult').classList.remove('hidden');
-        }
-
-        function copyURL() {
-            const text = document.getElementById('finalURL').innerText;
-            navigator.clipboard.writeText(text);
-            alert("Copied! Paste this link into Lightstream.");
-        }
     </script>
 </body>
 </html>
