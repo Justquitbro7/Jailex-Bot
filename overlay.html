@@ -1,107 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Jailex Unified Overlay</title>
-    <script src="https://cdn.jsdelivr.net/npm/tmi.js@1.8.5/dist/tmi.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Jailex Overlay v3.0</title>
+    <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
     <style>
-        /* Transparent background for Lightstream */
-        body { background: transparent; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; margin: 0; }
-        
-        /* Chat container - messages flow from bottom up */
-        #chat { 
-            display: flex; 
-            flex-direction: column-reverse; 
-            height: 100vh; 
-            padding: 15px; 
-            box-sizing: border-box;
-        }
-        
-        /* The Message Box: Chicago Bears Navy and Orange */
-        .msg { 
-            background: rgba(11, 22, 42, 0.95); /* Deep Navy */
-            border-left: 5px solid #C83803; /* Bears Orange */
-            margin-bottom: 10px; 
-            padding: 12px; 
-            border-radius: 8px; 
-            animation: slideIn 0.3s ease-out;
-            font-size: 1.2rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            word-wrap: break-word;
-        }
-
-        /* Platform Identifiers */
-        .platform-tag { font-weight: bold; margin-right: 10px; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; text-transform: uppercase; vertical-align: middle; }
-        .twitch-tag { background: #6441a5; color: white; } /* Purple */
-        .kick-tag { background: #00E701; color: black; } /* Green */
-        
-        .user { font-weight: bold; color: #FFA500; margin-right: 5px; }
-        .content { color: #FFFFFF; }
-
-        @keyframes slideIn { from { transform: translateX(-30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        body { background: transparent; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; margin: 0; padding: 10px; }
+        #chat-container { display: flex; flex-direction: column-reverse; height: 100vh; width: 100%; gap: 8px; }
+        .msg { background: rgba(11, 22, 42, 0.85); border-left: 4px solid #FF6A00; padding: 10px; border-radius: 4px; animation: slideIn 0.3s ease; max-width: 90%; }
+        .user { font-weight: bold; color: #00F3FF; font-size: 0.9em; margin-bottom: 2px; display: flex; align-items: center; gap: 5px; }
+        .platform { font-size: 0.7em; padding: 2px 5px; border-radius: 3px; background: rgba(255,255,255,0.1); }
+        .content { font-size: var(--fs); line-height: 1.2; word-break: break-all; }
+        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
-    <div id="chat"></div>
+    <div id="chat-container"></div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
-        const twitchToken = params.get('token');
-        const kickId = params.get('kick_id');
-        const kickUser = params.get('kick_user') || 'justquitbro7';
+        const twitchChannel = params.get('twitch') || 'justquitbro7';
+        const kickId = params.get('kick') || '92474944';
+        const fontSize = params.get('size') || '22';
+        const stayTime = (params.get('stay') || '20') * 1000;
 
-        // --- TWITCH CONNECTION ---
-        if (twitchToken) {
-            const client = new tmi.Client({
-                options: { debug: false },
-                identity: { password: `oauth:${twitchToken}`, username: 'justquitbro7' },
-                channels: ['justquitbro7']
-            });
-            client.connect().catch(console.error);
-            client.on('message', (channel, tags, message, self) => {
-                addMessage('twitch', tags['display-name'] || tags.username, message);
-            });
-        }
+        document.documentElement.style.setProperty('--fs', fontSize + 'px');
 
-        // --- KICK CONNECTION (via Pusher WebSocket) ---
-        if (kickId) {
-            const ws = new WebSocket('wss://ws-us2.pusher.com/app/eb1d5f283081a78b932c?protocol=7&client=js&version=7.0.6&flash=false');
-            ws.onopen = () => {
-                ws.send(JSON.stringify({ 
-                    event: "pusher:subscribe", 
-                    data: { auth: "", channel: `chatrooms.${kickId}.v2` } 
-                }));
-            };
-            ws.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                if (data.event === "App\\Events\\ChatMessageEvent") {
-                    const msgData = JSON.parse(data.data);
-                    addMessage('kick', msgData.sender.username, msgData.content);
-                }
-            };
-            ws.onclose = () => console.log("Kick connection closed. Reconnecting...");
-        }
-
-        // --- DISPLAY LOGIC ---
-        function addMessage(platform, user, msg) {
-            const chat = document.getElementById('chat');
+        function addMessage(user, message, platform) {
+            const container = document.getElementById('chat-container');
             const div = document.createElement('div');
             div.className = 'msg';
-            
-            const tagClass = platform === 'twitch' ? 'twitch-tag' : 'kick-tag';
-            
             div.innerHTML = `
-                <span class="platform-tag ${tagClass}">${platform}</span>
-                <span class="user">${user}:</span>
-                <span class="content">${msg}</span>
+                <div class="user">
+                    <span class="platform">${platform}</span>
+                    ${user}
+                </div>
+                <div class="content">${message}</div>
             `;
-
-            chat.prepend(div);
-            
-            // Keep only the last 50 messages to prevent lag
-            if (chat.childNodes.length > 50) {
-                chat.removeChild(chat.lastChild);
-            }
+            container.prepend(div);
+            setTimeout(() => { div.style.opacity = '0'; div.style.transition = '1s'; setTimeout(() => div.remove(), 1000); }, stayTime);
         }
+
+        // --- Twitch Connection ---
+        const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+        tws.onopen = () => { tws.send('PASS ignore'); tws.send('NICK justinfan' + Math.floor(Math.random()*999)); tws.send('JOIN #' + twitchChannel.toLowerCase()); };
+        tws.onmessage = (e) => {
+            if(e.data.includes('PRIVMSG')) {
+                const u = e.data.split('!')[0].substring(1);
+                const m = e.data.substring(e.data.indexOf(':', 1) + 1);
+                addMessage(u, m, 'Twitch');
+            }
+            if(e.data.includes('PING')) tws.send('PONG :tmi.twitch.tv');
+        };
+
+        // --- Kick Connection ---
+        const pusher = new Pusher('32cbd69e4b950bf97679', { cluster: 'us2' });
+        const channel = pusher.subscribe(`chatrooms.${kickId}.v2`);
+        channel.bind('App\\Events\\ChatMessageEvent', (data) => {
+            addMessage(data.sender.username, data.content, 'Kick');
+        });
     </script>
 </body>
 </html>
