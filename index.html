@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Studio | v5.2.1 Lead-Lined</title>
+    <title>Jailex Studio | v5.2.2 Loop Breaker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -13,10 +13,17 @@
             if (hash.includes("access_token=")) {
                 const params = new URLSearchParams(hash.substring(1));
                 const token = params.get("access_token");
+                
                 if (token) {
+                    // Save to Vault
                     localStorage.setItem("jailex_twitch_vault", token);
-                    // KILLS THE LOOP: Wipes the URL clean so it doesn't re-trigger
+                    
+                    // Kill the loop: Wipe URL and immediately stop further script execution 
+                    // until the URL is clean.
                     window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    // Force a single clean refresh to reset the state
+                    window.location.reload(); 
                 }
             }
         })();
@@ -38,7 +45,7 @@
         <header class="flex justify-between items-center mb-8 p-4 glass rounded-xl">
             <div>
                 <h1 class="text-3xl font-bold tracking-tighter">JAILEX <span class="bears-orange">STUDIO</span></h1>
-                <p class="text-xs text-slate-400 uppercase tracking-widest">v5.2.1 | Iron Vault Secured</p>
+                <p class="text-xs text-slate-400 uppercase tracking-widest">v5.2.2 | Loop Breaker Active</p>
             </div>
             <div class="text-right">
                 <div class="text-sm font-semibold">Project: <span class="bears-orange">The Bears Edition</span></div>
@@ -105,8 +112,8 @@
     </div>
 
     <script>
-        const CLIENT_ID = 'YOUR_TWITCH_CLIENT_ID'; // Keep this consistent
-        const REDIRECT_URI = window.location.href.split('#')[0];
+        const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz'; 
+        const REDIRECT_URI = window.location.href.split('#')[0].split('?')[0];
 
         function loginTwitch() {
             const scope = 'chat:read chat:edit';
@@ -125,7 +132,6 @@
             const twitch = localStorage.getItem("jailex_twitch_vault");
             const kick = localStorage.getItem("jailex_kick_vault");
             
-            // UI Updates
             if(twitch) {
                 document.getElementById('twitch-indicator').className = "status-dot status-on";
                 document.getElementById('vault-status').innerText = "Vault: SECURE";
@@ -136,7 +142,6 @@
             }
         }
 
-        // Run on load
         window.onload = checkVault;
     </script>
 </body>
