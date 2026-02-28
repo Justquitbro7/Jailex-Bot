@@ -1,41 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex - Streaming Made Easy</title>
-    <style>
-        body { background-color: #0B162A; color: #FFFFFF; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 260px; background-color: #070D19; border-right: 4px solid #C83803; padding: 20px; display: flex; flex-direction: column; }
-        .sidebar h1 { color: #C83803; font-size: 1.8rem; text-align: center; margin-bottom: 40px; }
-        .nav-item { padding: 15px; color: white; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.3s; }
-        .nav-item:hover, .active { background-color: #C83803; font-weight: bold; }
-        .main { flex-grow: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .card { background-color: #152238; border: 2px solid #C83803; border-radius: 12px; padding: 40px; width: 100%; max-width: 500px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
-        .sync-btn { background-color: #C83803; color: white; border: none; padding: 18px 35px; font-size: 1.2rem; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; text-transform: uppercase; }
-        .sync-btn:hover { background-color: #FF4500; }
-        #sync-status { display: block; margin-top: 20px; font-size: 1.1rem; font-weight: bold; color: #C83803; }
-        #debug-log { font-size: 0.7rem; color: #555; margin-top: 20px; text-align: left; background: #070D19; padding: 10px; border-radius: 5px; height: 60px; overflow-y: auto; }
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        <h1>JAILEX</h1>
-        <div class="nav-item active">Credentials</div>
-        <div class="nav-item">Bot Commands</div>
-        <div class="nav-item">TTS Settings</div>
-        <div class="nav-item">Overlay</div>
-        <div style="margin-top: auto; font-size: 0.7rem; color: #444; text-align: center;">Streaming Made Easy v1.0</div>
+<html>
+<head><title>Jailex Handshake</title></head>
+<body style="background:#0B162A; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; margin:0;">
+    <div style="text-align:center;">
+        <h2 style="color:#C83803;">Jailex Handshake</h2>
+        <p>Sending security token to dashboard...</p>
     </div>
-    <div class="main">
-        <div class="card">
-            <h2 style="color: #C83803;">Twitch Integration</h2>
-            <p>Sync your <strong>Jailex</strong> bot to start your stream session.</p>
-            <button class="sync-btn" onclick="openTwitchSync()">Sync Twitch Account</button>
-            <span id="sync-status">Status: Disconnected</span>
-            <div id="debug-log">System: Ready...</div>
-        </div>
-    </div>
-    <script src="script.js"></script>
+    <script>
+        const hash = window.location.hash;
+        if (hash) {
+            const params = new URLSearchParams(hash.substring(1));
+            const token = params.get('access_token');
+            if (token && window.opener) {
+                window.opener.postMessage({ type: 'TWITCH_TOKEN', token: token }, window.location.origin);
+                window.close();
+            }
+        }
+    </script>
 </body>
 </html>
