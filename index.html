@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAILEX STUDIO | v9.7.1</title>
+    <title>JAILEX STUDIO | v9.7.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --navy: #020617; --orange: #C83803; --blue: #00F3FF; }
         body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
         .sidebar { width: 240px; border-right: 1px solid rgba(200, 56, 3, 0.2); background: rgba(15, 23, 42, 0.9); flex-shrink: 0; display: flex; flex-direction: column; }
-        /* NEW NEON GLOW FOR VERSION CHECK */
         .neon-logo { text-shadow: 0 0 15px var(--blue); }
         .nav-item { padding: 18px 28px; cursor: pointer; transition: 0.3s; color: #64748b; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; border-left: 3px solid transparent; }
         .nav-item.active { background: rgba(200, 56, 3, 0.1); color: var(--orange); border-left: 3px solid var(--orange); }
@@ -27,13 +26,12 @@
     <div class="sidebar">
         <div class="p-10 text-center">
             <h2 class="text-4xl font-black text-orange-600 neon-logo tracking-tighter leading-none">JAILEX</h2>
-            <p class="text-[9px] font-black uppercase mt-3 italic text-blue-400">Build v9.7.1</p>
+            <p class="text-[9px] font-black uppercase mt-3 italic text-blue-400">Build v9.7.2</p>
         </div>
         <nav class="flex-1">
             <div class="nav-item active" onclick="showTab('sync', this)">🔄 Quick Sync</div>
             <div class="nav-item" onclick="showTab('engine', this)">🔊 Engine Master</div>
             <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
-            <div class="nav-item" onclick="showTab('timers', this)">⏰ Auto Timers</div>
         </nav>
     </div>
 
@@ -45,31 +43,13 @@
                     <div id="t-pill" class="status-pill">OFFLINE</div>
                 </div>
                 <button class="hud-btn w-full bg-purple-800 py-6" onclick="startTwitchSync()">Authorize Handshake</button>
+                <div id="t-user" class="text-center mt-4 text-[11px] text-blue-400 font-bold opacity-0 transition-opacity">NOT LINKED</div>
             </div>
         </div>
-
-        <div id="engine" class="tab-content">
-            <div class="hud-card border-orange-600/30">
-                <h2 class="text-xl font-black mb-4 uppercase">Engine Control</h2>
-                <button class="hud-btn w-full py-6" onclick="igniteEngine()">Ignite Signals</button>
-                <div id="log" class="mt-4 bg-black/40 p-5 rounded-xl border border-slate-800 h-32 overflow-y-auto font-mono text-xs text-green-500">> System Ready...</div>
-            </div>
         </div>
-
-        <div id="keywords" class="tab-content">
-            <div class="hud-card border-blue-500/20">
-                <h2 class="text-xl font-black mb-4 uppercase">Keyword Library</h2>
-                <div class="p-4 bg-black/20 rounded-lg border border-slate-800 mb-4">
-                    <p class="text-[10px] text-slate-500">!kick -> Follow me on Kick!</p>
-                </div>
-                <button class="hud-btn bg-blue-600 px-10">+ Add Command</button>
-            </div>
-        </div>
-    </div>
 
     <script>
         const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
-        // USE THE SHORT LINK - STAYS THE SAME
         const REDIRECT_URI = "https://jailex-bot.vercel.app/setup.html";
 
         function showTab(id, el) {
@@ -85,22 +65,37 @@
             window.open(authUrl, 'JailexSync', 'width=450,height=600');
         }
 
+        // LISTEN FOR THE HANDSHAKE BALL
         window.addEventListener('message', (event) => {
             if (event.data.type === 'TWITCH_TOKEN') {
-                localStorage.setItem('jailex_t_token', event.data.token);
-                syncUI();
+                const token = event.data.token;
+                localStorage.setItem('jailex_t_token', token);
+                validateTwitch(token);
             }
         });
 
-        function syncUI() {
-            if(localStorage.getItem('jailex_t_token')) {
-                document.getElementById('t-pill').innerText="ONLINE"; 
-                document.getElementById('t-pill').classList.add('status-on'); 
-            }
+        async function validateTwitch(token) {
+            try {
+                const res = await fetch('https://api.twitch.tv/helix/users', {
+                    headers: { 'Client-ID': CLIENT_ID, 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.data && data.data[0]) {
+                    localStorage.setItem('jailex_user', data.data[0].display_name);
+                    syncUI();
+                }
+            } catch (err) { console.error(err); }
         }
 
-        function igniteEngine() {
-            document.getElementById('log').innerHTML += `<div class="text-blue-400">> Signal Locked.</div>`;
+        function syncUI() {
+            const tkn = localStorage.getItem('jailex_t_token');
+            const user = localStorage.getItem('jailex_user');
+            if(tkn) {
+                document.getElementById('t-pill').innerText="ONLINE"; 
+                document.getElementById('t-pill').classList.add('status-on'); 
+                document.getElementById('t-user').innerText = `LIVE AS: ${user.toUpperCase()}`;
+                document.getElementById('t-user').classList.remove('opacity-0');
+            }
         }
 
         window.onload = syncUI;
