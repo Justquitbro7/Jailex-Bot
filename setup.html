@@ -1,21 +1,13 @@
-<!DOCTYPE html>
-<html>
-<head><title>Jailex Handshake</title></head>
-<body style="background:#0B162A; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; margin:0;">
-    <div style="text-align:center;">
-        <h2 style="color:#C83803;">Jailex Handshake</h2>
-        <p>Sending security token to dashboard...</p>
-    </div>
-    <script>
-        const hash = window.location.hash;
-        if (hash) {
-            const params = new URLSearchParams(hash.substring(1));
-            const token = params.get('access_token');
-            if (token && window.opener) {
-                window.opener.postMessage({ type: 'TWITCH_TOKEN', token: token }, window.location.origin);
-                window.close();
-            }
-        }
-    </script>
-</body>
-</html>
+<script>
+  const hash = window.location.hash;
+  if (hash) {
+    const params = new URLSearchParams(hash.substring(1));
+    const token = params.get('access_token');
+
+    if (token) {
+      // Send the token back to the main Jailex window
+      window.opener.postMessage({ type: 'TWITCH_TOKEN', token: token }, window.location.origin);
+      window.close(); // Close the popup automatically
+    }
+  }
+</script>
