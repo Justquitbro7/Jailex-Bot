@@ -2,60 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // EMERGENCY BRAKE: Run this before anything else loads
+        const hash = window.location.hash;
+        if (hash.includes('access_token=')) {
+            const params = new URLSearchParams(hash.substring(1));
+            const token = params.get('access_token');
+            // Save it safely and WIPE the URL to kill the loop
+            localStorage.setItem('jailex_twitch_token', token);
+            window.history.replaceState({}, document.title, "/");
+            console.log("Loop Killed. Token Saved.");
+        }
+    </script>
     <title>Jailex Bot Overlay</title>
     <style>
-        /* Modern, clean style for the overlay */
-        body {
-            background-color: rgba(0, 0, 0, 0); /* Transparent for OBS */
-            margin: 0;
-            padding: 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            overflow: hidden;
-        }
-
-        #chat-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            height: 85vh;
-            max-width: 450px;
-        }
-
-        .message {
-            background: rgba(0, 0, 0, 0.6);
-            margin-bottom: 10px;
-            padding: 12px;
-            border-radius: 10px;
-            border-left: 5px solid #9146ff; /* Twitch Purple */
-            animation: slideIn 0.3s ease-out;
-            font-size: 1.1rem;
-        }
-
-        .user { font-weight: bold; color: #bf94ff; margin-right: 8px; }
-        .system-text { font-style: italic; color: #00ffcc; }
-
-        #login-btn {
-            background-color: #9146ff;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1rem;
-            margin-bottom: 20px;
-            transition: background 0.2s;
-        }
-
-        #login-btn:hover { background-color: #772ce8; }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
+        body { background: rgba(0,0,0,0); color: white; font-family: sans-serif; padding: 20px; text-shadow: 2px 2px 4px #000; }
+        #chat-container { display: flex; flex-direction: column; justify-content: flex-end; height: 80vh; max-width: 400px; }
+        .message { background: rgba(0,0,0,0.7); margin-bottom: 8px; padding: 10px; border-radius: 8px; border-left: 5px solid #9146ff; }
+        #login-btn { background: #9146ff; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -63,35 +27,29 @@
     <button id="login-btn" onclick="loginWithTwitch()">Connect Jailex to Twitch</button>
 
     <div id="chat-container">
-        <div class="message" id="status-msg">
-            <span class="user">Jailex:</span>
-            <span class="system-text">System Standby. Awaiting Twitch Connection...</span>
-        </div>
+        <div class="message">System: Awaiting Twitch...</div>
     </div>
 
     <script src="twitch.js"></script>
 
     <script>
-        // Main function to display messages
-        function addMessage(platform, user, text, color = "#bf94ff") {
+        function addMessage(user, text) {
             const container = document.getElementById('chat-container');
             const msgDiv = document.createElement('div');
             msgDiv.className = 'message';
-            
-            // If we successfully link, hide the status message and the button
-            if (text.includes("SUCCESS!")) {
-                document.getElementById('login-btn').style.display = 'none';
-                const status = document.getElementById('status-msg');
-                if (status) status.style.display = 'none';
-            }
-
-            msgDiv.innerHTML = `
-                <span class="user" style="color: ${color}">${user}:</span>
-                <span class="text">${text}</span>
-            `;
-            
+            msgDiv.innerHTML = `<strong>${user}:</strong> ${text}`;
             container.appendChild(msgDiv);
-            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        // Check if we just saved a token from the Emergency Brake above
+        const savedToken = localStorage.getItem('jailex_twitch_token');
+        if (savedToken) {
+            document.getElementById('login-btn').style.display = 'none';
+            // Now we can safely use the token to get your ID in twitch.js
+            if (window.fetchTwitchID) {
+                fetchTwitchID(savedToken);
+                localStorage.removeItem('jailex_twitch_token'); // Clean up
+            }
         }
     </script>
 </body>
