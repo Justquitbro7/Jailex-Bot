@@ -3,56 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Bot - Bears Edition</title>
+    <title>Jailex - Streaming Made Easy</title>
     <style>
-        /* --- BEARS EDITION STYLING --- */
+        /* BEARS EDITION THEME */
         body {
-            background-color: #0B162A; /* Bears Navy */
+            background-color: #0B162A; /* Navy */
             color: #FFFFFF;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             display: flex;
             height: 100vh;
         }
 
-        /* Sidebar Navigation */
+        /* SIDEBAR */
         .sidebar {
-            width: 250px;
+            width: 260px;
             background-color: #070D19;
-            border-right: 3px solid #C83803; /* Bears Orange */
+            border-right: 4px solid #C83803; /* Orange */
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            padding: 20px;
         }
 
-        .sidebar h2 {
+        .sidebar h1 {
             color: #C83803;
+            font-size: 1.8rem;
             text-align: center;
-            font-size: 2rem;
-            margin-bottom: 30px;
-            letter-spacing: 2px;
+            margin-bottom: 40px;
         }
 
-        .nav-button {
-            background: transparent;
-            color: white;
-            border: 1px solid transparent;
+        .nav-item {
             padding: 15px;
-            text-align: left;
-            font-size: 1.1rem;
-            cursor: pointer;
-            border-radius: 5px;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
             margin-bottom: 10px;
+            cursor: pointer;
             transition: 0.3s;
         }
 
-        .nav-button:hover, .nav-button.active {
+        .nav-item:hover, .active {
             background-color: #C83803;
             font-weight: bold;
         }
 
-        /* Main Dashboard Area */
-        .main-content {
+        /* MAIN DASHBOARD */
+        .main {
             flex-grow: 1;
             padding: 40px;
             display: flex;
@@ -63,72 +59,62 @@
         .card {
             background-color: #152238;
             border: 2px solid #C83803;
-            border-radius: 10px;
-            padding: 30px;
+            border-radius: 12px;
+            padding: 40px;
             width: 100%;
-            max-width: 600px;
+            max-width: 550px;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
         }
 
-        h1 { color: #C83803; margin-top: 0; }
-
-        /* The Sync Button */
         .sync-btn {
             background-color: #C83803;
             color: white;
             border: none;
-            padding: 15px 30px;
+            padding: 18px 35px;
             font-size: 1.2rem;
             font-weight: bold;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            text-transform: uppercase;
-            transition: 0.2s;
+            width: 100%;
             margin-top: 20px;
+            text-transform: uppercase;
         }
 
-        .sync-btn:hover {
-            background-color: #FF4500;
-            transform: scale(1.05);
-        }
+        .sync-btn:hover { background-color: #FF4500; }
 
         #sync-status {
-            font-weight: bold;
-            margin-top: 15px;
             display: block;
+            margin-top: 20px;
             font-size: 1.1rem;
+            font-weight: bold;
+            color: #C83803;
         }
 
-        .footer {
-            margin-top: auto;
-            font-size: 0.8rem;
-            color: #555;
-            text-align: center;
-        }
+        .footer { margin-top: auto; font-size: 0.7rem; color: #444; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <h2>JAILEX</h2>
-        <button class="nav-button active">Credentials</button>
-        <button class="nav-button">Commands</button>
-        <button class="nav-button">TTS Settings</button>
-        <button class="nav-button">Overlay</button>
-        <div class="footer">Project Jailex v1.0</div>
+        <h1>JAILEX</h1>
+        <div class="nav-item active">Credentials</div>
+        <div class="nav-item">Bot Commands</div>
+        <div class="nav-item">TTS Settings</div>
+        <div class="nav-item">Overlay</div>
+        <div class="footer">Streaming Made Easy v1.0</div>
     </div>
 
-    <div class="main-content">
+    <div class="main">
         <div class="card">
-            <h1>Bot Connection</h1>
-            <p>Sync your Twitch account to enable the Jailex auto-login and chat features.</p>
+            <h2 style="color: #C83803;">Twitch Integration</h2>
+            <p>Ready to sync your <strong>Jailex</strong> bot? Click below to authorize and start streaming.</p>
             
             <button class="sync-btn" onclick="openTwitchSync()">
                 Sync Twitch Account
             </button>
 
-            <p>Current Status: <span id="sync-status">OFFLINE</span></p>
+            <span id="sync-status">Status: Disconnected</span>
         </div>
     </div>
 
