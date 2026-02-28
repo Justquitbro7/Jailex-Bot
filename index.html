@@ -3,235 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Studio | Unified Control</title>
-    
-    <script>
-    (function() {
-        // Capture Twitch Token
-        const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const twitchToken = params.get('access_token');
-
-        if (twitchToken) {
-            localStorage.setItem('twitch_access_token', twitchToken);
-            window.history.replaceState(null, null, window.location.pathname);
-        }
-
-        // Capture Kick ID from URL if present
-        const urlParams = new URLSearchParams(window.location.search);
-        const kickId = urlParams.get('kick');
-        if (kickId) {
-            localStorage.setItem('kick_chatroom_id', kickId);
-        }
-
-        // AUTO-LOGIN: If we have the data, skip the login screen
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTwitch = localStorage.getItem('twitch_access_token');
-            if (savedTwitch) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-dashboard').style.display = 'grid';
-                startJailex();
-            }
-        });
-    })();
-    </script>
-
+    <title>Jailex Chat Overlay</title>
     <style>
-        :root {
-            --bg: #0a0a0b;
-            --card: #141417;
-            --twitch: #9146FF;
-            --kick: #53fc18;
-            --text: #efeff1;
-            --accent: #26262c;
-        }
-
+        /* Modern, clean style for the overlay */
         body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: rgba(0, 0, 0, 0); /* Transparent for OBS */
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
             overflow: hidden;
         }
 
-        /* LOGIN BOX */
-        #login-screen {
-            text-align: center;
-            background: var(--card);
-            padding: 50px;
-            border-radius: 16px;
-            border: 1px solid var(--accent);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-        }
-
-        .btn-twitch {
-            background: var(--twitch);
-            color: white;
-            border: none;
-            padding: 14px 30px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            transition: 0.2s;
-        }
-        .btn-twitch:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(145, 70, 255, 0.4); }
-
-        /* DASHBOARD GRID */
-        #main-dashboard {
-            display: none;
-            width: 98vw;
-            height: 95vh;
-            grid-template-columns: 280px 1fr 300px;
-            gap: 15px;
-            padding: 10px;
-        }
-
-        .panel {
-            background: var(--card);
-            border-radius: 12px;
-            border: 1px solid var(--accent);
+        #chat-container {
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            justify-content: flex-end;
+            height: 80vh;
+            max-width: 450px;
         }
 
-        .panel-header {
+        .message {
+            background: rgba(0, 0, 0, 0.6);
+            margin-bottom: 10px;
             padding: 12px;
-            background: rgba(255,255,255,0.03);
-            border-bottom: 1px solid var(--accent);
-            font-weight: bold;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            border-radius: 10px;
+            border-left: 5px solid #9146ff; /* Twitch Purple */
+            animation: slideIn 0.3s ease-out;
+            font-size: 1.1rem;
         }
 
-        #chat-box {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column-reverse; /* New messages at bottom */
-        }
+        .user { font-weight: bold; color: #bf94ff; margin-right: 8px; }
+        .system-text { font-style: italic; color: #00ffcc; }
 
-        .chat-msg { margin-bottom: 10px; line-height: 1.4; font-size: 0.95rem; }
-        .twitch-tag { color: var(--twitch); font-weight: 800; margin-right: 5px; }
-        .kick-tag { color: var(--kick); font-weight: 800; margin-right: 5px; }
-        .system-tag { color: #888; font-style: italic; }
-
-        input {
-            background: #1f1f23;
-            border: 1px solid var(--accent);
+        #login-btn {
+            background-color: #9146ff;
             color: white;
-            padding: 10px;
-            border-radius: 6px;
-            width: 80%;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        #login-btn:hover { background-color: #772ce8; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <h1 style="margin-top:0;">JAILEX <span style="color:var(--kick)">STUDIO</span></h1>
-        <p style="color:#adadb8; margin-bottom:30px;">Initialize your streaming command center.</p>
-        
-        <a id="twitch-login-btn" class="btn-twitch" href="#">Connect Twitch Account</a>
-        
-        <div style="margin-top: 25px;">
-            <p style="font-size: 0.8rem; color: #666;">KICK CHANNEL ID</p>
-            <input type="text" id="kick-input" value="92474944">
+    <button id="login-btn" onclick="loginWithTwitch()">Connect Jailex to Twitch</button>
+
+    <div id="chat-container">
+        <div class="message">
+            <span class="user">Jailex:</span>
+            <span class="system-text">System ready. Please login to retrieve your IDs.</span>
         </div>
     </div>
 
-    <div id="main-dashboard">
-        <div class="panel">
-            <div class="panel-header">Controls</div>
-            <div style="padding:15px;">
-                <button onclick="localStorage.clear(); location.reload();" style="width:100%; padding:10px; background:#eb0400; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">LOGOUT & RESET</button>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="panel-header">Unified Chat Feed</div>
-            <div id="chat-box"></div>
-        </div>
-
-        <div class="panel">
-            <div class="panel-header">Connection Status</div>
-            <div style="padding:15px; font-size: 0.9rem;">
-                <p>Twitch: <span id="t-status" style="color:#666;">Checking...</span></p>
-                <p>Kick: <span id="k-status" style="color:#666;">Checking...</span></p>
-            </div>
-        </div>
-    </div>
+    <script src="twitch.js"></script>
 
     <script>
-        const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
-        const REDIRECT_URI = window.location.origin + window.location.pathname;
-
-        // Set Login URL
-        document.getElementById('twitch-login-btn').href = 
-            `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=chat:read+chat:edit`;
-
-        function startJailex() {
-            const tToken = localStorage.getItem('twitch_access_token');
-            const kID = document.getElementById('kick-input').value || '92474944';
-            localStorage.setItem('kick_chatroom_id', kID);
-
-            addMessage("System", "All systems nominal. Jailex is active.", "system");
-
-            // 1. Connect Kick
-            connectKick(kID);
+        // Function to display messages in the UI
+        function addMessage(platform, user, text, color = "#bf94ff") {
+            const container = document.getElementById('chat-container');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message';
             
-            // 2. Connect Twitch
-            if(tToken) connectTwitch(tToken);
-        }
+            // Hide login button if we get a success message
+            if (text.includes("Linked!")) {
+                document.getElementById('login-btn').style.display = 'none';
+            }
 
-        function connectKick(chatroomId) {
-            const script = document.createElement('script');
-            script.src = "https://js.pusher.com/8.0.1/pusher.min.js";
-            script.onload = () => {
-                const pusher = new Pusher('eb1d5f283082a9c4d548', { cluster: 'us2' });
-                const channel = pusher.subscribe(`chatrooms.${chatroomId}.v2`);
-                
-                channel.bind('App\\Events\\ChatMessageEvent', (data) => {
-                    addMessage(data.sender.username, data.content, 'kick');
-                });
-                document.getElementById('k-status').innerText = "ONLINE ✅";
-                document.getElementById('k-status').style.color = "var(--kick)";
-            };
-            document.head.appendChild(script);
-        }
-
-        function connectTwitch(token) {
-            const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-            ws.onopen = () => {
-                ws.send(`PASS oauth:${token}`);
-                ws.send(`NICK justquitbro7`);
-                ws.send(`JOIN #justquitbro7`);
-                document.getElementById('t-status').innerText = "ONLINE ✅";
-                document.getElementById('t-status').style.color = "var(--twitch)";
-            };
-            ws.onmessage = (e) => {
-                if (e.data.includes('PRIVMSG')) {
-                    const m = e.data.match(/:(\w+)!.*PRIVMSG #\w+ :(.*)/);
-                    if (m) addMessage(m[1], m[2], 'twitch');
-                }
-            };
-        }
-
-        function addMessage(user, msg, platform) {
-            const chatBox = document.getElementById('chat-box');
-            const div = document.createElement('div');
-            div.className = 'chat-msg';
-            const tag = `<span class="${platform}-tag">[${platform.toUpperCase()}]</span>`;
-            div.innerHTML = `${tag} <strong>${user}</strong>: ${msg}`;
-            chatBox.prepend(div);
+            msgDiv.innerHTML = `
+                <span class="user" style="color: ${color}">${user}:</span>
+                <span class="text">${text}</span>
+            `;
+            
+            container.appendChild(msgDiv);
+            window.scrollTo(0, document.body.scrollHeight);
         }
     </script>
 </body>
