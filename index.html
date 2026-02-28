@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Studio v4.4 | Atomic Sync</title>
+    <title>Jailex Studio v4.5 | Memory Guard</title>
     <script>
-        // ATOMIC CAPTURE: Run this before anything else loads
+        // ATOMIC CAPTURE: Snares the Twitch token before the page even paints
         (function() {
             if (window.location.hash) {
                 const params = new URLSearchParams(window.location.hash.substring(1));
                 const token = params.get('access_token');
                 if (token) {
                     localStorage.setItem('jailex_twitch_token', 'oauth:' + token);
-                    // Clear the URL instantly to stop the loop
                     window.history.replaceState(null, null, window.location.pathname);
                 }
             }
@@ -44,7 +43,7 @@
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-header"><h2 style="color: var(--orange); margin:0;">JAILEX</h2><span style="font-size:0.7em;">v4.4 MASTER</span></div>
+        <div class="sidebar-header"><h2 style="color: var(--orange); margin:0;">JAILEX</h2><span style="font-size:0.7em;">v4.5 MASTER</span></div>
         <div class="nav-item active" onclick="showTab('sync', this)">🔄 Quick Sync</div>
         <div class="nav-item" onclick="showTab('overlay', this)">📡 Overlay</div>
         <div class="nav-item" onclick="showTab('tts', this)">🔊 Engine</div>
@@ -70,7 +69,7 @@
         </div>
 
         <div id="overlay" class="tab-content">
-            <h2>Step 2: Get Overlay URL</h2>
+            <h2>Step 2: Overlay Link</h2>
             <div class="card">
                 <label>Font Size: <span id="sV">22</span>px</label><input type="range" id="fS" min="16" max="44" value="22" oninput="save()">
                 <label>Stay: <span id="tV">20</span>s</label><input type="range" id="sT" min="5" max="60" value="20" oninput="save()">
@@ -124,35 +123,42 @@
             const config = {
                 tw: document.getElementById('kIn').value,
                 ki: document.getElementById('kCode').innerText,
-                tok: localStorage.getItem('jailex_twitch_token') || "",
                 fS: document.getElementById('fS').value,
                 sT: document.getElementById('sT').value,
                 timers: Array.from(document.querySelectorAll('#tL .item-row')).map(r => ({m:r.querySelector('.t-m').value, t:r.querySelector('.t-t').value})),
                 keywords: Array.from(document.querySelectorAll('#kL .item-row')).map(r => ({k:r.querySelector('.k-t').value, r:r.querySelector('.k-r').value}))
             };
             localStorage.setItem('jailex_master_save', JSON.stringify(config));
-            document.getElementById('sV').innerText = config.fS; document.getElementById('tV').innerText = config.sT;
             updateFinalURL();
         }
 
         function load() {
+            // 1. Load the primary config object
             const raw = localStorage.getItem('jailex_master_save');
-            if(!raw) return;
-            const c = JSON.parse(raw);
-            document.getElementById('kIn').value = c.tw || "";
-            document.getElementById('kCode').innerText = c.ki || "";
-            if(c.ki) document.getElementById('kDone').classList.remove('hidden');
-            
+            if(raw) {
+                const c = JSON.parse(raw);
+                document.getElementById('kIn').value = c.tw || "";
+                document.getElementById('kCode').innerText = c.ki || "";
+                if(c.ki) document.getElementById('kDone').classList.remove('hidden');
+                document.getElementById('fS').value = c.fS || 22; 
+                document.getElementById('sT').value = c.sT || 20;
+                document.getElementById('sV').innerText = document.getElementById('fS').value;
+                document.getElementById('tV').innerText = document.getElementById('sT').value;
+                
+                // Clear and reload dynamic rows
+                document.getElementById('tL').innerHTML = "";
+                document.getElementById('kL').innerHTML = "";
+                if(c.timers) c.timers.forEach(t => addTimerRow(t.m, t.t));
+                if(c.keywords) c.keywords.forEach(k => addKeywordRow(k.k, k.r));
+            }
+
+            // 2. Independently check for the Twitch Token (it lives in its own key)
             const tok = localStorage.getItem('jailex_twitch_token');
             if(tok) {
-                document.getElementById('tCode').innerText = tok;
+                document.getElementById('tCode').innerText = "oauth:" + tok.replace('oauth:', '');
                 document.getElementById('tDone').classList.remove('hidden');
                 document.getElementById('tBtn').classList.add('hidden');
             }
-
-            document.getElementById('fS').value = c.fS || 22; document.getElementById('sT').value = c.sT || 20;
-            if(c.timers) c.timers.forEach(t => addTimerRow(t.m, t.t));
-            if(c.keywords) c.keywords.forEach(k => addKeywordRow(k.k, k.r));
             updateFinalURL();
         }
 
@@ -161,16 +167,16 @@
             const kid = document.getElementById('kCode').innerText;
             const user = document.getElementById('kIn').value;
             if(tok && kid) {
-                document.getElementById('fL').innerText = `${window.location.origin}/overlay.html?twitch=${user}&kick=${kid}&token=${tok}&size=${document.getElementById('fS').value}&stay=${document.getElementById('sT').value}`;
+                const cleanTok = tok.replace('oauth:', '');
+                document.getElementById('fL').innerText = `${window.location.origin}/overlay.html?twitch=${user}&kick=${kid}&token=${cleanTok}&size=${document.getElementById('fS').value}&stay=${document.getElementById('sT').value}`;
             }
         }
 
         function startBot() {
             const tok = localStorage.getItem('jailex_twitch_token');
-            const user = document.getElementById('kIn').value;
             const kid = document.getElementById('kCode').innerText;
-            if(!tok || !kid) return alert("Sync Accounts first!");
-            addLog("System starting...");
+            if(!tok || !kid) return alert("Please sync your accounts first!");
+            addLog("Engine initializing...");
             document.getElementById('sB').disabled = true;
             document.getElementById('sB').innerText = "ENGINE ONLINE";
         }
@@ -179,7 +185,7 @@
         function copyUrl() { navigator.clipboard.writeText(document.getElementById('fL').innerText); alert("URL Copied!"); }
         function addTimerRow(m="", t=15) { const d = document.createElement('div'); d.className = 'item-row'; d.innerHTML = `<input type="text" value="${m}" class="t-m" placeholder="Message"><input type="number" value="${t}" class="t-t" style="width:60px">m <button onclick="this.parentElement.remove(); save()">X</button>`; document.getElementById('tL').appendChild(d); }
         function addKeywordRow(k="", r="") { const d = document.createElement('div'); d.className = 'item-row'; d.innerHTML = `<input type="text" value="${k}" class="k-t" placeholder="Keyword"><input type="text" value="${r}" class="k-r" placeholder="Response"> <button onclick="this.parentElement.remove(); save()">X</button>`; document.getElementById('kL').appendChild(d); }
-        function fullReset() { localStorage.clear(); location.reload(); }
+        function fullReset() { if(confirm("This will wipe all data. Continue?")) { localStorage.clear(); location.reload(); } }
 
         window.onload = load;
     </script>
