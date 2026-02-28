@@ -3,122 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Studio v3.0</title>
+    <title>Jailex Studio v4.0 | Unified Master</title>
     <style>
         :root { --navy: #0B162A; --orange: #C83803; --blue: #00F3FF; }
         * { box-sizing: border-box; }
         body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; width: 100vw; overflow: hidden; }
+        
+        /* Sidebar Navigation */
         .sidebar { width: 220px; background: rgba(0,0,0,0.6); border-right: 2px solid var(--orange); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
         .sidebar-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
         .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; color: #ccc; font-weight: bold; font-size: 0.9em; }
         .nav-item.active { background: rgba(200, 56, 3, 0.2); color: var(--orange); border-left: 5px solid var(--orange); }
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; background: var(--navy); position: relative; }
+        
+        /* Content Area */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; background: var(--navy); }
         .tab-content { display: none; max-width: 800px; margin: 0 auto; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Cards & Inputs */
         .card { background: rgba(255,255,255,0.05); border: 1px solid var(--blue); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        .btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
-        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #333; background: #000; color: white; margin-bottom: 10px; }
+        .btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; margin-top: 10px; }
+        .btn-twitch { background: #6441a5; }
+        .btn-kick { background: #00E701; color: black; }
+        input { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #333; background: #000; color: white; margin-bottom: 10px; text-align: center; font-size: 1.1em; }
+        
+        /* Status & Logs */
+        code { background: #000; color: #00FF00; padding: 10px; display: block; border-radius: 5px; margin-top: 10px; font-family: monospace; border-left: 3px solid var(--blue); }
         #log { height: 200px; overflow-y: auto; background: #000; padding: 10px; font-family: monospace; font-size: 0.85em; color: #00ff00; border-radius: 8px; border: 1px solid #333; }
         .item-row { display: flex; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px; align-items: center; }
-        .url-box { background: #000; padding: 15px; border-radius: 8px; color: var(--blue); font-family: monospace; font-size: 0.75em; word-break: break-all; border-left: 4px solid var(--orange); }
+        .loading { color: var(--blue); font-style: italic; font-size: 0.9em; margin: 10px 0; text-align: center; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
+
     <div class="sidebar">
-        <div class="sidebar-header"><h2 style="color: var(--orange); margin:0;">JAILEX</h2><span style="font-size:0.7em;">v3.0 MASTER</span></div>
-        <div class="nav-item active" onclick="showTab('setup', this)">👤 Setup & Config</div>
-        <div class="nav-item" onclick="showTab('overlay', this)">📡 Overlay Builder</div>
-        <div class="nav-item" onclick="showTab('tts', this)">🔊 TTS Audio Engine</div>
-        <div class="nav-item" onclick="showTab('timers', this)">⏰ Auto-Timers</div>
-        <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keyword Tasks</div>
+        <div class="sidebar-header"><h2 style="color: var(--orange); margin:0;">JAILEX</h2><span style="font-size:0.7em;">v4.0 MASTER</span></div>
+        <div class="nav-item active" onclick="showTab('sync', this)">🔄 Quick Sync</div>
+        <div class="nav-item" onclick="showTab('overlay', this)">📡 Overlay</div>
+        <div class="nav-item" onclick="showTab('tts', this)">🔊 Engine</div>
+        <div class="nav-item" onclick="showTab('timers', this)">⏰ Timers</div>
+        <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
     </div>
+
     <div class="main-content">
-        <div id="setup" class="tab-content active">
-            <h2>Config</h2>
+        <div id="sync" class="tab-content active">
+            <h2>Step 1: Synchronize Accounts</h2>
             <div class="card">
-                <label>Twitch Username</label><input type="text" id="tw" value="justquitbro7">
-                <label>Kick Room ID</label><input type="text" id="ki" value="92474944">
-                <button class="btn" onclick="save()">SAVE CONFIG</button>
+                <h3>Twitch Account</h3>
+                <button id="tBtn" class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
+                <div id="tDone" class="hidden">✅ Twitch Connected! <code id="tCode"></code></div>
             </div>
+            <div class="card">
+                <h3>Kick Account</h3>
+                <input type="text" id="kIn" placeholder="Enter Kick Username">
+                <button id="kBtn" class="btn btn-kick" onclick="resolveKick()">FIND KICK ID</button>
+                <div id="kLoad" class="loading hidden">Connecting to Kick...</div>
+                <div id="kDone" class="hidden">✅ Kick ID Found: <code id="kCode"></code></div>
+                <div id="kFail" class="hidden" style="text-align:center; margin-top:10px;">
+                    <button class="btn" style="background:#333; width:auto; padding:5px 15px; font-size:0.8em;" onclick="forceKick()">MANUAL FALLBACK</button>
+                </div>
+            </div>
+            <button class="btn" style="background:transparent; border:1px solid #444; color:#666;" onclick="fullReset()">RESET ALL DATA</button>
         </div>
+
         <div id="overlay" class="tab-content">
-            <h2>Overlay</h2>
+            <h2>Step 2: Browser Source</h2>
             <div class="card">
-                <label>Size: <span id="sV">22</span>px</label><input type="range" id="fS" min="16" max="44" value="22" oninput="save()">
-                <label>Stay: <span id="tV">20</span>s</label><input type="range" id="sT" min="5" max="60" value="20" oninput="save()">
-                <div id="fL" class="url-box">URL...</div>
+                <label>Font Size: <span id="sV">22</span>px</label><input type="range" id="fS" min="16" max="44" value="22" oninput="save()">
+                <label>Stay Time: <span id="tV">20</span>s</label><input type="range" id="sT" min="5" max="60" value="20" oninput="save()">
+                <div id="fL" style="background:#000; padding:15px; border-radius:8px; color:var(--blue); font-family:monospace; font-size:0.75em; word-break:break-all; border-left:4px solid var(--orange); margin-top:20px;">Complete Sync first...</div>
                 <button class="btn" onclick="copy()" style="margin-top:10px">COPY URL</button>
-            </div>
-        </div>
-        <div id="tts" class="tab-content">
-            <h2>Audio Engine</h2>
-            <div class="card">
-                <button class="btn" id="sB" onclick="startBot()" style="height:60px;">ACTIVATE JAILEX ENGINE</button>
-                <div id="log" style="margin-top:20px;">Ready.</div>
-            </div>
-        </div>
-        <div id="timers" class="tab-content">
-            <h2>Timers</h2>
-            <div class="card"><div id="tL"></div><button class="btn" onclick="addTimerRow()" style="background:#28a745">+ Add</button></div>
-        </div>
-        <div id="keywords" class="tab-content">
-            <h2>Keywords</h2>
-            <div class="card"><div id="kL"></div><button class="btn" onclick="addKeywordRow()" style="background:#28a745">+ Add</button></div>
-        </div>
-    </div>
-    <script>
-        function showTab(id, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            el.classList.add('active');
-        }
-        function save() {
-            const config = { tw: document.getElementById('tw').value, ki: document.getElementById('ki').value, fS: document.getElementById('fS').value, sT: document.getElementById('sT').value, timers: Array.from(document.querySelectorAll('#tL .item-row')).map(r => ({m:r.querySelector('.t-m').value, t:r.querySelector('.t-t').value})), keywords: Array.from(document.querySelectorAll('#kL .item-row')).map(r => ({k:r.querySelector('.k-t').value, r:r.querySelector('.k-r').value})) };
-            localStorage.setItem('jailex_v3', JSON.stringify(config));
-            document.getElementById('sV').innerText = config.fS; document.getElementById('tV').innerText = config.sT;
-            document.getElementById('fL').innerText = `${window.location.origin}/overlay.html?twitch=${config.tw}&kick=${config.ki}&size=${config.fS}&stay=${config.sT}&cb=${Date.now()}`;
-        }
-        function load() {
-            const raw = localStorage.getItem('jailex_v3');
-            if(!raw) return; const c = JSON.parse(raw);
-            document.getElementById('tw').value = c.tw; document.getElementById('ki').value = c.ki;
-            document.getElementById('fS').value = c.fS; document.getElementById('sT').value = c.sT;
-            c.timers.forEach(t => addTimerRow(t.m, t.t)); c.keywords.forEach(k => addKeywordRow(k.k, k.r));
-            save();
-        }
-        function startBot() {
-            const tU = document.getElementById('tw').value, kI = document.getElementById('ki').value;
-            addLog("Connecting...");
-            const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-            tws.onopen = () => { tws.send('PASS ignore'); tws.send('NICK justinfan' + Math.floor(Math.random()*999)); tws.send('JOIN #' + tU.toLowerCase()); addLog("Twitch OK."); };
-            tws.onmessage = (e) => {
-                if(e.data.includes('PRIVMSG')) {
-                    const u = e.data.split('!')[0].substring(1);
-                    const m = e.data.substring(e.data.indexOf(':', 1) + 1);
-                    handle(u, m, 'Twitch');
-                }
-                if(e.data.includes('PING')) tws.send('PONG :tmi.twitch.tv');
-            };
-            const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-            kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kI}.v2` } })); addLog("Kick OK."); setInterval(() => kws.send(JSON.stringify({event:"pusher:ping",data:{}})), 20000); };
-            kws.onmessage = (e) => { const d = JSON.parse(e.data); if (d.event.includes("ChatMessageEvent")) { const m = JSON.parse(d.data); handle(m.sender.username, m.content, 'Kick'); } };
-            document.getElementById('sB').disabled = true;
-        }
-        function handle(u, m, p) { 
-            addLog(`${p} | ${u}: ${m}`); 
-            window.speechSynthesis.speak(new SpeechSynthesisUtterance(u + " says " + m)); 
-            document.querySelectorAll('#kL .item-row').forEach(row => { 
-                const trig = row.querySelector('.k-t').value.toLowerCase(); 
-                if(trig && m.toLowerCase().includes(trig)) window.speechSynthesis.speak(new SpeechSynthesisUtterance(row.querySelector('.k-r').value)); 
-            }); 
-        }
-        function addLog(m) { const l = document.getElementById('log'); l.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${m}</div>`; l.scrollTop = l.scrollHeight; }
-        function copy() { navigator.clipboard.writeText(document.getElementById('fL').innerText); alert("URL Copied!"); }
-        function addTimerRow(m="", t=15) { const d = document.createElement('div'); d.className = 'item-row'; d.innerHTML = `<input type="text" value="${m}" class="t-m"><input type="number" value="${t}" class="t-t" style="width:50px">m <button onclick="this.parentElement.remove(); save()">X</button>`; document.getElementById('tL').appendChild(d); }
-        function addKeywordRow(k="", r="") { const d = document.createElement('div'); d.className = 'item-row'; d.innerHTML = `<input type="text" value="${k}" class="k-t"><input type="text" value="${r}" class="k-r"> <button onclick="this.parentElement.remove(); save()">X</button>`; document.getElementById('kL').appendChild(d); }
-        window.onload = load;
-    </script>
-</body>
-</html>
