@@ -3,51 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Studio | v5.2.6 Final Shutdown</title>
+    <title>Jailex Studio | v5.3 Iron Vault + Modules</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <script>
+        // ATOMIC CAPTURE SCRIPT
         (function() {
             const hash = window.location.hash;
             if (hash.includes("access_token=")) {
                 const params = new URLSearchParams(hash.substring(1));
                 const token = params.get("access_token");
-                
                 if (token) {
-                    // 1. Check if we already have this exact token to prevent the "Double Hit"
-                    const currentVault = localStorage.getItem("jailex_twitch_vault");
-                    if (currentVault !== token) {
-                        localStorage.setItem("jailex_twitch_vault", token);
-                    }
-                    
-                    // 2. KILL THE LOOP: Force a hard redirect to the clean URL
-                    // This stops the browser from ever 'seeing' the token twice.
+                    localStorage.setItem("jailex_twitch_vault", token);
                     window.location.replace(window.location.origin + window.location.pathname);
-                    
-                    // 3. STOP EVERYTHING: Prevent the rest of the HTML from even parsing
-                    throw new Error("Vault Secured. Redirecting..."); 
+                    throw new Error("Vault Secured. Redirecting...");
                 }
             }
         })();
     </script>
-
     <style>
         body { background: #0b1121; color: white; font-family: 'Inter', sans-serif; }
         .glass { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
         .bears-orange { color: #f26522; }
-        .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; transition: all 0.4s ease; }
+        .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; }
         .status-on { background-color: #22c55e; box-shadow: 0 0 12px #22c55e; }
         .status-off { background-color: #ef4444; }
     </style>
 </head>
 <body class="min-h-screen p-8 bg-gradient-to-br from-[#0b1121] to-[#0f172a]">
-
     <div class="max-w-5xl mx-auto">
         <header class="flex justify-between items-center mb-8 p-6 glass rounded-3xl border-b-2 border-orange-500/20">
             <div>
                 <h1 class="text-3xl font-black italic">JAILEX <span class="bears-orange">STUDIO</span></h1>
-                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">v5.2.6 | Final Shutdown Build</p>
+                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">v5.3 | The Complete Engine</p>
             </div>
             <div id="vault-status" class="text-xs font-bold text-red-500 uppercase tracking-tighter italic">Vault: Offline</div>
         </header>
@@ -55,17 +43,16 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="space-y-6">
                 <div class="glass p-6 rounded-3xl">
-                    <h2 class="font-bold mb-4 uppercase text-xs text-slate-400">Twitch Connection</h2>
+                    <h2 class="font-bold mb-4 uppercase text-[10px] text-slate-400">Twitch Vault</h2>
                     <div class="flex justify-between items-center p-3 bg-slate-900 rounded-xl mb-4">
                         <span class="text-xs"><i class="fa-brands fa-twitch text-purple-400 mr-2"></i>Status</span>
                         <span id="twitch-indicator" class="status-dot status-off"></span>
                     </div>
                     <button onclick="loginTwitch()" class="w-full py-3 bg-purple-600 hover:bg-purple-700 rounded-xl text-xs font-black uppercase">Sync Twitch</button>
-                    <button onclick="resetVault()" class="w-full mt-2 text-[10px] text-slate-500 hover:text-red-400 underline">Wipe Vault</button>
                 </div>
 
                 <div class="glass p-6 rounded-3xl">
-                    <h2 class="font-bold mb-4 uppercase text-xs text-slate-400">Kick Connection</h2>
+                    <h2 class="font-bold mb-4 uppercase text-[10px] text-slate-400">Kick Vault</h2>
                     <div class="flex justify-between items-center p-3 bg-slate-900 rounded-xl mb-4">
                         <span class="text-xs"><i class="fa-solid fa-bolt text-green-400 mr-2"></i>Status</span>
                         <span id="kick-indicator" class="status-dot status-off"></span>
@@ -76,25 +63,44 @@
             </div>
 
             <div class="md:col-span-2">
-                <div class="glass h-full min-h-[400px] rounded-3xl p-8 flex items-center justify-center relative">
-                    <div id="engine-locked" class="text-center">
+                <div class="glass h-full min-h-[400px] rounded-3xl p-8">
+                    <div id="engine-locked" class="h-full flex flex-col items-center justify-center text-center">
                         <i class="fa-solid fa-lock text-5xl text-slate-700 mb-4"></i>
-                        <h3 class="text-xl font-bold">Engine Locked</h3>
-                        <p class="text-slate-500 text-sm">Synchronize both vaults to unlock Bot Engine.</p>
+                        <h3 class="text-xl font-bold uppercase tracking-widest">Engine Locked</h3>
+                        <p class="text-slate-500 text-xs">Verify both connections to initialize modules.</p>
                     </div>
-                    <div id="engine-unlocked" class="hidden w-full h-full">
-                        <div class="p-6 bg-green-500/10 border border-green-500/20 rounded-2xl mb-6">
-                            <h4 class="font-bold text-green-400 italic">SYSTEMS NOMINAL</h4>
-                            <p class="text-xs text-slate-400">Twitch & Kick vaults active. Bot Engine listening.</p>
+
+                    <div id="engine-unlocked" class="hidden space-y-6">
+                        <div class="flex justify-between items-center border-b border-white/5 pb-4">
+                            <h3 class="text-green-400 font-bold italic tracking-tighter">SYSTEMS NOMINAL</h3>
+                            <button onclick="resetVault()" class="text-[10px] text-slate-500 hover:text-red-400 underline uppercase">Purge Vault</button>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="p-6 glass rounded-2xl border-l-4 border-orange-500">
-                                <span class="text-[10px] text-slate-500 font-bold uppercase">Auto-Timers</span>
-                                <p class="text-2xl font-black">READY</p>
+
+                        <div class="p-6 bg-orange-500/5 border border-orange-500/20 rounded-2xl">
+                            <h4 class="text-xs font-black text-orange-500 uppercase mb-4 tracking-widest">Auto-Timer Module</h4>
+                            <div class="space-y-4">
+                                <input type="text" id="timer-msg" placeholder="Message to repeat..." class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm outline-none">
+                                <div class="flex gap-2">
+                                    <select id="timer-interval" class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-xs flex-1">
+                                        <option value="300000">Every 5 Mins</option>
+                                        <option value="600000">Every 10 Mins</option>
+                                    </select>
+                                    <button class="px-6 bg-orange-600 rounded-xl text-xs font-bold">START</button>
+                                </div>
                             </div>
-                            <div class="p-6 glass rounded-2xl border-l-4 border-blue-500">
-                                <span class="text-[10px] text-slate-500 font-bold uppercase">Keyword Tasks</span>
-                                <p class="text-2xl font-black">READY</p>
+                        </div>
+
+                        <div class="p-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl">
+                            <h4 class="text-xs font-black text-blue-500 uppercase mb-4 tracking-widest">Keyword Listeners</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-4 bg-slate-900 rounded-xl">
+                                    <p class="text-[10px] text-slate-500 font-bold uppercase">!discord</p>
+                                    <p class="text-xs text-slate-300 italic">"Join the lab..."</p>
+                                </div>
+                                <div class="p-4 bg-slate-900 rounded-xl">
+                                    <p class="text-[10px] text-slate-500 font-bold uppercase">!commands</p>
+                                    <p class="text-xs text-slate-300 italic">"List active bot tasks."</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -104,7 +110,7 @@
     </div>
 
     <script>
-        const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz'; 
+        const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
         function loginTwitch() {
@@ -128,12 +134,24 @@
         function checkVault() {
             const twitch = localStorage.getItem("jailex_twitch_vault");
             const kick = localStorage.getItem("jailex_kick_vault");
-            
-            if(twitch) { document.getElementById('twitch-indicator').className = "status-dot status-on"; }
-            if(kick) { 
-                document.getElementById('kick-indicator').className = "status-dot status-on"; 
+
+            if(twitch) {
+                document.getElementById('twitch-indicator').className = "status-dot status-on";
+            }
+            if(kick) {
+                document.getElementById('kick-indicator').className = "status-dot status-on";
                 document.getElementById('kick-username').value = kick;
             }
 
             if(twitch && kick) {
-                document.getElementById('vault-status').innerText = "Vault
+                document.getElementById('vault-status').innerText = "Vault: Active";
+                document.getElementById('vault-status').className = "text-xs font-bold text-green-500 uppercase tracking-tighter italic";
+                document.getElementById('engine-locked').classList.add('hidden');
+                document.getElementById('engine-unlocked').classList.remove('hidden');
+            }
+        }
+
+        window.onload = checkVault;
+    </script>
+</body>
+</html>
