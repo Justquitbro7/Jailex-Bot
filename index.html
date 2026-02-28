@@ -1,34 +1,174 @@
-<script>
-(function() {
-    // 1. ATOMIC CAPTURE: Check URL for Twitch Token
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-    const twitchToken = params.get('access_token');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jailex Studio | Unified Stream Control</title>
+    
+    <script>
+    (function() {
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const twitchToken = params.get('access_token');
 
-    if (twitchToken) {
-        localStorage.setItem('twitch_access_token', twitchToken);
-        // Wipe the URL fragment immediately so Twitch doesn't see it again
-        window.history.replaceState(null, null, window.location.pathname);
-    }
-
-    // 2. KICK CAPTURE: Check if we are passing a Kick ID in the URL as well
-    const urlParams = new URLSearchParams(window.location.search);
-    const kickId = urlParams.get('kick');
-    if (kickId) {
-        localStorage.setItem('kick_chatroom_id', kickId);
-    }
-
-    // 3. VALIDATION: If we have the tokens, hide the login screen immediately
-    document.addEventListener('DOMContentLoaded', () => {
-        const savedTwitch = localStorage.getItem('twitch_access_token');
-        const loginScreen = document.getElementById('login-screen'); // Ensure this ID matches yours
-        const dashboard = document.getElementById('main-dashboard');
-
-        if (savedTwitch) {
-            if (loginScreen) loginScreen.style.display = 'none';
-            if (dashboard) dashboard.style.display = 'block';
-            console.log("System: Auth Verified. Initializing Jailex...");
+        if (twitchToken) {
+            localStorage.setItem('twitch_access_token', twitchToken);
+            window.history.replaceState(null, null, window.location.pathname);
         }
-    });
-})();
-</script>
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const kickId = urlParams.get('kick');
+        if (kickId) {
+            localStorage.setItem('kick_chatroom_id', kickId);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTwitch = localStorage.getItem('twitch_access_token');
+            const loginScreen = document.getElementById('login-screen');
+            const dashboard = document.getElementById('main-dashboard');
+
+            if (savedTwitch) {
+                loginScreen.style.display = 'none';
+                dashboard.style.display = 'grid';
+                console.log("Jailex: Auth Verified.");
+                startJailex(); // Fires the main app logic
+            }
+        });
+    })();
+    </script>
+
+    <style>
+        :root {
+            --bg: #0d0d0d;
+            --card: #1a1a1a;
+            --twitch: #9146FF;
+            --kick: #53fc18;
+            --text: #ffffff;
+            --accent: #2e2e2e;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* LOGIN SCREEN STYLING */
+        #login-screen {
+            text-align: center;
+            background: var(--card);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid var(--accent);
+        }
+
+        .btn-twitch {
+            background: var(--twitch);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+
+        .btn-twitch:hover { transform: scale(1.05); }
+
+        /* DASHBOARD STYLING */
+        #main-dashboard {
+            display: none; /* Hidden until login */
+            width: 95vw;
+            height: 90vh;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--accent);
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .chat-msg { margin-bottom: 8px; font-size: 0.9rem; }
+        .twitch-tag { color: var(--twitch); font-weight: bold; }
+        .kick-tag { color: var(--kick); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <h1>Welcome to <span style="color:var(--kick)">Jailex</span></h1>
+        <p>Connect your accounts to begin</p>
+        <br>
+        <a id="twitch-login-btn" class="btn-twitch" href="#">Login with Twitch</a>
+        <div style="margin-top: 20px;">
+            <input type="text" id="kick-input" placeholder="Enter Kick Channel ID" 
+                   style="background:#222; border:1px solid #444; color:white; padding:10px; border-radius:5px; width:200px;">
+        </div>
+    </div>
+
+    <div id="main-dashboard">
+        <div class="panel">
+            <h3>Control Center</h3>
+            <button onclick="localStorage.clear(); location.reload();" style="background:red; color:white; border:none; padding:5px; border-radius:3px; cursor:pointer;">Logout / Reset</button>
+        </div>
+
+        <div class="panel" id="unified-chat">
+            <h3>Unified Chat</h3>
+            <div id="chat-box"></div>
+        </div>
+
+        <div class="panel">
+            <h3>Stream Stats</h3>
+            <div id="status-indicators">
+                <p>Twitch: <span id="t-status">Connecting...</span></p>
+                <p>Kick: <span id="k-status">Connecting...</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURATION
+        const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
+        const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+        // Set the Login Link
+        document.getElementById('twitch-login-btn').href = 
+            `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=chat:read+chat:edit`;
+
+        function startJailex() {
+            const tToken = localStorage.getItem('twitch_access_token');
+            const kID = localStorage.getItem('kick_chatroom_id') || '92474944'; // Default to your ID
+
+            document.getElementById('t-status').innerText = "Connected ✅";
+            document.getElementById('k-status').innerText = "Connected ✅ (ID: " + kID + ")";
+
+            addMessage("System", "Jailex Studio v6.0 Initialized.", "system");
+        }
+
+        function addMessage(user, msg, platform) {
+            const chatBox = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.className = 'chat-msg';
+            
+            let tag = `<span class="${platform}-tag">[${platform.toUpperCase()}]</span> `;
+            if(platform === 'system') tag = `⚙️ `;
+
+            div.innerHTML = `${tag}<strong>${user}:</strong> ${msg}`;
+            chatBox.prepend(div);
+        }
+    </script>
+</body>
+</html>
