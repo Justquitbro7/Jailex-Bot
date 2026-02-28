@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Studio | v5.2.4 Hard-Wired</title>
+    <title>Jailex Studio | v5.2.4 The Iron Vault</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -13,73 +13,143 @@
             const token = params.get("access_token");
             if (token) {
                 localStorage.setItem("jailex_twitch_vault", token);
-                // Hard Redirect to clean URL before the rest of the HTML even parses
+                // Hard Redirect to clean URL immediately
                 window.location.href = window.location.origin + window.location.pathname;
             }
         }
     </script>
 
     <style>
-        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { background: #0b1121; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
         .bears-orange { color: #f26522; }
-        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; transition: all 0.3s ease; }
-        .status-on { background-color: #22c55e; box-shadow: 0 0 10px #22c55e; }
+        .bears-navy { background: #0b162a; }
+        .glow-orange { box-shadow: 0 0 20px rgba(242, 101, 34, 0.2); }
+        .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; transition: all 0.4s ease; }
+        .status-on { background-color: #22c55e; box-shadow: 0 0 12px #22c55e; }
         .status-off { background-color: #ef4444; }
+        .tab-btn.active { border-bottom: 2px solid #f26522; color: white; }
     </style>
 </head>
-<body class="p-6">
+<body class="min-h-screen bg-fixed bg-gradient-to-br from-[#0b1121] via-[#0f172a] to-[#0b1121]">
 
-    <div class="max-w-5xl mx-auto">
-        <header class="flex justify-between items-center mb-8 p-4 glass rounded-xl">
-            <div>
-                <h1 class="text-3xl font-bold tracking-tighter">JAILEX <span class="bears-orange">STUDIO</span></h1>
-                <p class="text-xs text-slate-400 uppercase tracking-widest">v5.2.4 | Hard-Wired & Stable</p>
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+        
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 p-6 glass rounded-3xl glow-orange">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-white/5 rounded-2xl border border-white/10">
+                    <i class="fa-solid fa-shield-halved text-2xl bears-orange"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-black tracking-tighter italic uppercase">Jailex <span class="bears-orange font-normal">Studio</span></h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-slate-400 font-bold uppercase tracking-widest">Build v5.2.4</span>
+                        <span id="vault-status" class="text-[10px] text-red-400 font-bold flex items-center gap-1">
+                             <i class="fa-solid fa-circle text-[6px]"></i> SYSTEMS STANDBY
+                        </span>
+                    </div>
+                </div>
             </div>
-            <div class="text-right">
-                <div class="text-sm font-semibold text-slate-300">Project: <span class="bears-orange">The Bears Edition</span></div>
-                <div id="vault-status" class="text-[10px] text-slate-500 uppercase font-bold mt-1">Standby</div>
+            <div class="flex gap-4">
+                <div class="text-right hidden md:block">
+                    <p class="text-xs text-slate-500 uppercase font-bold tracking-widest">Operator</p>
+                    <p class="text-sm font-bold text-white uppercase">Justquitbro7</p>
+                </div>
+                <div class="w-10 h-10 rounded-full border-2 border-orange-500/30 overflow-hidden bg-slate-800 flex items-center justify-center">
+                    <i class="fa-solid fa-user text-slate-500"></i>
+                </div>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <div class="space-y-6">
-                <div class="glass p-6 rounded-2xl border-t-4 border-purple-500">
-                    <h2 class="text-lg font-bold mb-4 flex items-center"><i class="fa-brands fa-twitch mr-2 text-purple-400"></i>Twitch</h2>
-                    <div class="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg mb-4">
-                        <span class="text-xs text-slate-400">Vault Status</span>
-                        <span id="twitch-indicator" class="status-dot status-off"></span>
+            <div class="lg:col-span-4 space-y-6">
+                
+                <div class="glass p-6 rounded-3xl relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <i class="fa-solid fa-link text-6xl"></i>
                     </div>
-                    <button onclick="loginTwitch()" class="w-full py-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-xs font-black transition uppercase tracking-widest">Connect Twitch</button>
+                    
+                    <h2 class="text-lg font-bold mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-tower-broadcast text-blue-400"></i> Sync Accounts
+                    </h2>
+
+                    <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/5 mb-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm font-bold flex items-center gap-2">
+                                <i class="fa-brands fa-twitch text-purple-400 text-lg"></i> Twitch
+                            </span>
+                            <span id="twitch-indicator" class="status-dot status-off"></span>
+                        </div>
+                        <button onclick="loginTwitch()" class="w-full py-2.5 bg-purple-600 hover:bg-purple-700 rounded-xl text-xs font-black transition-all active:scale-95 shadow-lg shadow-purple-900/20">
+                            CONNECT ACCOUNT
+                        </button>
+                    </div>
+
+                    <div class="bg-slate-900/40 p-4 rounded-2xl border border-white/5">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-bolt text-green-400 text-lg"></i> Kick
+                            </span>
+                            <span id="kick-indicator" class="status-dot status-off"></span>
+                        </div>
+                        <input type="text" id="kick-username" placeholder="Channel Name..." class="w-full mb-2 bg-slate-950/50 border border-slate-700/50 p-2.5 rounded-xl text-sm outline-none focus:border-green-500/50 transition-colors">
+                        <button onclick="saveKick()" class="w-full py-2.5 bg-green-600 hover:bg-green-700 rounded-xl text-xs font-black transition-all active:scale-95 shadow-lg shadow-green-900/20 uppercase tracking-widest">
+                            Lock Vault
+                        </button>
+                    </div>
                 </div>
 
-                <div class="glass p-6 rounded-2xl border-t-4 border-green-500">
-                    <h2 class="text-lg font-bold mb-4 flex items-center"><i class="fa-solid fa-bolt mr-2 text-green-400"></i>Kick</h2>
-                    <div class="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg mb-4">
-                        <span class="text-xs text-slate-400">Vault Status</span>
-                        <span id="kick-indicator" class="status-dot status-off"></span>
+                <div class="glass p-6 rounded-3xl">
+                    <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">OBS Browser Source</h2>
+                    <div class="flex gap-2">
+                        <input type="text" readonly value="https://jailex-overlay.vercel.app" class="flex-1 bg-slate-950/50 border border-slate-700/50 p-2 rounded-lg text-[10px] text-slate-300">
+                        <button class="bg-white/5 hover:bg-white/10 p-2 rounded-lg transition-colors">
+                            <i class="fa-solid fa-copy text-xs"></i>
+                        </button>
                     </div>
-                    <input type="text" id="kick-username" placeholder="Enter Username" class="w-full p-2 bg-slate-900 border border-slate-700 rounded text-sm outline-none focus:border-green-500 mb-2">
-                    <button onclick="saveKick()" class="w-full py-3 bg-green-600 hover:bg-green-700 rounded-lg text-xs font-black transition uppercase tracking-widest">Lock Kick ID</button>
                 </div>
             </div>
 
-            <div class="md:col-span-2">
-                <div class="glass p-8 rounded-2xl min-h-[420px] relative overflow-hidden">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-2xl font-bold"><i class="fa-solid fa-robot mr-3 bears-orange"></i>Bot Engine</h2>
-                        <div class="flex gap-2">
-                            <span class="px-2 py-1 bg-slate-800 rounded text-[10px] text-slate-400">Timers: OFF</span>
-                            <span class="px-2 py-1 bg-slate-800 rounded text-[10px] text-slate-400">Keywords: OFF</span>
-                        </div>
-                    </div>
+            <div class="lg:col-span-8">
+                <div class="glass h-full min-h-[500px] rounded-3xl relative flex flex-col">
                     
-                    <div id="engine-overlay" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-10 text-center p-6">
-                        <div>
-                            <i class="fa-solid fa-lock text-4xl text-slate-600 mb-4"></i>
-                            <h3 class="text-lg font-bold text-slate-300">Engine Locked</h3>
-                            <p class="text-sm text-slate-500 max-w-xs mx-auto">Connect Twitch and Kick to activate Auto-Timers and Keyword responses.</p>
+                    <div class="flex border-b border-white/5 px-6 pt-6 gap-8">
+                        <button class="tab-btn active pb-4 text-sm font-bold tracking-tight">BOT ENGINE</button>
+                        <button class="tab-btn pb-4 text-sm font-bold tracking-tight text-slate-500 hover:text-slate-300 transition-colors">AUTO-TIMERS</button>
+                        <button class="tab-btn pb-4 text-sm font-bold tracking-tight text-slate-500 hover:text-slate-300 transition-colors">KEYWORD TASKS</button>
+                    </div>
+
+                    <div class="p-8 flex-1">
+                        <div id="engine-overlay" class="h-full flex flex-col items-center justify-center text-center space-y-4">
+                            <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-2xl text-slate-600 border border-white/5">
+                                <i class="fa-solid fa-lock"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold">Iron Vault Locked</h3>
+                                <p class="text-slate-500 text-sm max-w-sm">Complete the account sync on the left to activate the Jailex Bot engine and automation suite.</p>
+                            </div>
+                        </div>
+
+                        <div id="engine-active" class="hidden animate-in fade-in duration-700 space-y-6">
+                            <div class="p-6 bg-gradient-to-r from-green-500/10 to-transparent border border-green-500/20 rounded-2xl">
+                                <h4 class="font-bold text-green-400 flex items-center gap-2">
+                                    <i class="fa-solid fa-check-circle"></i> Connection Verified
+                                </h4>
+                                <p class="text-sm text-slate-400 mt-1">Bot is listening to Twitch & Kick chat. Auto-timers are armed.</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="p-5 glass rounded-2xl border-l-4 border-orange-500">
+                                    <h5 class="font-bold text-sm uppercase tracking-widest text-slate-300">Active Timers</h5>
+                                    <p class="text-2xl font-black mt-1">0</p>
+                                </div>
+                                <div class="p-5 glass rounded-2xl border-l-4 border-blue-500">
+                                    <h5 class="font-bold text-sm uppercase tracking-widest text-slate-300">Keyword Tasks</h5>
+                                    <p class="text-2xl font-black mt-1">0</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -101,7 +171,6 @@
             if(user) {
                 localStorage.setItem("jailex_kick_vault", user);
                 checkVault();
-                console.log("Kick ID Locked: " + user);
             }
         }
 
@@ -111,21 +180,21 @@
             
             if(twitch) {
                 document.getElementById('twitch-indicator').className = "status-dot status-on";
-                document.getElementById('vault-status').innerText = "TWITCH CONNECTED";
             }
             if(kick) {
                 document.getElementById('kick-indicator').className = "status-dot status-on";
                 document.getElementById('kick-username').value = kick;
             }
 
-            // Unlock Engine if both are active
+            // Unlock System
             if(twitch && kick) {
+                document.getElementById('vault-status').innerHTML = '<i class="fa-solid fa-circle text-[6px]"></i> SYSTEMS ACTIVE';
+                document.getElementById('vault-status').className = "text-[10px] text-green-400 font-bold flex items-center gap-1";
                 document.getElementById('engine-overlay').classList.add('hidden');
-                document.getElementById('vault-status').innerText = "SYSTEMS ACTIVE";
+                document.getElementById('engine-active').classList.remove('hidden');
             }
         }
 
-        // Initialize
         window.onload = checkVault;
     </script>
 </body>
