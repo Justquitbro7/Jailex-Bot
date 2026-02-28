@@ -212,7 +212,7 @@ window.addEventListener('DOMContentLoaded', () => {
  */
 
 // --- 1. CONFIGURATION ---
-const CLIENT_ID = 'YOUR_TWITCH_CLIENT_ID'; // <--- PASTE YOUR CLIENT ID HERE
+const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz'; // <--- PASTE YOUR CLIENT ID HERE
 const BEARS_ORANGE = "#C83803";
 const BEARS_NAVY = "#0B162A";
 
