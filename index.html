@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAILEX STUDIO | v9.6.8</title>
+    <title>JAILEX STUDIO | v9.7.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --navy: #020617; --orange: #C83803; --blue: #00F3FF; }
@@ -19,7 +19,6 @@
         .hud-card { background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(0, 243, 255, 0.15); padding: 28px; border-radius: 20px; margin-bottom: 24px; backdrop-filter: blur(10px); }
         .hud-btn { background: var(--orange); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: 900; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
         .hud-btn:hover { background: #e04a05; transform: translateY(-2px); box-shadow: 0 5px 20px rgba(200, 56, 3, 0.4); }
-        input { background: rgba(0,0,0,0.5); border: 1px solid #334155; color: #f8fafc; padding: 12px; border-radius: 10px; width: 100%; font-family: 'Consolas', monospace; font-size: 0.85rem; }
         .status-pill { background: #1e293b; padding: 4px 10px; border-radius: 6px; font-size: 9px; font-weight: 900; border: 1px solid #334155; transition: 0.5s; }
         .status-on { color: var(--blue); border-color: var(--blue); box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -31,7 +30,7 @@
         <div class="p-10 text-center">
             <h2 class="text-4xl font-black text-orange-600 tracking-tighter leading-none">JAILEX</h2>
             <p class="text-[9px] font-black uppercase tracking-[0.1em] mt-3 italic"><span class="text-white">Streaming Made</span> <span class="text-blue-400">Easy</span></p>
-            <p class="text-[8px] font-bold text-slate-500 uppercase mt-1 opacity-60">Build Version 9.6.8</p>
+            <p class="text-[8px] font-bold text-slate-500 uppercase mt-1 opacity-60">Build Version 9.7.0</p>
         </div>
         <nav class="flex-1">
             <div class="nav-item active" onclick="showTab('sync', this)">🔄 Quick Sync</div>
@@ -46,25 +45,21 @@
     <div class="main-content">
         <div id="sync" class="tab-content active">
             <div class="hud-header"><h1 class="text-3xl font-black italic text-white uppercase tracking-tighter">Sync <span class="text-blue-400">Terminal</span></h1></div>
-            
             <div class="grid grid-cols-2 gap-6">
                 <div class="hud-card border-purple-500/20">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-[10px] font-black text-purple-400 uppercase tracking-widest">Twitch Broadcast</h3>
                         <div id="t-pill" class="status-pill">OFFLINE</div>
                     </div>
-                    <p class="text-[11px] text-slate-400 mb-6 text-center italic">Secure one-click authorization</p>
                     <button class="hud-btn w-full bg-purple-800 py-6 mb-4" onclick="startTwitchSync()">Authorize Sync</button>
                     <div id="t-user-display" class="text-center text-[12px] font-black text-blue-400 italic opacity-0 transition-opacity">NOT LINKED</div>
                 </div>
-
                 <div class="hud-card border-emerald-500/20">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Kick Signal</h3>
                         <div id="k-pill" class="status-pill">OFFLINE</div>
                     </div>
-                    <p class="text-[11px] text-slate-400 mb-6 text-center italic">Enter your unique Kick ID</p>
-                    <input type="text" id="k-id-box" placeholder="KICK ID (e.g. 24968498)" class="mb-4">
+                    <input type="text" id="k-id-box" placeholder="KICK ID (e.g. 24968498)" class="bg-black/50 border border-slate-700 p-3 rounded-lg w-full mb-4">
                     <button class="hud-btn w-full bg-emerald-700" onclick="linkKick()">Link Signal</button>
                 </div>
             </div>
@@ -75,6 +70,41 @@
             <div class="hud-card border-orange-600/30">
                 <button class="hud-btn w-full py-6 text-xl shadow-2xl mb-4" onclick="igniteEngine()">Ignite Multi-Platform Engine</button>
                 <div id="log" class="mt-4 bg-black/40 p-5 rounded-xl border border-slate-800 h-48 overflow-y-auto font-mono text-xs text-green-500">System Ready.</div>
+            </div>
+        </div>
+
+        <div id="dash" class="tab-content">
+            <div class="hud-header"><h1 class="text-3xl font-black italic text-white uppercase tracking-tighter">Live <span class="text-blue-400">Dashboard</span></h1></div>
+            <div class="hud-card text-center py-20">
+                <h3 class="text-slate-500 font-black italic uppercase">Telemetry Loading...</h3>
+                <p class="text-xs text-slate-600 mt-2">Connecting to Broadcast Feeds</p>
+            </div>
+        </div>
+
+        <div id="overlay" class="tab-content">
+            <div class="hud-header"><h1 class="text-3xl font-black italic text-white uppercase tracking-tighter">Overlay <span class="text-blue-400">Hub</span></h1></div>
+            <div class="hud-card">
+                <h3 class="text-xs font-black text-blue-400 mb-4 uppercase">Chat Overlay URL</h3>
+                <div class="flex gap-2">
+                    <input type="text" readonly value="https://jailex-overlay.vercel.app/" class="bg-black/50 border border-slate-700 p-3 rounded-lg flex-1">
+                    <button class="hud-btn px-6 bg-slate-800">Copy</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="keywords" class="tab-content">
+            <div class="hud-header"><h1 class="text-3xl font-black italic text-white uppercase tracking-tighter">Keyword <span class="text-blue-400">Triggers</span></h1></div>
+            <div class="hud-card border-blue-500/20">
+                <p class="text-xs text-slate-400 italic mb-6">Automated chat responses for specific commands.</p>
+                <button class="hud-btn bg-blue-600 px-10">+ New Keyword</button>
+            </div>
+        </div>
+
+        <div id="timers" class="tab-content">
+            <div class="hud-header"><h1 class="text-3xl font-black italic text-white uppercase tracking-tighter">Auto <span class="text-blue-400">Timers</span></h1></div>
+            <div class="hud-card">
+                <p class="text-xs text-slate-400 italic mb-6">Post scheduled links every 15, 30, or 60 minutes.</p>
+                <button class="hud-btn bg-slate-800 px-10">Set Socials Reminder</button>
             </div>
         </div>
     </div>
@@ -98,9 +128,8 @@
 
         window.addEventListener('message', (event) => {
             if (event.data.type === 'TWITCH_TOKEN') {
-                const token = event.data.token;
-                localStorage.setItem('jailex_t_token', token);
-                validateTwitch(token);
+                localStorage.setItem('jailex_t_token', event.data.token);
+                validateTwitch(event.data.token);
             }
         });
 
@@ -111,43 +140,31 @@
                 });
                 const data = await res.json();
                 if (data.data && data.data[0]) {
-                    const user = data.data[0].display_name;
-                    localStorage.setItem('jailex_user', user);
+                    localStorage.setItem('jailex_user', data.data[0].display_name);
                     syncUI();
-                    window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Broadcast link confirmed. Welcome back ${user}.`));
                 }
             } catch (err) { console.error(err); }
         }
 
         function linkKick() {
-            const val = document.getElementById('k-id-box').value.trim();
-            localStorage.setItem('jailex_kick_id', val);
+            localStorage.setItem('jailex_kick_id', document.getElementById('k-id-box').value.trim());
             syncUI();
-            window.speechSynthesis.speak(new SpeechSynthesisUtterance("Kick signal locked."));
         }
 
         function syncUI() {
             const kid = localStorage.getItem('jailex_kick_id');
             const tkn = localStorage.getItem('jailex_t_token');
             const user = localStorage.getItem('jailex_user');
-
-            if(kid) { 
-                document.getElementById('k-id-box').value = kid;
-                document.getElementById('k-pill').innerText = "ONLINE"; 
-                document.getElementById('k-pill').classList.add('status-on'); 
-            }
+            if(kid) { document.getElementById('k-pill').innerText="ONLINE"; document.getElementById('k-pill').classList.add('status-on'); }
             if(tkn) { 
-                document.getElementById('t-pill').innerText = "ONLINE"; 
+                document.getElementById('t-pill').innerText="ONLINE"; 
                 document.getElementById('t-pill').classList.add('status-on'); 
-                const display = document.getElementById('t-user-display');
-                display.innerText = `LINKED AS: ${user.toUpperCase()}`;
-                display.classList.remove('opacity-0');
+                document.getElementById('t-user-display').innerText = `LINKED AS: ${user.toUpperCase()}`;
+                document.getElementById('t-user-display').classList.remove('opacity-0');
             }
         }
 
         function igniteEngine() {
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(new SpeechSynthesisUtterance("Engine ignited. Monitoring broadcast signals."));
             document.getElementById('log').innerHTML += `<div class="text-blue-400">[SYSTEM] Multi-Platform Engine Online.</div>`;
         }
 
