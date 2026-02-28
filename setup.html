@@ -1,29 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Jailex Syncing...</title>
-</head>
-<body style="background: #0B162A; color: #FFFFFF; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
-    <div style="text-align: center;">
-        <h2 style="color: #C83803;">Syncing with Twitch...</h2>
-        <p>This window will close automatically.</p>
+<html>
+<head><title>Jailex Sync</title></head>
+<body style="background:#0B162A; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; margin:0;">
+    <div style="text-align:center;">
+        <h2 style="color:#C83803;">Jailex Handshake</h2>
+        <p>Sending security token to dashboard...</p>
     </div>
-
     <script>
-      const hash = window.location.hash;
-      if (hash) {
-        const params = new URLSearchParams(hash.substring(1));
-        const token = params.get('access_token');
-
-        if (token) {
-          // Send the token back to the main Jailex window
-          if (window.opener) {
-            window.opener.postMessage({ type: 'TWITCH_TOKEN', token: token }, window.location.origin);
-          }
-          window.close(); // Close the popup automatically
+        const hash = window.location.hash;
+        if (hash) {
+            const params = new URLSearchParams(hash.substring(1));
+            const token = params.get('access_token');
+            if (token && window.opener) {
+                // Shouts the token back to index.html
+                window.opener.postMessage({ type: 'TWITCH_TOKEN', token: token }, window.location.origin);
+                window.close();
+            }
         }
-      }
     </script>
 </body>
 </html>
