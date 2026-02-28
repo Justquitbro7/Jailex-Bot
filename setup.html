@@ -1,26 +1,29 @@
 <!DOCTYPE html>
-<html>
-<head><title>JAILEX | Master Setup</title></head>
-<body style="background:#020617; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; overflow:hidden;">
-    <div style="text-align:center;">
-        <h2 style="color:#00F3FF; font-style:italic; font-weight:900;">SIGNAL SECURED</h2>
-        <p style="color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:1px;">Transferring Handshake to JAILEX Studio...</p>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Jailex Syncing...</title>
+</head>
+<body style="background: #0B162A; color: #FFFFFF; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+    <div style="text-align: center;">
+        <h2 style="color: #C83803;">Syncing with Twitch...</h2>
+        <p>This window will close automatically.</p>
     </div>
 
     <script>
-        const hash = window.location.hash;
-        if (hash.includes('access_token=')) {
-            const token = hash.split('access_token=')[1].split('&')[0];
-            
-            // This is the "Magic" - It talks directly back to your local file
-            if (window.opener) {
-                window.opener.postMessage({ type: 'JAILEX_TOKEN', token: token }, "*");
-                setTimeout(() => window.close(), 1000);
-            } else {
-                // Fallback if not a popup
-                document.body.innerHTML = "<h2>Handshake complete. Please return to your Studio tab.</h2>";
-            }
+      const hash = window.location.hash;
+      if (hash) {
+        const params = new URLSearchParams(hash.substring(1));
+        const token = params.get('access_token');
+
+        if (token) {
+          // Send the token back to the main Jailex window
+          if (window.opener) {
+            window.opener.postMessage({ type: 'TWITCH_TOKEN', token: token }, window.location.origin);
+          }
+          window.close(); // Close the popup automatically
         }
+      }
     </script>
 </body>
 </html>
