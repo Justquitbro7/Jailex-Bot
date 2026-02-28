@@ -3,212 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Bot v5.2 - Local Engine</title>
+    <title>Jailex v5.3 - Debug Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background-color: #020617; color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .status-on { color: #22c55e; text-shadow: 0 0 8px rgba(34, 197, 94, 0.4); }
-        .status-off { color: #ef4444; }
-        .log-entry { border-left: 3px solid #3b82f6; transition: all 0.2s; }
-        .log-entry:hover { background-color: #1e293b; }
-        .version-tag { background: #334155; padding: 2px 10px; border-radius: 99px; font-size: 11px; font-weight: bold; color: #cbd5e1; }
-    </style>
 </head>
-<body class="p-4 md:p-8">
-
-    <div class="max-w-3xl mx-auto bg-slate-900 rounded-2xl shadow-2xl border border-slate-800 overflow-hidden">
-        <div class="bg-slate-800/50 p-6 border-b border-slate-800 flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-black text-blue-400 tracking-tight">JAILEX <span class="text-white">STUDIO</span></h1>
-                <p class="text-xs text-slate-400 mt-1 uppercase tracking-widest font-semibold">Live Broadcast Engine</p>
+<body class="bg-slate-950 text-white p-8">
+    <div class="max-w-xl mx-auto bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-2xl">
+        <h1 class="text-xl font-bold text-blue-400 mb-4">Jailex Debug Console <span class="text-xs bg-slate-800 px-2 py-1 rounded ml-2">v5.3</span></h1>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-black p-3 rounded border border-slate-800">
+                <p class="text-[10px] text-slate-500 uppercase">WebSocket</p>
+                <p id="ws-status" class="text-yellow-500 font-mono text-sm">INITIALIZING...</p>
             </div>
-            <span class="version-tag text-blue-300">v5.2 - STABLE</span>
+            <div class="bg-black p-3 rounded border border-slate-800">
+                <p class="text-[10px] text-slate-500 uppercase">Audio Engine</p>
+                <p id="tts-status" class="text-red-500 font-mono text-sm">LOCKED</p>
+            </div>
         </div>
 
-        <div class="p-6 space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Kick Connection</p>
-                    <p id="kick-status" class="font-mono text-sm status-off">WAITING...</p>
-                </div>
-                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Speech Engine</p>
-                    <p id="engine-status" class="font-mono text-sm text-yellow-500">LOCKED</p>
-                </div>
-                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Queue Depth</p>
-                    <p id="queue-count" class="font-mono text-sm text-blue-400">0 MSGS</p>
-                </div>
-            </div>
+        <button id="unlock-btn" class="w-full bg-blue-600 py-4 rounded-xl font-bold mb-6 hover:bg-blue-500 transition-all">
+            1. CLICK TO UNLOCK AUDIO
+        </button>
 
-            <div class="bg-slate-800/30 p-5 rounded-xl border border-slate-700/50">
-                <div class="flex items-center justify-between mb-4">
-                    <label class="text-sm font-semibold text-slate-300">TTS Output Volume (<span id="vol-val">100</span>%)</label>
-                </div>
-                <input type="range" id="volume" min="0" max="1" step="0.1" value="1" 
-                    class="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500 mb-6">
-                
-                <button id="start-btn" class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 group">
-                    <span class="text-xl group-hover:rotate-12 transition-transform">🔊</span>
-                    ACTIVATE AUDIO & RESET
-                </button>
-            </div>
-
-            <div>
-                <h3 class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2">
-                    <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                    Security-Filtered Feed
-                </h3>
-                <div id="chat-log" class="bg-black/50 p-4 h-64 overflow-y-auto rounded-xl border border-slate-800 font-mono text-sm space-y-2">
-                    <p class="text-slate-700 italic">Initializing local connection...</p>
-                </div>
-            </div>
+        <div id="debug-log" class="bg-black p-4 h-64 overflow-y-auto rounded border border-slate-800 font-mono text-[11px] text-green-500 space-y-1">
+            <p>> System standby...</p>
         </div>
     </div>
 
     <script>
-        // --- CONFIG ---
-        const KICK_CHANNEL = "justquitbro7";
-        const KICK_BOTS = ["botrix", "kickbot", "streamelements", "nightbot", "moobot"];
-        const BANNED_WORDS = ["spam", "testword", "vulgarity1"]; // Add words to block here
+        // --- HARD-CODED CONFIG ---
+        const CHANNEL_ID = "24968498"; // Your Verified Kick ID
+        const PUSHER_KEY = "32cbd69e4b950bf97679";
+        
+        const debugLog = document.getElementById('debug-log');
+        const wsStatus = document.getElementById('ws-status');
+        const ttsStatus = document.getElementById('tts-status');
 
-        // --- STATE ---
-        let queue = [];
-        let isSpeaking = false;
-        let processedIds = new Set();
-        let volume = 1;
-        let audioUnlocked = false;
-
-        // --- DOM ---
-        const kickStatusEl = document.getElementById('kick-status');
-        const queueCountEl = document.getElementById('queue-count');
-        const chatLogEl = document.getElementById('chat-log');
-        const startBtn = document.getElementById('start-btn');
-        const volSlider = document.getElementById('volume');
-        const volVal = document.getElementById('vol-val');
-        const engineStatus = document.getElementById('engine-status');
-
-        // --- SECURITY: BANNED WORDS FILTER ---
-        function isMessageSafe(msg) {
-            const lowerMsg = msg.toLowerCase();
-            return !BANNED_WORDS.some(word => lowerMsg.includes(word));
-        }
-
-        // --- TTS CORE ---
-        function processQueue() {
-            if (isSpeaking || queue.length === 0 || !audioUnlocked) return;
-
-            const next = queue.shift();
-            isSpeaking = true;
-            queueCountEl.innerText = `${queue.length} MSGS`;
-
-            const utterance = new SpeechSynthesisUtterance(`${next.user} says ${next.msg}`);
-            utterance.volume = volume;
-            utterance.rate = 1;
-
-            utterance.onend = () => {
-                isSpeaking = false;
-                setTimeout(processQueue, 150);
-            };
-
-            utterance.onerror = () => {
-                isSpeaking = false;
-                processQueue();
-            };
-
-            window.speechSynthesis.speak(utterance);
-        }
-
-        // --- KICK PUSHER CONNECTION ---
-        async function connectKick() {
-            try {
-                // Fetch Channel Data
-                const res = await fetch(`https://kick.com/api/v2/channels/${KICK_CHANNEL}`);
-                const data = await res.json();
-                const chatroomId = data.chatroom?.id;
-
-                if (!chatroomId) throw new Error("ID Failed");
-
-                // Connect to Pusher
-                const ws = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0-rc2&flash=false");
-
-                ws.onopen = () => {
-                    ws.send(JSON.stringify({
-                        event: "pusher:subscribe",
-                        data: { channel: `chatrooms.${chatroomId}.v2` }
-                    }));
-                    kickStatusEl.innerText = "LINKED";
-                    kickStatusEl.className = "font-mono text-sm status-on";
-                };
-
-                ws.onmessage = (e) => {
-                    const raw = JSON.parse(e.data);
-                    if (raw.event === "App\\Events\\ChatMessageEvent") {
-                        const chat = JSON.parse(raw.data);
-                        const user = chat.sender?.username;
-                        const msg = chat.content;
-                        const id = chat.id;
-
-                        // Security & Bot Check
-                        if (KICK_BOTS.includes(user.toLowerCase()) || processedIds.has(id) || !isMessageSafe(msg)) {
-                            return; 
-                        }
-
-                        processedIds.add(id);
-                        addChatToLog(user, msg);
-                        queue.push({ user, msg });
-                        queueCountEl.innerText = `${queue.length} MSGS`;
-                    }
-                };
-
-                ws.onclose = () => {
-                    kickStatusEl.innerText = "OFFLINE - RETRYING";
-                    kickStatusEl.className = "font-mono text-sm status-off";
-                    setTimeout(connectKick, 5000);
-                };
-
-            } catch (err) {
-                console.error("Connect Error:", err);
-                setTimeout(connectKick, 10000);
-            }
-        }
-
-        // --- LOGGING ---
-        function addChatToLog(user, msg) {
+        function log(msg) {
+            console.log("JAILEX:", msg); // Force to browser console
             const p = document.createElement('p');
-            p.className = "log-entry p-2 bg-slate-900/40 rounded shadow-sm";
-            p.innerHTML = `<span class="text-blue-400 font-bold">${user}</span>: <span class="text-slate-300">${msg}</span>`;
-            chatLogEl.prepend(p);
-            if (chatLogEl.children.length > 25) chatLogEl.lastChild.remove();
+            p.innerText = `> ${msg}`;
+            debugLog.appendChild(p);
+            debugLog.scrollTop = debugLog.scrollHeight;
         }
 
-        // --- USER ACTIVATION ---
-        startBtn.addEventListener('click', () => {
-            audioUnlocked = true;
+        // --- 1. TTS UNLOCK ---
+        document.getElementById('unlock-btn').addEventListener('click', () => {
             window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance("Audio system online");
+            window.speechSynthesis.speak(utter);
             
-            // Wake up speech engine
-            const wake = new SpeechSynthesisUtterance("Engine Active");
-            wake.volume = 0.1;
-            window.speechSynthesis.speak(wake);
-
-            engineStatus.innerText = "ACTIVE";
-            engineStatus.className = "font-mono text-sm status-on";
-            startBtn.innerHTML = "⚡ SYSTEM READY & RESET";
-            startBtn.classList.replace('bg-blue-600', 'bg-emerald-600');
-            
-            isSpeaking = false;
-            console.log("Local Engine Activated");
+            ttsStatus.innerText = "ACTIVE";
+            ttsStatus.classList.replace('text-red-500', 'text-green-500');
+            log("Audio Engine Unlocked");
         });
 
-        volSlider.addEventListener('input', (e) => {
-            volume = e.target.value;
-            volVal.innerText = Math.round(volume * 100);
-        });
+        // --- 2. WEBSOCKET CONNECTION ---
+        function connect() {
+            log("Attempting WebSocket connection...");
+            wsStatus.innerText = "CONNECTING...";
 
-        // Initialize Loops
-        setInterval(processQueue, 100);
-        connectKick();
+            const url = `wss://ws-us2.pusher.com/app/${PUSHER_KEY}?protocol=7&client=js&version=8.4.0-rc2&flash=false`;
+            const ws = new WebSocket(url);
+
+            ws.onopen = () => {
+                log("Connected to Pusher Server");
+                wsStatus.innerText = "CONNECTED";
+                wsStatus.classList.replace('text-yellow-500', 'text-green-500');
+
+                // Subscribe to your specific chat
+                const subscribeMsg = {
+                    event: "pusher:subscribe",
+                    data: { channel: `chatrooms.${CHANNEL_ID}.v2` }
+                };
+                ws.send(JSON.stringify(subscribeMsg));
+                log(`Subscribed to Chatroom: ${CHANNEL_ID}`);
+            };
+
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                
+                if (data.event === "App\\Events\\ChatMessageEvent") {
+                    const chat = JSON.parse(data.data);
+                    const user = chat.sender.username;
+                    const msg = chat.content;
+                    
+                    log(`MSG: ${user}: ${msg}`);
+                    
+                    // SPEAK
+                    const utter = new SpeechSynthesisUtterance(`${user} says ${msg}`);
+                    window.speechSynthesis.speak(utter);
+                }
+            };
+
+            ws.onerror = (err) => {
+                log("CONNECTION ERROR!");
+                wsStatus.innerText = "ERROR";
+            };
+
+            ws.onclose = () => {
+                log("Connection Lost. Retrying in 5s...");
+                wsStatus.innerText = "DISCONNECTED";
+                setTimeout(connect, 5000);
+            };
+        }
+
+        // Auto-start connection
+        connect();
     </script>
 </body>
 </html>
