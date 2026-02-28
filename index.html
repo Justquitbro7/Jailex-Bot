@@ -1,21 +1,110 @@
 <!DOCTYPE html>
-<html>
-<head><title>Jailex Handshake</title></head>
-<body style="background:#0B162A; color:white; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; margin:0;">
-    <div style="text-align:center;">
-        <h2 style="color:#C83803;">Jailex Handshake</h2>
-        <p>Sending security token to dashboard...</p>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jailex - Streaming Made Easy</title>
+    <style>
+        /* BEARS EDITION UI */
+        body { background-color: #0B162A; color: #FFFFFF; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 260px; background-color: #070D19; border-right: 4px solid #C83803; padding: 20px; display: flex; flex-direction: column; }
+        .sidebar h1 { color: #C83803; font-size: 1.8rem; text-align: center; margin-bottom: 40px; letter-spacing: 2px; }
+        .nav-item { padding: 15px; color: white; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.3s; }
+        .nav-item:hover, .active { background-color: #C83803; font-weight: bold; }
+        .main { flex-grow: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .card { background-color: #152238; border: 2px solid #C83803; border-radius: 12px; padding: 40px; width: 100%; max-width: 500px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+        .sync-btn { background-color: #C83803; color: white; border: none; padding: 18px 35px; font-size: 1.2rem; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .sync-btn:hover { background-color: #FF4500; transform: scale(1.02); }
+        #sync-status { display: block; margin-top: 20px; font-size: 1.1rem; font-weight: bold; color: #C83803; text-transform: uppercase; }
+        #debug-log { font-size: 0.7rem; color: #555; margin-top: 20px; text-align: left; background: #070D19; padding: 10px; border-radius: 5px; height: 60px; overflow-y: auto; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h1>JAILEX</h1>
+        <div class="nav-item active">Credentials</div>
+        <div class="nav-item">Bot Commands</div>
+        <div class="nav-item">TTS Settings</div>
+        <div class="nav-item">Overlay</div>
+        <div style="margin-top: auto; font-size: 0.7rem; color: #444; text-align: center;">Streaming Made Easy v1.0</div>
     </div>
+
+    <div class="main">
+        <div class="card">
+            <h2 style="color: #C83803;">Twitch Integration</h2>
+            <p>Ready to sync your <strong>Jailex</strong> bot? Click below to authorize and start streaming.</p>
+            
+            <button class="sync-btn" onclick="openTwitchSync()">
+                Sync Twitch Account
+            </button>
+
+            <span id="sync-status">Status: Disconnected</span>
+            <div id="debug-log">System: Ready...</div>
+        </div>
+    </div>
+
     <script>
-        const hash = window.location.hash;
-        if (hash) {
-            const params = new URLSearchParams(hash.substring(1));
-            const token = params.get('access_token');
-            if (token && window.opener) {
-                window.opener.postMessage({ type: 'TWITCH_TOKEN', token: token }, window.location.origin);
-                window.close();
+        const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
+
+        function log(msg) {
+            console.log("Jailex:", msg);
+            const debug = document.getElementById('debug-log');
+            if (debug) debug.innerHTML += `<div>> ${msg}</div>`;
+        }
+
+        // 1. Listen for the token from the popup handshake
+        window.addEventListener('message', (event) => {
+            if (event.origin !== window.location.origin) return;
+            if (event.data.type === 'TWITCH_TOKEN') {
+                const token = event.data.token;
+                localStorage.setItem('jailex_twitch_token', token);
+                log("Token received! Authenticating...");
+                connectBot(token);
+            }
+        });
+
+        // 2. Open the Sync Popup
+        function openTwitchSync() {
+            log("Opening Twitch Authorization...");
+            const redirectUri = `${window.location.origin}/setup.html`;
+            const scope = encodeURIComponent('chat:read chat:edit');
+            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+            
+            window.open(authUrl, 'JailexSync', 'width=450,height=600');
+        }
+
+        // 3. Connect to Twitch API
+        async function connectBot(token) {
+            const status = document.getElementById('sync-status');
+            status.innerText = "Status: Connecting...";
+            try {
+                const res = await fetch('https://api.twitch.tv/helix/users', {
+                    headers: { 'Client-ID': CLIENT_ID, 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.data && data.data[0]) {
+                    const user = data.data[0].display_name;
+                    status.innerText = `Status: Live as ${user}`;
+                    status.style.color = "#00FF00"; // Green for success
+                    log(`Successfully synced as ${user}`);
+                }
+            } catch (err) {
+                log("Error: " + err.message);
+                status.innerText = "Status: Sync Failed";
+                status.style.color = "red";
             }
         }
+
+        // 4. Auto-login on Page Load
+        window.onload = () => {
+            log("Jailex Dashboard Loaded.");
+            const savedToken = localStorage.getItem('jailex_twitch_token');
+            if (savedToken) {
+                log("Restoring saved session...");
+                connectBot(savedToken);
+            }
+        };
     </script>
 </body>
 </html>
