@@ -5,42 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jailex - Streaming Made Easy</title>
     <style>
-        /* BEARS EDITION UI: Navy & Orange */
         body { background-color: #0B162A; color: #FFFFFF; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         .sidebar { width: 260px; background-color: #070D19; border-right: 4px solid #C83803; padding: 20px; display: flex; flex-direction: column; }
-        .sidebar h1 { color: #C83803; font-size: 1.8rem; text-align: center; margin-bottom: 40px; letter-spacing: 2px; }
+        .sidebar h1 { color: #C83803; font-size: 1.8rem; text-align: center; margin-bottom: 40px; }
         .nav-item { padding: 15px; color: white; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.3s; }
         .nav-item:hover, .active { background-color: #C83803; font-weight: bold; }
         .main { flex-grow: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .card { background-color: #152238; border: 2px solid #C83803; border-radius: 12px; padding: 40px; width: 100%; max-width: 550px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
-        
-        .sync-btn { background-color: #C83803; color: white; border: none; padding: 18px 35px; font-size: 1.2rem; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; text-transform: uppercase; letter-spacing: 1px; }
-        .sync-btn:hover { background-color: #FF4500; transform: scale(1.02); }
-        
-        #sync-status { display: block; margin-top: 20px; font-size: 1.1rem; font-weight: bold; color: #C83803; text-transform: uppercase; }
+        .card { background-color: #152238; border: 2px solid #C83803; border-radius: 12px; padding: 40px; width: 100%; max-width: 550px; text-align: center; }
+        .sync-btn { background-color: #C83803; color: white; border: none; padding: 18px 35px; font-size: 1.2rem; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; text-transform: uppercase; }
+        #sync-status { display: block; margin-top: 20px; font-size: 1.1rem; font-weight: bold; color: #C83803; }
         #debug-log { font-size: 0.7rem; color: #555; margin-top: 20px; text-align: left; background: #070D19; padding: 10px; border-radius: 5px; height: 80px; overflow-y: auto; font-family: monospace; border: 1px solid #111; }
     </style>
 </head>
 <body>
-
     <div class="sidebar">
         <h1>JAILEX</h1>
         <div class="nav-item active">Credentials</div>
         <div class="nav-item">Bot Commands</div>
         <div class="nav-item">TTS Settings</div>
-        <div class="nav-item">Overlay</div>
         <div style="margin-top: auto; font-size: 0.7rem; color: #444; text-align: center;">Streaming Made Easy v1.0</div>
     </div>
-
     <div class="main">
         <div class="card">
             <h2 style="color: #C83803;">Twitch Integration</h2>
             <p>Sync your <strong>Jailex</strong> bot to start your session.</p>
-            
-            <button id="sync-button" class="sync-btn">
-                Sync Twitch Account
-            </button>
-
+            <button id="sync-button" class="sync-btn">Sync Twitch Account</button>
             <span id="sync-status">Status: Disconnected</span>
             <div id="debug-log">System: Ready...</div>
         </div>
@@ -48,7 +37,6 @@
 
     <script>
         const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
-        let BOT_TOKEN = null;
 
         function log(msg) {
             const debug = document.getElementById('debug-log');
@@ -56,25 +44,25 @@
             debug.scrollTop = debug.scrollHeight;
         }
 
-        // --- THE "CATCHER" (Handshake Listener) ---
-        window.addEventListener('message', (event) => {
-            if (event.origin !== window.location.origin) return;
-            if (event.data.type === 'TWITCH_TOKEN') {
-                BOT_TOKEN = event.data.token;
-                localStorage.setItem('jailex_token', BOT_TOKEN);
-                log("Token received! Authenticating...");
-                connectBot(BOT_TOKEN);
-            }
-        });
-
-        // --- THE "THROWER" (Sync Button Action) ---
+        // --- THE SYNC BUTTON ---
         document.getElementById('sync-button').onclick = function() {
             log("Opening Twitch Authorization...");
-            const redirectUri = `${window.location.origin}/setup.html`;
+            // We use the exact URL you sent me
+            const redirectUri = "https://jailex-h16lm8t8s-justquitbro7s-projects.vercel.app/setup.html";
             const scope = encodeURIComponent('chat:read chat:edit');
             const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
             window.open(authUrl, 'JailexSync', 'width=450,height=600');
         };
+
+        // --- THE CATCHER ---
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'TWITCH_TOKEN') {
+                const token = event.data.token;
+                localStorage.setItem('jailex_token', token);
+                log("Token received! Authenticating...");
+                connectBot(token);
+            }
+        });
 
         async function connectBot(token) {
             const status = document.getElementById('sync-status');
@@ -87,11 +75,8 @@
                 if (data.data && data.data[0]) {
                     const user = data.data[0].display_name;
                     status.innerText = `Status: Live as ${user}`;
-                    status.style.color = "#00FF00"; // Bears Victory Green
+                    status.style.color = "#00FF00";
                     log(`Success: Connected as ${user}`);
-                    
-                    // START THE SOCIALS TIMER (Every 15 minutes)
-                    startSocialsTimer();
                 }
             } catch (err) {
                 log("Error: " + err.message);
@@ -99,23 +84,9 @@
             }
         }
 
-        // --- SOCIALS REMINDER LOGIC ---
-        function startSocialsTimer() {
-            log("Socials Timer Started (Every 15m)");
-            setInterval(() => {
-                log("Bot is posting socials to chat...");
-                // This is where the actual chat message code will go next!
-            }, 15 * 60 * 1000); 
-        }
-
         window.onload = () => {
-            log("Jailex Dashboard Loaded.");
             const savedToken = localStorage.getItem('jailex_token');
-            if (savedToken) {
-                log("Restoring saved session...");
-                BOT_TOKEN = savedToken;
-                connectBot(savedToken);
-            }
+            if (savedToken) connectBot(savedToken);
         };
     </script>
 </body>
