@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jailex Studio v3.8 | Auth Fix</title>
+    <title>Jailex Studio v3.9 | Force Sync</title>
     <style>
         :root { --navy: #0B162A; --orange: #C83803; --blue: #00F3FF; }
         body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
@@ -29,26 +29,27 @@
 
     <div class="main-content">
         <div id="setup" class="tab-content">
-            <h2>Account Sync</h2>
+            <h2>Step 1: Link Accounts</h2>
+            
             <div class="card">
-                <h3>1. Twitch</h3>
+                <h3>Twitch</h3>
                 <button id="tBtn" class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
-                <div id="tDone" class="hidden">✅ Twitch Token Saved! <code id="tCode"></code> <button class="btn" onclick="clearTwitch()" style="width: auto; padding: 5px 10px; font-size: 0.7em;">Reset</button></div>
+                <div id="tDone" class="hidden">✅ Twitch Connected! <code id="tCode"></code></div>
             </div>
 
             <div class="card">
-                <h3>2. Kick</h3>
-                <input type="text" id="kIn" placeholder="Type Kick Username (e.g. Justquitbro7)">
-                <button id="kBtn" class="btn btn-kick" onclick="resolveKick()">RESOLVE KICK ID</button>
+                <h3>Kick</h3>
+                <input type="text" id="kIn" placeholder="Enter Kick Username">
+                <button id="kBtn" class="btn btn-kick" onclick="resolveKick()">FIND KICK ID</button>
                 <div id="kDone" class="hidden">✅ Kick ID Found: <code id="kCode"></code></div>
             </div>
         </div>
 
         <div id="overlay" class="tab-content hidden">
-            <h2>Overlay Link</h2>
+            <h2>Step 2: Get Overlay URL</h2>
             <div class="card">
-                <p>Paste this into Lightstream:</p>
-                <code id="fURL" style="color: var(--blue);">Connect Twitch & Kick first...</code>
+                <p>Paste this into Lightstream/OBS:</p>
+                <div id="fURL" style="background:#000; padding:15px; border-radius:5px; font-family:monospace; font-size:0.8em; color:var(--blue); border-left:4px solid var(--orange);">Complete setup first...</div>
                 <button class="btn" onclick="copyUrl()">COPY URL</button>
             </div>
         </div>
@@ -65,83 +66,72 @@
             el.classList.add('active');
         }
 
-        // --- TWITCH LOGIC ---
+        // --- TWITCH ---
         function startTwitch() {
             window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${CID}&redirect_uri=${encodeURIComponent(RED)}&response_type=token&scope=chat:read&force_verify=true`;
         }
 
-        function clearTwitch() {
-            localStorage.removeItem('jailex_twitch_token');
-            location.reload();
-        }
-
-        // --- KICK LOGIC ---
+        // --- KICK (Real ID Fetch) ---
         async function resolveKick() {
             const user = document.getElementById('kIn').value;
-            if(!user) return alert("Please type your Kick username first!");
-            
+            if(!user) return alert("Please type your username!");
             try {
                 const res = await fetch(`https://corsproxy.io/?https://kick.com/api/v1/channels/${user}`);
                 const data = await res.json();
                 if(data.chatroom && data.chatroom.id) {
                     const kid = data.chatroom.id;
-                    document.getElementById('kCode').innerText = kid;
-                    document.getElementById('kDone').classList.remove('hidden');
                     localStorage.setItem('jailex_kick_id', kid);
                     localStorage.setItem('jailex_kick_user', user);
-                    updateFinalURL();
+                    applyDataToUI(null, kid, user);
                 }
-            } catch (e) { alert("User not found on Kick."); }
+            } catch (e) { alert("Kick user not found."); }
         }
 
-        function updateFinalURL() {
-            const token = localStorage.getItem('jailex_twitch_token');
-            const kid = localStorage.getItem('jailex_kick_id');
-            const kuser = localStorage.getItem('jailex_kick_user');
-            
-            if(token && kid) {
-                const final = `${window.location.origin}/overlay.html?twitch=${kuser}&kick=${kid}&token=${token}&size=22&stay=20`;
+        // --- THE "FORCE SYNC" LOGIC ---
+        function applyDataToUI(token, kid, kuser) {
+            const t = token || localStorage.getItem('jailex_twitch_token');
+            const k = kid || localStorage.getItem('jailex_kick_id');
+            const u = kuser || localStorage.getItem('jailex_kick_user');
+
+            if (t) {
+                document.getElementById('tCode').innerText = t.substring(0, 15) + "...";
+                document.getElementById('tDone').classList.remove('hidden');
+                document.getElementById('tBtn').classList.add('hidden');
+            }
+
+            if (k) {
+                document.getElementById('kIn').value = u || "";
+                document.getElementById('kCode').innerText = k;
+                document.getElementById('kDone').classList.remove('hidden');
+            }
+
+            if (t && k) {
+                const final = `${window.location.origin}/overlay.html?twitch=${u}&kick=${k}&token=${t}&size=22&stay=20`;
                 document.getElementById('fURL').innerText = final;
             }
         }
 
         function copyUrl() {
-            navigator.clipboard.writeText(document.getElementById('fURL').innerText);
+            const text = document.getElementById('fURL').innerText;
+            if(text.includes('...')) return alert("Complete Setup first!");
+            navigator.clipboard.writeText(text);
             alert("URL Copied!");
         }
 
-        // --- STARTUP / LOOP PROTECTION ---
         window.onload = function() {
-            // 1. Check for the token in the URL Hash
+            // 1. Capture Hash Data IMMEDIATELY
             if (window.location.hash) {
                 const p = new URLSearchParams(window.location.hash.substring(1));
                 const tok = p.get('access_token');
                 if (tok) {
-                    // Save it permanently
                     localStorage.setItem('jailex_twitch_token', tok);
-                    // Wipe the URL immediately to stop the loop
+                    // 2. Clear hash only after saving
                     history.replaceState(null, null, window.location.pathname);
                 }
             }
-
-            // 2. Load existing data from memory
-            const savedToken = localStorage.getItem('jailex_twitch_token');
-            const savedKickID = localStorage.getItem('jailex_kick_id');
-            const savedKickUser = localStorage.getItem('jailex_kick_user');
-
-            if (savedToken) {
-                document.getElementById('tCode').innerText = savedToken.substring(0, 10) + "...";
-                document.getElementById('tDone').classList.remove('hidden');
-                document.getElementById('tBtn').classList.add('hidden');
-            }
-
-            if (savedKickID) {
-                document.getElementById('kIn').value = savedKickUser;
-                document.getElementById('kCode').innerText = savedKickID;
-                document.getElementById('kDone').classList.remove('hidden');
-            }
-
-            updateFinalURL();
+            
+            // 3. Sync UI with Memory
+            applyDataToUI();
         };
     </script>
 </body>
