@@ -2,150 +2,137 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jailex Master Overlay v3.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jailex Studio | Unified Overlay</title>
     <style>
-        :root { --neon: #ff6a00; --size: 22px; --op: 0.85; }
+        /* Transparent background for streaming */
         body { 
-            background: transparent !important; 
+            background-color: rgba(0, 0, 0, 0); 
             margin: 0; 
-            padding: 15px; 
+            padding: 20px; 
             overflow: hidden; 
-            font-family: 'Segoe UI', sans-serif; 
-            color: white; 
-        }
-        
-        #chat-container { 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
-            gap: 12px; 
-            justify-content: flex-end; 
+            font-family: 'Segoe UI', Arial, sans-serif;
         }
 
-        .chat-message { 
-            background: rgba(11, 22, 42, var(--op)); 
-            border-left: 5px solid var(--neon); 
-            padding: 12px; 
-            border-radius: 0 8px 8px 0; 
-            font-size: var(--size); 
-            text-shadow: 2px 2px 4px black; 
-            animation: slideIn 0.3s ease-out; 
-            max-width: 95%; 
-            word-wrap: break-word;
+        #chat-container {
+            display: flex;
+            flex-direction: column-reverse;
+            height: 95vh;
+            width: 400px; /* Standard overlay width */
+            gap: 10px;
         }
 
-        /* Platform Color Coding */
-        .t-user { color: #bf94ff; font-weight: bold; text-shadow: 0 0 8px #9146ff; } /* Twitch Purple */
-        .k-user { color: #53fc18; font-weight: bold; text-shadow: 0 0 8px #53fc18; } /* Kick Green */
-        
-        @keyframes slideIn { 
-            from { opacity: 0; transform: translateX(-30px); } 
-            to { opacity: 1; transform: translateX(0); } 
+        .message {
+            background: rgba(11, 22, 42, 0.9); /* Jailex Navy */
+            border-left: 5px solid #C83803; /* Jailex Orange */
+            padding: 10px;
+            border-radius: 8px;
+            color: white;
+            animation: fadeIn 0.3s ease;
+            font-size: 18px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .user-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        /* Platform Badges */
+        .badge {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 8px;
+            text-transform: uppercase;
+        }
+        .twitch-badge { background: #6441a5; color: white; }
+        .kick-badge { background: #00E701; color: black; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
     </style>
 </head>
 <body>
+
     <div id="chat-container"></div>
 
     <script>
-        // --- 1. CONFIGURATION & URL PARSING ---
-        const params = new URLSearchParams(window.location.search);
-        const stayTime = (parseInt(params.get('stay')) || 20) * 1000;
-        
-        // Apply dynamic styles from the Studio Builder
-        document.documentElement.style.setProperty('--neon', params.get('color') || '#ff6a00');
-        document.documentElement.style.setProperty('--size', (params.get('size') || '22') + 'px');
-        document.documentElement.style.setProperty('--op', params.get('opacity') || '0.85');
+        // 1. GRAB THE DATA FROM THE URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const twitchToken = urlParams.get('token');
+        const kickId = urlParams.get('kick_id');
+        const kickUser = urlParams.get('kick_user') || 'justquitbro7'; // Defaults to you
 
-        // --- 2. MESSAGE DISPLAY LOGIC ---
-        function addMessage(user, text, platform) {
-            const container = document.getElementById('chat-container');
-            const div = document.createElement('div');
-            div.className = 'chat-message';
+        const chatContainer = document.getElementById('chat-container');
+
+        // 2. HELPER TO ADD MESSAGES TO SCREEN
+        function addMessage(platform, user, text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message';
             
-            // Choose color class based on where the message came from
-            const platformClass = platform === 'Twitch' ? 't-user' : 'k-user';
+            const badgeClass = platform === 'Twitch' ? 'twitch-badge' : 'kick-badge';
             
-            div.innerHTML = `<span class="${platformClass}">${user}:</span> ${text}`;
-            
-            container.appendChild(div);
-            
-            // Keep the overlay clean (max 8 messages)
-            if (container.children.length > 8) {
-                container.removeChild(container.firstChild);
+            msgDiv.innerHTML = `
+                <span class="user-name">
+                    <span class="badge ${badgeClass}">${platform}</span>${user}
+                </span>
+                <span class="text">${text}</span>
+            `;
+
+            chatContainer.prepend(msgDiv); // Newest messages at the bottom
+
+            // Auto-remove old messages to keep it clean
+            if (chatContainer.childNodes.length > 50) {
+                chatContainer.removeChild(chatContainer.lastChild);
             }
-            
-            // Auto-remove message after the "Stay Time"
-            setTimeout(() => {
-                div.style.transition = "opacity 1s";
-                div.style.opacity = "0";
-                setTimeout(() => div.remove(), 1000);
-            }, stayTime);
         }
 
-        // --- 3. TWITCH ENGINE (IRC) ---
-        const twChannel = params.get('twitch');
-        if(twChannel) {
-            const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-            
-            tws.onopen = () => {
-                tws.send('PASS anonymous'); // Pass is required but can be anything for justinfan
-                tws.send('NICK justinfan' + Math.floor(Math.random() * 99999));
-                tws.send('JOIN #' + twChannel.toLowerCase());
-                console.log("Twitch Overlay Connected");
+        // 3. TWITCH CONNECTION (TMI.js logic simplified)
+        if (twitchToken) {
+            // Using a simple WebSocket for Twitch
+            const twitchWS = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+
+            twitchWS.onopen = () => {
+                twitchWS.send(`PASS oauth:${twitchToken}`);
+                twitchWS.send(`NICK ${kickUser}`); // Uses your name to connect
+                twitchWS.send(`JOIN #${kickUser}`);
             };
 
-            tws.onmessage = (e) => {
-                // Keep-alive check
-                if(e.data.includes('PING')) {
-                    tws.send('PONG :tmi.twitch.tv');
+            twitchWS.onmessage = (event) => {
+                if (event.data.includes('PRIVMSG')) {
+                    const parts = event.data.split('!');
+                    const user = parts[0].substring(1);
+                    const msg = event.data.split(' :')[1];
+                    addMessage('Twitch', user, msg);
                 }
-                
-                // Parse chat message
-                if(e.data.includes('PRIVMSG')) {
-                    const user = e.data.split('!')[0].substring(1);
-                    const msg = e.data.substring(e.data.indexOf(':', 1) + 1);
-                    if(user && msg) {
-                        addMessage(user, msg.trim(), 'Twitch');
-                    }
-                }
-            };
-
-            tws.onclose = () => {
-                console.log("Twitch closed, reconnecting...");
-                setTimeout(() => location.reload(), 5000);
+                // Keep connection alive
+                if (event.data.includes('PING')) twitchWS.send('PONG :tmi.twitch.tv');
             };
         }
 
-        // --- 4. KICK ENGINE (PUSHER) ---
-        const kickId = params.get('kick');
-        if(kickId) {
-            const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-            
-            kws.onopen = () => {
-                kws.send(JSON.stringify({ 
-                    event: "pusher:subscribe", 
-                    data: { channel: `chatrooms.${kickId}.v2` } 
-                }));
-                console.log("Kick Overlay Connected");
+        // 4. KICK CONNECTION (Using their EventSource or WebSocket)
+        if (kickId) {
+            // For Kick, we connect to their chatroom ID
+            const kickWS = new WebSocket('wss://ws-us2.pusher.com/app/eb1d5f283081a78b932c?protocol=7&client=js&version=7.4.0&flash=false');
+
+            kickWS.onopen = () => {
+                const subscribeData = {
+                    event: "pusher:subscribe",
+                    data: { channel: `chatrooms.${kickId}.v2` }
+                };
+                kickWS.send(JSON.stringify(subscribeData));
             };
 
-            kws.onmessage = (e) => {
-                const d = JSON.parse(e.data);
-                if (d.event === "App\\Events\\ChatMessageEvent") {
-                    const m = JSON.parse(d.data);
-                    addMessage(m.sender.username, m.content, 'Kick');
+            kickWS.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.event === "App\\Events\\ChatMessageEvent") {
+                    const msgData = JSON.parse(data.data);
+                    addMessage('Kick', msgData.sender.username, msgData.content);
                 }
-            };
-
-            // Kick Heartbeat
-            setInterval(() => {
-                if(kws.readyState === 1) kws.send(JSON.stringify({event:"pusher:ping",data:{}}));
-            }, 20000);
-
-            kws.onclose = () => {
-                console.log("Kick closed, reconnecting...");
-                setTimeout(() => location.reload(), 5000);
             };
         }
     </script>
