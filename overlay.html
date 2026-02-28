@@ -2,25 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jailex Overlay v3.0</title>
+    <title>Jailex Overlay Lightstream-Safe</title>
     <style>
-        body { background: transparent; color: white; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; margin: 0; padding: 20px; }
-        #chat-container { display: flex; flex-direction: column-reverse; height: 90vh; width: 100%; gap: 10px; }
-        .msg { 
-            background: rgba(11, 22, 42, 0.9); /* Bears Navy */
-            border-left: 5px solid #FF6A00; /* Bears Orange */
-            padding: 12px; border-radius: 6px; animation: slideIn 0.3s ease-out; 
-            max-width: 80%; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        body { background: transparent; color: white; font-family: sans-serif; overflow: hidden; margin: 0; padding: 10px; }
+        #chat-container { 
+            display: block; 
+            height: 100vh; 
+            width: 100%; 
         }
-        .user { font-weight: bold; color: #00F3FF; font-size: 0.9em; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-        .platform { font-size: 0.7em; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); }
-        .content { font-size: var(--fs); line-height: 1.3; word-wrap: break-word; }
-        #status-box { position: fixed; top: 10px; right: 10px; font-size: 10px; color: #555; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px; }
-        @keyframes slideIn { from { transform: translateX(-30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .msg { 
+            background: rgba(11, 22, 42, 0.95); /* Bears Navy */
+            border-left: 5px solid #FF6A00; /* Bears Orange */
+            padding: 10px; 
+            margin-bottom: 8px;
+            border-radius: 4px; 
+            width: fit-content;
+            max-width: 90%;
+            font-size: var(--fs);
+        }
+        .user { font-weight: bold; color: #00F3FF; font-size: 0.8em; margin-bottom: 2px; }
+        .platform { font-size: 0.7em; margin-right: 5px; opacity: 0.7; }
     </style>
 </head>
 <body>
-    <div id="status-box">Twitch: ... | Kick: ...</div>
     <div id="chat-container"></div>
 
     <script>
@@ -31,51 +35,65 @@
         const stayTime = (params.get('stay') || '20') * 1000;
 
         document.documentElement.style.setProperty('--fs', fontSize + 'px');
-        const status = document.getElementById('status-box');
 
         function addMessage(user, message, platform) {
             const container = document.getElementById('chat-container');
             const div = document.createElement('div');
             div.className = 'msg';
-            div.innerHTML = `<div class="user"><span class="platform">${platform}</span>${user}</div><div class="content">${message}</div>`;
-            container.prepend(div);
-            setTimeout(() => { div.style.opacity = '0'; div.style.transition = '1s'; setTimeout(() => div.remove(), 1000); }, stayTime);
+            div.innerHTML = '<div class="user"><span class="platform">[' + platform + ']</span>' + user + '</div>' +
+                            '<div>' + message + '</div>';
+            
+            // Add new messages to the TOP
+            container.insertBefore(div, container.firstChild);
+            
+            // Remove after stayTime
+            setTimeout(function() {
+                div.style.opacity = '0';
+                setTimeout(function() { div.remove(); }, 1000);
+            }, stayTime);
         }
 
         // TWITCH
-        const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-        tws.onopen = () => {
-            tws.send('PASS ignore');
-            tws.send('NICK justinfan' + Math.floor(Math.random()*9999));
-            tws.send('JOIN #' + twitchChannel.toLowerCase());
-            status.innerHTML = status.innerHTML.replace('Twitch: ...', 'Twitch: OK');
-        };
-        tws.onmessage = (e) => {
-            if(e.data.includes('PRIVMSG')) {
-                const u = e.data.split('!')[0].substring(1);
-                const m = e.data.substring(e.data.indexOf(':', 1) + 1);
-                addMessage(u, m, 'Twitch');
-            }
-            if(e.data.includes('PING')) tws.send('PONG :tmi.twitch.tv');
-        };
+        function connectTwitch() {
+            var tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+            tws.onopen = function() {
+                tws.send('PASS ignore');
+                tws.send('NICK justinfan' + Math.floor(Math.random()*999));
+                tws.send('JOIN #' + twitchChannel.toLowerCase());
+            };
+            tws.onmessage = function(e) {
+                if(e.data.includes('PRIVMSG')) {
+                    var u = e.data.split('!')[0].substring(1);
+                    var m = e.data.substring(e.data.indexOf(':', 1) + 1);
+                    addMessage(u, m, 'Twitch');
+                }
+                if(e.data.includes('PING')) tws.send('PONG :tmi.twitch.tv');
+            };
+            tws.onclose = function() { setTimeout(connectTwitch, 5000); }; // Auto-reconnect
+        }
 
-        // KICK (Native WebSocket)
-        const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-        kws.onopen = () => {
-            kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kickId}.v2` } }));
-            status.innerHTML = status.innerHTML.replace('Kick: ...', 'Kick: OK');
-            setInterval(() => kws.send(JSON.stringify({event:"pusher:ping",data:{}})), 20000);
-        };
-        kws.onmessage = (e) => {
-            const d = JSON.parse(e.data);
-            if (d.event === "App\\Events\\ChatMessageEvent") {
-                const msg = JSON.parse(d.data);
-                addMessage(msg.sender.username, msg.content, 'Kick');
-            }
-        };
+        // KICK
+        function connectKick() {
+            var kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
+            kws.onopen = function() {
+                kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: "chatrooms." + kickId + ".v2" } }));
+                setInterval(function() { kws.send(JSON.stringify({event:"pusher:ping",data:{}})); }, 20000);
+            };
+            kws.onmessage = function(e) {
+                var d = JSON.parse(e.data);
+                if (d.event === "App\\Events\\ChatMessageEvent") {
+                    var msg = JSON.parse(d.data);
+                    addMessage(msg.sender.username, msg.content, 'Kick');
+                }
+            };
+            kws.onclose = function() { setTimeout(connectKick, 5000); }; // Auto-reconnect
+        }
 
-        // Hide status box after 15 seconds so it doesn't stay on stream
-        setTimeout(() => { status.style.display = 'none'; }, 15000);
+        connectTwitch();
+        connectKick();
+
+        // TEST MESSAGE - To confirm it's loading in Lightstream
+        setTimeout(function() { addMessage('SYSTEM', 'Jailex Loaded Successfully!', 'INFO'); }, 2000);
     </script>
 </body>
 </html>
