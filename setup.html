@@ -4,70 +4,78 @@
     <meta charset="UTF-8">
     <title>Jailex Studio | Master Setup</title>
     <style>
-        body { background: #0B162A; color: white; font-family: sans-serif; text-align: center; padding: 40px 20px; }
-        .container { max-width: 500px; margin: auto; }
-        .box { border: 2px solid #C83803; padding: 25px; background: #12213a; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
-        h1 { color: #C83803; letter-spacing: 2px; text-shadow: 2px 2px black; }
-        .btn { padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 10px; border: none; margin-top: 10px; font-size: 1rem; transition: 0.3s; }
+        body { background: #0B162A; color: white; font-family: sans-serif; text-align: center; padding: 40px; }
+        .box { border: 2px solid #C83803; padding: 20px; background: #12213a; border-radius: 15px; margin-bottom: 20px; }
+        .btn { padding: 15px; width: 100%; max-width: 300px; cursor: pointer; font-weight: bold; border-radius: 10px; border: none; font-size: 1rem; margin: 10px 0; }
         .btn-twitch { background: #6441a5; color: white; }
         .btn-kick { background: #00E701; color: black; }
         .btn-final { background: white; color: black; }
-        input { padding: 12px; width: 90%; margin-top: 10px; border-radius: 8px; border: none; text-align: center; font-size: 1rem; background: #0B162A; color: white; border: 1px solid #444; }
-        code { background: black; color: #00FF00; padding: 12px; display: block; margin-top: 15px; word-break: break-all; border-radius: 8px; font-family: monospace; border: 1px solid #333; }
+        input { padding: 12px; width: 280px; border-radius: 8px; border: none; text-align: center; margin-bottom: 10px; }
+        code { background: black; color: #00FF00; padding: 10px; display: block; word-break: break-all; border-radius: 5px; margin-top: 10px; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>JAILEX STUDIO</h1>
-        
-        <div class="box" id="step1">
-            <h3>1. Twitch Status</h3>
-            <div id="twitchWait">
-                <button class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
-            </div>
-            <div id="twitchResult" class="hidden">
-                <p>✅ Twitch Linked</p>
-                <code id="twitchTokenText"></code>
-            </div>
-        </div>
+    <h1>JAILEX STUDIO SETUP</h1>
 
-        <div class="box" id="step2" style="border-color: #00E701;">
-            <h3>2. Kick Connection</h3>
-            <input type="text" id="kickUser" placeholder="Kick Name (justquitbro7)">
-            <input type="text" id="manualID" placeholder="Manual ID (92474944)">
-            <button class="btn btn-kick" onclick="linkKick()">LINK KICK</button>
-            <div id="kickResult" class="hidden">
-                <p>✅ Kick Ready</p>
-                <code id="kickIDText"></code>
-            </div>
-        </div>
+    <div class="box">
+        <h3>1. Twitch</h3>
+        <button id="tBtn" class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
+        <div id="tDone" class="hidden">✅ Twitch Token: <code id="tCode"></code></div>
+    </div>
 
-        <div class="box" style="border-color: white;">
-            <h3>3. Final Step</h3>
-            <button class="btn btn-final" onclick="generateLink()">GENERATE OVERLAY URL</button>
-            <div id="finalResult" class="hidden">
-                <p>Your Golden Link:</p>
-                <code id="finalURL"></code>
-                <button class="btn" style="background: #444; color: white;" onclick="copyURL()">COPY TO CLIPBOARD</button>
-            </div>
+    <div class="box">
+        <h3>2. Kick</h3>
+        <input type="text" id="kIn" placeholder="Enter Kick Name">
+        <button class="btn btn-kick" onclick="startKick()">LINK KICK</button>
+        <div id="kDone" class="hidden">✅ Kick ID: <code id="kCode"></code></div>
+    </div>
+
+    <div class="box">
+        <h3>3. Overlay Link</h3>
+        <button class="btn btn-final" onclick="makeLink()">GET MY LINK</button>
+        <div id="fDone" class="hidden">
+            <p>Paste this into Lightstream:</p>
+            <code id="fURL"></code>
         </div>
     </div>
 
     <script>
-        const MY_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz'; 
-        const MY_REDIRECT = 'https://jailex-bot.vercel.app/setup.html';
+        // YOUR CONFIRMED CLIENT ID
+        const CID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
+        const RED = 'https://jailex-bot.vercel.app/setup.html';
 
         function startTwitch() {
-            window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${MY_ID}&redirect_uri=${encodeURIComponent(MY_REDIRECT)}&response_type=token&scope=chat:read+chat:edit&force_verify=true`;
+            window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${CID}&redirect_uri=${encodeURIComponent(RED)}&response_type=token&scope=chat:read+chat:edit&force_verify=true`;
         }
 
-        function linkKick() {
-            const manual = document.getElementById('manualID').value.trim();
-            const user = document.getElementById('kickUser').value.trim();
-            
-            // If the user provided the ID, use it. Otherwise, assume the username is the ID (some users have them match)
-            const finalID = manual || "92474944";
-            
-            document.getElementById('kickIDText').innerText = finalID;
-            document.getElementById('kickResult').
+        function startKick() {
+            const val = document.getElementById('kIn').value || "justquitbro7";
+            document.getElementById('kCode').innerText = "92474944"; // Your known ID
+            document.getElementById('kDone').classList.remove('hidden');
+        }
+
+        function makeLink() {
+            const t = document.getElementById('tCode').innerText;
+            const k = document.getElementById('kCode').innerText;
+            const u = document.getElementById('kIn').value || "justquitbro7";
+            if(!t || !k) return alert("Complete Steps 1 and 2!");
+            const final = `${window.location.origin}/overlay.html?kick_id=${k}&kick_user=${u}&token=${t}`;
+            document.getElementById('fURL').innerText = final;
+            document.getElementById('fDone').classList.remove('hidden');
+        }
+
+        window.onload = function() {
+            if (window.location.hash) {
+                const p = new URLSearchParams(window.location.hash.substring(1));
+                const tok = p.get('access_token');
+                if (tok) {
+                    document.getElementById('tCode').innerText = tok;
+                    document.getElementById('tDone').classList.remove('hidden');
+                    document.getElementById('tBtn').classList.add('hidden');
+                }
+            }
+        };
+    </script>
+</body>
+</html>
