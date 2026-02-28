@@ -5,38 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jailex Bot Overlay</title>
     <style>
-        body { background-color: rgba(0, 0, 0, 0); margin: 0; padding: 20px; font-family: sans-serif; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); overflow: hidden; }
-        #chat-container { display: flex; flex-direction: column; justify-content: flex-end; height: 85vh; max-width: 450px; }
-        .message { background: rgba(0, 0, 0, 0.6); margin-bottom: 10px; padding: 12px; border-radius: 10px; animation: slideIn 0.3s ease-out; font-size: 1.1rem; }
-        .twitch-msg { border-left: 5px solid #9146ff; }
-        .kick-msg { border-left: 5px solid #53fc18; }
-        .user { font-weight: bold; margin-right: 8px; }
-        #controls { margin-bottom: 20px; display: flex; gap: 10px; }
-        button { padding: 10px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; color: white; }
-        .btn-twitch { background-color: #9146ff; }
-        .btn-kick { background-color: #53fc18; color: black; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        /* Modern, clean style for the overlay */
+        body {
+            background-color: rgba(0, 0, 0, 0); /* Transparent for OBS */
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            height: 85vh;
+            max-width: 450px;
+        }
+
+        .message {
+            background: rgba(0, 0, 0, 0.6);
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 10px;
+            border-left: 5px solid #9146ff; /* Twitch Purple */
+            animation: slideIn 0.3s ease-out;
+            font-size: 1.1rem;
+        }
+
+        .user { font-weight: bold; color: #bf94ff; margin-right: 8px; }
+        .system-text { font-style: italic; color: #00ffcc; }
+
+        #login-btn {
+            background-color: #9146ff;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            transition: background 0.2s;
+        }
+
+        #login-btn:hover { background-color: #772ce8; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
     </style>
 </head>
 <body>
 
-    <div id="controls">
-        <button class="btn-twitch" onclick="loginWithTwitch()">Connect Twitch</button>
-        </div>
+    <button id="login-btn" onclick="loginWithTwitch()">Connect Jailex to Twitch</button>
 
     <div id="chat-container">
-        <div class="message twitch-msg"><span class="user">System:</span> Waiting for Twitch...</div>
+        <div class="message" id="status-msg">
+            <span class="user">Jailex:</span>
+            <span class="system-text">System Standby. Awaiting Twitch Connection...</span>
+        </div>
     </div>
 
     <script src="twitch.js"></script>
-    <script src="kick.js"></script>
 
     <script>
-        function addMessage(platform, user, text, color = "#fff") {
+        // Main function to display messages
+        function addMessage(platform, user, text, color = "#bf94ff") {
             const container = document.getElementById('chat-container');
             const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${platform}-msg`;
-            msgDiv.innerHTML = `<span class="user" style="color: ${color}">${user}:</span> <span class="text">${text}</span>`;
+            msgDiv.className = 'message';
+            
+            // If we successfully link, hide the status message and the button
+            if (text.includes("SUCCESS!")) {
+                document.getElementById('login-btn').style.display = 'none';
+                const status = document.getElementById('status-msg');
+                if (status) status.style.display = 'none';
+            }
+
+            msgDiv.innerHTML = `
+                <span class="user" style="color: ${color}">${user}:</span>
+                <span class="text">${text}</span>
+            `;
+            
             container.appendChild(msgDiv);
             window.scrollTo(0, document.body.scrollHeight);
         }
