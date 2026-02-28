@@ -1,5 +1,5 @@
 <script>
-    // KILL-SWITCH: This runs BEFORE the page even exists
+    // 1. ATOMIC CAPTURE: Run this before anything else loads
     (function() {
         if (window.location.hash) {
             const params = new URLSearchParams(window.location.hash.substring(1));
@@ -7,7 +7,7 @@
             if (token) {
                 // Save it to memory immediately
                 localStorage.setItem('jailex_twitch_token', 'oauth:' + token);
-                // Wipe the URL so the browser can't loop
+                // Wipe the URL instantly so it can't loop
                 window.history.replaceState(null, null, window.location.pathname);
             }
         }
@@ -18,35 +18,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Studio v4.6 | Zero-Loop</title>
+    <title>Jailex Studio v4.7 | Memory Core</title>
     <style>
         :root { --navy: #0B162A; --orange: #C83803; --blue: #00F3FF; }
         * { box-sizing: border-box; }
         body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; width: 100vw; overflow: hidden; }
-        
-        /* Sidebar Navigation */
         .sidebar { width: 220px; background: rgba(0,0,0,0.6); border-right: 2px solid var(--orange); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
         .sidebar-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
         .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; color: #ccc; font-weight: bold; font-size: 0.9em; }
         .nav-item.active { background: rgba(200, 56, 3, 0.2); color: var(--orange); border-left: 5px solid var(--orange); }
-        
-        /* Main Workspace */
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; background: var(--navy); position: relative; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; background: var(--navy); }
         .tab-content { display: none; max-width: 800px; margin: 0 auto; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-        
-        /* UI Components */
         .card { background: rgba(255,255,255,0.05); border: 1px solid var(--blue); padding: 25px; border-radius: 12px; margin-bottom: 20px; }
         .btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; margin-top: 10px; }
         .btn-twitch { background: #6441a5; }
         .btn-kick { background: #00E701; color: black; }
-        
         input { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #333; background: #000; color: white; margin-bottom: 10px; text-align: center; font-size: 1.1em; }
         code { background: #000; color: #00FF00; padding: 12px; display: block; border-radius: 6px; margin-top: 10px; font-family: monospace; border-left: 4px solid var(--blue); word-break: break-all; font-size: 0.8em; }
-        
-        #log { height: 200px; overflow-y: auto; background: #000; padding: 15px; font-family: monospace; font-size: 0.85em; color: #00ff00; border-radius: 8px; border: 1px solid #333; }
+        #log { height: 200px; overflow-y: auto; background: #000; padding: 10px; font-family: monospace; font-size: 0.85em; color: #00ff00; border-radius: 8px; border: 1px solid #333; }
         .item-row { display: flex; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px; align-items: center; }
-        
         .hidden { display: none; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -54,7 +45,7 @@
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-header"><h2 style="color: var(--orange); margin:0;">JAILEX</h2><span style="font-size:0.7em;">v4.6 MASTER</span></div>
+        <div class="sidebar-header"><h2 style="color: var(--orange); margin:0;">JAILEX</h2><span style="font-size:0.7em;">v4.7 MASTER</span></div>
         <div class="nav-item active" onclick="showTab('sync', this)">🔄 Quick Sync</div>
         <div class="nav-item" onclick="showTab('overlay', this)">📡 Overlay</div>
         <div class="nav-item" onclick="showTab('tts', this)">🔊 Engine</div>
@@ -67,7 +58,9 @@
             <h2>Step 1: Link Accounts</h2>
             <div class="card">
                 <h3>Twitch Sync</h3>
-                <button id="tBtn" class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
+                <div id="tArea">
+                    <button class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
+                </div>
                 <div id="tDone" class="hidden">✅ Twitch Connected! <code id="tCode"></code></div>
             </div>
             <div class="card">
@@ -113,6 +106,7 @@
             updateFinalURL();
         }
 
+        // --- AUTH LOGIC ---
         function startTwitch() { window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${CID}&redirect_uri=${encodeURIComponent(RED)}&response_type=token&scope=chat:read+chat:edit&force_verify=true`; }
 
         async function resolveKick() {
@@ -123,33 +117,56 @@
                 const data = await res.json();
                 const parsed = JSON.parse(data.contents);
                 if(parsed.chatroom && parsed.chatroom.id) {
-                    document.getElementById('kCode').innerText = parsed.chatroom.id;
-                    document.getElementById('kDone').classList.remove('hidden');
-                    save(); // Force save the moment ID is found
+                    const kid = parsed.chatroom.id;
+                    localStorage.setItem('jailex_kick_id', kid);
+                    localStorage.setItem('jailex_kick_user', user);
+                    showKick(kid, user);
                 }
             } catch (e) { alert("Kick search failed."); }
         }
 
+        function showKick(id, user) {
+            document.getElementById('kCode').innerText = id;
+            document.getElementById('kIn').value = user;
+            document.getElementById('kDone').classList.remove('hidden');
+            document.getElementById('kBtn').classList.add('hidden');
+            save();
+        }
+
         function save() {
             const config = {
-                tw: document.getElementById('kIn').value,
-                ki: document.getElementById('kCode').innerText,
                 fS: document.getElementById('fS').value,
                 sT: document.getElementById('sT').value,
                 timers: Array.from(document.querySelectorAll('#tL .item-row')).map(r => ({m:r.querySelector('.t-m').value, t:r.querySelector('.t-t').value})),
                 keywords: Array.from(document.querySelectorAll('#kL .item-row')).map(r => ({k:r.querySelector('.k-t').value, r:r.querySelector('.k-r').value}))
             };
-            localStorage.setItem('jailex_master_save', JSON.stringify(config));
+            localStorage.setItem('jailex_master_settings', JSON.stringify(config));
             updateFinalURL();
         }
 
         function load() {
-            const raw = localStorage.getItem('jailex_master_save');
+            // 1. Check Memory for Twitch
+            const t = localStorage.getItem('jailex_twitch_token');
+            if (t) {
+                document.getElementById('tCode').innerText = t;
+                document.getElementById('tDone').classList.remove('hidden');
+                document.getElementById('tArea').classList.add('hidden');
+            }
+
+            // 2. Check Memory for Kick
+            const kid = localStorage.getItem('jailex_kick_id');
+            const kuser = localStorage.getItem('jailex_kick_user');
+            if (kid) {
+                document.getElementById('kCode').innerText = kid;
+                document.getElementById('kIn').value = kuser || "";
+                document.getElementById('kDone').classList.remove('hidden');
+                document.getElementById('kBtn').classList.add('hidden');
+            }
+
+            // 3. Load UI Settings
+            const raw = localStorage.getItem('jailex_master_settings');
             if(raw) {
                 const c = JSON.parse(raw);
-                document.getElementById('kIn').value = c.tw || "";
-                document.getElementById('kCode').innerText = c.ki || "";
-                if(c.ki) document.getElementById('kDone').classList.remove('hidden');
                 document.getElementById('fS').value = c.fS || 22; 
                 document.getElementById('sT').value = c.sT || 20;
                 document.getElementById('sV').innerText = document.getElementById('fS').value;
@@ -157,39 +174,30 @@
                 if(c.timers) c.timers.forEach(t => addTimerRow(t.m, t.t));
                 if(c.keywords) c.keywords.forEach(k => addKeywordRow(k.k, k.r));
             }
-
-            const tok = localStorage.getItem('jailex_twitch_token');
-            if(tok) {
-                document.getElementById('tCode').innerText = tok;
-                document.getElementById('tDone').classList.remove('hidden');
-                document.getElementById('tBtn').classList.add('hidden');
-            }
             updateFinalURL();
         }
 
         function updateFinalURL() {
             const tok = localStorage.getItem('jailex_twitch_token');
-            const kid = document.getElementById('kCode').innerText;
-            const user = document.getElementById('kIn').value;
+            const kid = localStorage.getItem('jailex_kick_id');
+            const kuser = localStorage.getItem('jailex_kick_user');
             if(tok && kid) {
-                document.getElementById('fL').innerText = `${window.location.origin}/overlay.html?twitch=${user}&kick=${kid}&token=${tok.replace('oauth:', '')}&size=${document.getElementById('fS').value}&stay=${document.getElementById('sT').value}`;
+                const cleanTok = tok.replace('oauth:', '');
+                document.getElementById('fL').innerText = `${window.location.origin}/overlay.html?twitch=${kuser}&kick=${kid}&token=${cleanTok}&size=${document.getElementById('fS').value}&stay=${document.getElementById('sT').value}`;
             }
         }
 
+        function addTimerRow(m="", t=15) { const d = document.createElement('div'); d.className = 'item-row'; d.innerHTML = `<input type="text" value="${m}" class="t-m" placeholder="Msg"><input type="number" value="${t}" class="t-t" style="width:60px">m <button onclick="this.parentElement.remove(); save()">X</button>`; document.getElementById('tL').appendChild(d); }
+        function addKeywordRow(k="", r="") { const d = document.createElement('div'); d.className = 'item-row'; d.innerHTML = `<input type="text" value="${k}" class="k-t" placeholder="Keyword"><input type="text" value="${r}" class="k-r" placeholder="Response"> <button onclick="this.parentElement.remove(); save()">X</button>`; document.getElementById('kL').appendChild(d); }
+        function fullReset() { if(confirm("This will wipe everything. Continue?")) { localStorage.clear(); location.reload(); } }
+        function copyUrl() { navigator.clipboard.writeText(document.getElementById('fL').innerText); alert("URL Copied!"); }
+
         function startBot() {
-            const tok = localStorage.getItem('jailex_twitch_token');
-            const kid = document.getElementById('kCode').innerText;
-            if(!tok || !kid) return alert("Sync Accounts first!");
             addLog("System starting...");
-            document.getElementById('sB').disabled = true;
             document.getElementById('sB').innerText = "ENGINE ONLINE";
         }
 
         function addLog(m) { const l = document.getElementById('log'); l.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${m}</div>`; l.scrollTop = l.scrollHeight; }
-        function copyUrl() { navigator.clipboard.writeText(document.getElementById('fL').innerText); alert("URL Copied!"); }
-        function addTimerRow(m="", t=15) { const d = document.createElement('div'); d.className = 'item-row'; d.innerHTML = `<input type="text" value="${m}" class="t-m" placeholder="Message"><input type="number" value="${t}" class="t-t" style="width:60px">m <button onclick="this.parentElement.remove(); save()">X</button>`; document.getElementById('tL').appendChild(d); }
-        function addKeywordRow(k="", r="") { const d = document.createElement('div'); d.className = 'item-row'; d.innerHTML = `<input type="text" value="${k}" class="k-t" placeholder="Keyword"><input type="text" value="${r}" class="k-r" placeholder="Response"> <button onclick="this.parentElement.remove(); save()">X</button>`; document.getElementById('kL').appendChild(d); }
-        function fullReset() { if(confirm("Wipe all data?")) { localStorage.clear(); location.reload(); } }
 
         window.onload = load;
     </script>
