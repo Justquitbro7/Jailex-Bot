@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAILEX | Professional Streaming Dashboard</title>
+    <title>Jailex | Streaming Made Easy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --navy: #0B162A;
             --orange: #C83803;
-            --dark-bg: #070D19;
-            --card: #152238;
+            --sidebar-bg: #070D19;
+            --card-bg: #152238;
         }
 
         body { 
@@ -23,162 +23,143 @@
             overflow: hidden; 
         }
 
-        /* --- PROFESSIONAL SIDEBAR --- */
+        /* --- CLEAN SIDEBAR --- */
         .sidebar { 
             width: 280px; 
-            background-color: var(--dark-bg); 
-            border-right: 3px solid var(--orange); 
+            background-color: var(--sidebar-bg); 
+            border-right: 2px solid rgba(255,255,255,0.05); 
             padding: 40px 20px; 
             display: flex; 
             flex-direction: column; 
-            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
         }
 
         .sidebar h1 { 
-            color: var(--orange); 
+            color: #FFFFFF; 
             font-size: 2.2rem; 
             text-align: center; 
-            margin-bottom: 50px; 
-            letter-spacing: 5px;
+            margin-bottom: 5px; 
             font-weight: 900;
+            letter-spacing: -1px;
+        }
+
+        .sidebar .tagline {
+            color: var(--orange);
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 50px;
         }
 
         .nav-item { 
-            padding: 18px 25px; 
-            color: rgba(255,255,255,0.6); 
-            border-radius: 12px; 
-            margin-bottom: 12px; 
+            padding: 16px 20px; 
+            color: rgba(255,255,255,0.5); 
+            border-radius: 10px; 
+            margin-bottom: 8px; 
             cursor: pointer; 
-            transition: 0.3s; 
+            transition: 0.2s; 
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
         }
 
-        .nav-item:hover { color: #fff; background-color: rgba(200, 56, 3, 0.1); }
+        .nav-item:hover { color: #fff; background-color: rgba(255,255,255,0.05); }
         .nav-item.active { 
-            background-color: var(--orange); 
-            color: white; 
-            box-shadow: 0 4px 15px rgba(200, 56, 3, 0.3);
+            background-color: rgba(200, 56, 3, 0.15); 
+            color: var(--orange); 
         }
 
-        /* --- MAIN WORKSPACE --- */
+        /* --- MAIN AREA --- */
         .main { 
             flex-grow: 1; 
             padding: 60px; 
             display: flex; 
             flex-direction: column; 
-            background: radial-gradient(circle at center, #1c2e4a 0%, #0B162A 100%);
+            background: linear-gradient(180deg, #101d33 0%, #0B162A 100%);
             overflow-y: auto;
         }
 
-        .workspace-header { 
-            width: 100%; 
-            max-width: 900px; 
-            margin: 0 auto 40px auto; 
-        }
+        .content-header { margin-bottom: 40px; }
+        .content-header h2 { font-size: 1.8rem; font-weight: 800; margin: 0; }
 
-        .workspace-header h2 { 
-            font-size: 2.2rem; 
-            font-weight: 900; 
-            text-transform: uppercase; 
-            border-left: 6px solid var(--orange); 
-            padding-left: 20px;
-        }
-
-        /* --- THE HUD CARD --- */
+        /* --- CENTRAL CARD --- */
         .card { 
-            background-color: var(--card); 
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 24px; 
+            background-color: var(--card-bg); 
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px; 
             padding: 50px; 
             width: 100%; 
-            max-width: 650px; 
-            margin: 0 auto;
-            text-align: center; 
-            box-shadow: 0 30px 80px rgba(0,0,0,0.8); 
+            max-width: 600px; 
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5); 
         }
 
-        .card p { color: #8e9aaf; font-size: 1.1rem; line-height: 1.6; margin-bottom: 35px; }
+        .card h3 { font-size: 1.4rem; margin-top: 0; }
+        .card p { color: #94a3b8; line-height: 1.6; margin-bottom: 30px; }
 
-        /* THE SYNC BUTTON */
         .sync-btn { 
             background-color: var(--orange); 
             color: white; 
             border: none; 
-            padding: 22px 40px; 
-            font-size: 1.2rem; 
-            font-weight: 800; 
-            border-radius: 14px; 
+            padding: 20px; 
+            font-size: 1.1rem; 
+            font-weight: 700; 
+            border-radius: 12px; 
             cursor: pointer; 
             width: 100%; 
-            text-transform: uppercase; 
-            letter-spacing: 2px;
-            transition: 0.4s;
+            transition: 0.3s;
         }
 
-        .sync-btn:hover { 
-            background-color: #FF4500; 
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(200, 56, 3, 0.4);
-        }
+        .sync-btn:hover { background-color: #e64002; transform: translateY(-2px); }
 
         #sync-status { 
             display: block; 
-            margin-top: 30px; 
-            font-size: 1.3rem; 
-            font-weight: 900; 
+            margin-top: 25px; 
+            text-align: center;
+            font-weight: 700; 
             color: var(--orange); 
-            letter-spacing: 1px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
         }
 
-        /* LOGGING / STATUS CONSOLE */
-        #debug-log { 
+        #console { 
             font-size: 0.75rem; 
-            color: #5d6d7e; 
+            color: #475569; 
             margin-top: 40px; 
-            text-align: left; 
-            background: #000; 
+            background: rgba(0,0,0,0.2); 
             padding: 15px; 
-            border-radius: 10px; 
-            height: 90px; 
+            border-radius: 8px; 
+            height: 60px; 
             overflow-y: auto; 
             font-family: monospace; 
-            border: 1px solid #1c2e4a; 
         }
-
-        .footer-tag { margin-top: auto; font-size: 0.7rem; color: #2c3e50; text-align: center; font-weight: 800; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
         <h1>JAILEX</h1>
+        <div class="tagline">Streaming Made Easy</div>
+        
         <div class="nav-item active">Credentials</div>
         <div class="nav-item">Bot Commands</div>
-        <div class="nav-item">TTS Settings</div>
         <div class="nav-item">Keywords</div>
         <div class="nav-item">Socials Timer</div>
-        <div class="footer-tag">JAILEX ENGINE V1.0 - BEARS EDITION</div>
+        <div class="nav-item">Overlay</div>
     </div>
 
     <div class="main">
-        <div class="workspace-header">
-            <h2>System Credentials</h2>
+        <div class="content-header">
+            <h2>Account Integration</h2>
         </div>
 
         <div class="card">
-            <h3 style="margin-top:0; font-size: 1.5rem;">Twitch Link</h3>
-            <p>Sync your main broadcasting account to enable chat monitoring, automated commands, and real-time bot interactions.</p>
+            <h3>Twitch Connection</h3>
+            <p>Connect your account to enable the Jailex automated streaming suite. This allows the bot to monitor your chat and post your scheduled reminders.</p>
             
-            <button id="sync-button" class="sync-btn">
-                Link Twitch Account
-            </button>
-
-            <span id="sync-status">STATUS: STANDBY</span>
+            <button id="sync-button" class="sync-btn">Link Twitch Account</button>
+            <span id="sync-status">Status: Disconnected</span>
             
-            <div id="debug-log">System: Ready for handshake...</div>
+            <div id="console">System initialized...</div>
         </div>
     </div>
 
@@ -186,34 +167,31 @@
         const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
 
         function log(msg) {
-            const debug = document.getElementById('debug-log');
-            if (debug) debug.innerHTML += `<div>> ${msg}</div>`;
-            debug.scrollTop = debug.scrollHeight;
+            const con = document.getElementById('console');
+            if (con) con.innerHTML += `<div>> ${msg}</div>`;
+            con.scrollTop = con.scrollHeight;
         }
 
-        // BUTTON TRIGGER
         document.getElementById('sync-button').onclick = function() {
-            log("Opening Secure Handshake...");
+            log("Starting handshake...");
             const redirectUri = "https://jailex-h16lm8t8s-justquitbro7s-projects.vercel.app/setup.html";
             const scope = encodeURIComponent('chat:read chat:edit');
             const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
             window.open(authUrl, 'JailexSync', 'width=450,height=600');
         };
 
-        // HANDSHAKE LISTENER
         window.addEventListener('message', (event) => {
             if (event.data.type === 'TWITCH_TOKEN') {
                 const token = event.data.token;
                 localStorage.setItem('jailex_token', token);
-                log("Authentication successful! Connecting...");
+                log("Authentication successful.");
                 connectBot(token);
             }
         });
 
-        // CONNECT TO TWITCH
         async function connectBot(token) {
             const status = document.getElementById('sync-status');
-            status.innerText = "STATUS: CONNECTING...";
+            status.innerText = "Status: Connecting...";
             try {
                 const res = await fetch('https://api.twitch.tv/helix/users', {
                     headers: { 'Client-ID': CLIENT_ID, 'Authorization': `Bearer ${token}` }
@@ -221,23 +199,19 @@
                 const data = await res.json();
                 if (data.data && data.data[0]) {
                     const user = data.data[0].display_name;
-                    status.innerText = `STATUS: LIVE AS ${user.toUpperCase()}`;
-                    status.style.color = "#00FF00";
-                    log(`Bot successfully linked to ${user}`);
+                    status.innerText = `Status: Live as ${user}`;
+                    status.style.color = "#10b981"; // Clean Green
+                    log(`Linked to ${user}`);
                 }
             } catch (err) {
                 log("Error: " + err.message);
-                status.innerText = "STATUS: SYNC FAILED";
+                status.innerText = "Status: Error";
             }
         }
 
-        // AUTO-LOGIN ON LOAD
         window.onload = () => {
             const savedToken = localStorage.getItem('jailex_token');
-            if (savedToken) {
-                log("Restoring active session...");
-                connectBot(savedToken);
-            }
+            if (savedToken) connectBot(savedToken);
         };
     </script>
 </body>
