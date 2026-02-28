@@ -22,8 +22,10 @@
         <h1>JAILEX STUDIO</h1>
         
         <div class="box" id="step1">
-            <h3>1. Twitch Connection</h3>
-            <button id="twitchBtn" class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
+            <h3>1. Twitch Status</h3>
+            <div id="twitchWait">
+                <button class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
+            </div>
             <div id="twitchResult" class="hidden">
                 <p>✅ Twitch Linked</p>
                 <code id="twitchTokenText"></code>
@@ -32,10 +34,9 @@
 
         <div class="box" id="step2" style="border-color: #00E701;">
             <h3>2. Kick Connection</h3>
-            <p style="font-size: 0.8rem;">Enter name OR paste ID if you have it</p>
-            <input type="text" id="kickUser" placeholder="Kick Username (justquitbro7)">
-            <input type="text" id="manualID" placeholder="Optional: Paste ID here (92474944)">
-            <button class="btn btn-kick" onclick="findKickID()">LINK KICK</button>
+            <input type="text" id="kickUser" placeholder="Kick Name (justquitbro7)">
+            <input type="text" id="manualID" placeholder="Manual ID (92474944)">
+            <button class="btn btn-kick" onclick="linkKick()">LINK KICK</button>
             <div id="kickResult" class="hidden">
                 <p>✅ Kick Ready</p>
                 <code id="kickIDText"></code>
@@ -43,10 +44,10 @@
         </div>
 
         <div class="box" style="border-color: white;">
-            <h3>3. Get Your Link</h3>
+            <h3>3. Final Step</h3>
             <button class="btn btn-final" onclick="generateLink()">GENERATE OVERLAY URL</button>
             <div id="finalResult" class="hidden">
-                <p>Final Link for Lightstream:</p>
+                <p>Your Golden Link:</p>
                 <code id="finalURL"></code>
                 <button class="btn" style="background: #444; color: white;" onclick="copyURL()">COPY TO CLIPBOARD</button>
             </div>
@@ -61,55 +62,12 @@
             window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${MY_ID}&redirect_uri=${encodeURIComponent(MY_REDIRECT)}&response_type=token&scope=chat:read+chat:edit&force_verify=true`;
         }
 
-        window.onload = function() {
-            const hash = window.location.hash;
-            if (hash) {
-                const params = new URLSearchParams(hash.substring(1));
-                const token = params.get('access_token');
-                if (token) {
-                    document.getElementById('twitchResult').classList.remove('hidden');
-                    document.getElementById('twitchTokenText').innerText = token;
-                    document.getElementById('twitchBtn').style.opacity = "0.5";
-                }
-            }
-        };
-
-        async function findKickID() {
+        function linkKick() {
             const manual = document.getElementById('manualID').value.trim();
-            const user = document.getElementById('kickUser').value.trim().toLowerCase();
+            const user = document.getElementById('kickUser').value.trim();
             
-            // If you already typed the ID, just use it!
-            if (manual) {
-                document.getElementById('kickIDText').innerText = manual;
-                document.getElementById('kickResult').classList.remove('hidden');
-                return;
-            }
-
-            try {
-                const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/api/v1/channels/' + user)}`);
-                const json = await res.json();
-                const data = JSON.parse(json.contents);
-                document.getElementById('kickIDText').innerText = data.chatroom.id;
-                document.getElementById('kickResult').classList.remove('hidden');
-            } catch (e) { 
-                alert("Search failed. Please paste your ID (92474944) into the second box manually!"); 
-            }
-        }
-
-        function generateLink() {
-            const t = document.getElementById('twitchTokenText').innerText;
-            const k = document.getElementById('kickIDText').innerText;
-            const u = document.getElementById('kickUser').value.trim() || "justquitbro7";
-            if(!t || !k) return alert("Complete Step 1 and 2!");
-            const final = `${window.location.origin}/overlay.html?kick_id=${k}&kick_user=${u}&token=${t}`;
-            document.getElementById('finalURL').innerText = final;
-            document.getElementById('finalResult').classList.remove('hidden');
-        }
-
-        function copyURL() {
-            navigator.clipboard.writeText(document.getElementById('finalURL').innerText);
-            alert("Copied!");
-        }
-    </script>
-</body>
-</html>
+            // If the user provided the ID, use it. Otherwise, assume the username is the ID (some users have them match)
+            const finalID = manual || "92474944";
+            
+            document.getElementById('kickIDText').innerText = finalID;
+            document.getElementById('kickResult').
