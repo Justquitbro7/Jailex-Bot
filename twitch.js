@@ -1,7 +1,8 @@
 const TWITCH_CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz'; 
-const REDIRECT_URI = 'https://jailex.vercel.app'; 
+const REDIRECT_URI = 'https://jailex-bot.vercel.app'; 
 
 function loginWithTwitch() {
+    // This exact URL must be in your Twitch Dev Console "Redirect URLs"
     const scope = 'chat:read chat:edit';
     const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=${scope}`;
     window.location.href = authUrl;
@@ -21,14 +22,11 @@ async function getTwitchUser() {
                 }
             });
             const data = await response.json();
-            const userId = data.data[0].id;
             const userName = data.data[0].display_name;
+            const userId = data.data[0].id;
 
-            console.log(`Connected: ${userName} (ID: ${userId})`);
-            
-            // This shows you the ID right on the screen!
             if (typeof addMessage === "function") {
-                addMessage('twitch', 'System', `Linked! ID for ${userName} is: ${userId}`, '#9146ff');
+                addMessage('twitch', 'Jailex-Bot', `Successfully Linked! ID for ${userName} is: ${userId}`, '#9146ff');
             }
         }
     }
