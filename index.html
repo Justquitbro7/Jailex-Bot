@@ -2,106 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Studio v4.1 | Unified Master</title>
+    <title>Jailex Studio v5.0 | Hard Reset</title>
     <style>
         :root { --navy: #0B162A; --orange: #C83803; --blue: #00F3FF; }
-        * { box-sizing: border-box; }
-        body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; width: 100vw; overflow: hidden; }
-        
-        /* Sidebar */
-        .sidebar { width: 220px; background: rgba(0,0,0,0.6); border-right: 2px solid var(--orange); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
-        .sidebar-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
-        .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; color: #ccc; font-weight: bold; font-size: 0.9em; }
-        .nav-item.active { background: rgba(200, 56, 3, 0.2); color: var(--orange); border-left: 5px solid var(--orange); }
-        
-        /* Main Layout */
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; background: var(--navy); position: relative; }
-        .tab-content { display: none; max-width: 800px; margin: 0 auto; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-        
-        /* Cards & Buttons */
+        body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 220px; background: rgba(0,0,0,0.6); border-right: 2px solid var(--orange); display: flex; flex-direction: column; padding: 20px 0; }
+        .nav-item { padding: 15px 25px; cursor: pointer; font-weight: bold; color: #ccc; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .nav-item.active { color: var(--orange); background: rgba(200, 56, 3, 0.1); border-left: 5px solid var(--orange); }
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
         .card { background: rgba(255,255,255,0.05); border: 1px solid var(--blue); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        .btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; margin-top: 10px; }
+        .btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
         .btn-twitch { background: #6441a5; }
         .btn-kick { background: #00E701; color: black; }
-        .btn-add { background: #28a745; margin-bottom: 10px; }
-        
-        /* Inputs & Logs */
-        input { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #333; background: #000; color: white; margin-bottom: 10px; text-align: center; }
-        #log { height: 200px; overflow-y: auto; background: #000; padding: 10px; font-family: monospace; font-size: 0.85em; color: #00ff00; border-radius: 8px; border: 1px solid #333; margin-top: 10px; }
-        .item-row { display: flex; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px; align-items: center; }
-        .url-box { background: #000; padding: 15px; border-radius: 8px; color: var(--blue); font-family: monospace; font-size: 0.75em; word-break: break-all; border-left: 4px solid var(--orange); }
-        
+        input { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #333; background: #000; color: white; margin-bottom: 10px; text-align: center; font-size: 1.1em; }
+        code { background: black; color: #00FF00; padding: 10px; display: block; border-radius: 5px; margin-top: 10px; font-size: 0.8em; overflow-x: auto; }
         .hidden { display: none; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-header"><h2 style="color: var(--orange); margin:0;">JAILEX</h2><span style="font-size:0.7em;">v4.1 MASTER</span></div>
+        <div style="text-align:center; padding-bottom:20px;"><h2 style="color:var(--orange);">JAILEX</h2><small>v5.0 MASTER</small></div>
         <div class="nav-item active" onclick="showTab('setup', this)">👤 Setup</div>
         <div class="nav-item" onclick="showTab('overlay', this)">📡 Overlay</div>
-        <div class="nav-item" onclick="showTab('tts', this)">🔊 TTS Engine</div>
-        <div class="nav-item" onclick="showTab('timers', this)">⏰ Timers</div>
-        <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
+        <div style="margin-top: auto; padding: 20px;">
+            <button onclick="fullPurge()" style="background:none; border:1px solid #ff4444; color:#ff4444; cursor:pointer; width:100%; padding:5px; border-radius:4px; font-size:0.7em;">HARD RESET APP</button>
+        </div>
     </div>
 
     <div class="main-content">
-        
-        <div id="setup" class="tab-content active">
+        <div id="setup" class="tab-content">
             <h2>Account Sync</h2>
             <div class="card">
-                <h3>Twitch</h3>
-                <button id="tBtn" class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
-                <div id="tDone" class="hidden">✅ Twitch Ready <code id="tCode" style="font-size:0.7em; color:#aaa;"></code></div>
+                <h3>1. Twitch</h3>
+                <div id="tArea">
+                    <button class="btn btn-twitch" onclick="connectTwitch()">CONNECT TWITCH</button>
+                </div>
+                <div id="tDone" class="hidden">✅ Twitch Linked! <code id="tCode"></code></div>
             </div>
-            <div class="card">
-                <h3>Kick</h3>
-                <input type="text" id="kIn" placeholder="Type Kick Username">
-                <button id="kBtn" class="btn btn-kick" onclick="resolveKick()">FIND KICK ID</button>
-                <div id="kDone" class="hidden">✅ Kick ID Found: <code id="kCode"></code></div>
-            </div>
-            <button class="btn" style="background:transparent; border:1px solid #444; color:#666;" onclick="fullReset()">RESET ALL DATA</button>
-        </div>
 
-        <div id="overlay" class="tab-content">
-            <h2>Overlay Config</h2>
             <div class="card">
-                <label>Font Size: <span id="sV">22</span>px</label>
-                <input type="range" id="fS" min="16" max="44" value="22" oninput="saveAll()">
-                <label>Message Stay: <span id="tV">20</span>s</label>
-                <input type="range" id="sT" min="5" max="60" value="20" oninput="saveAll()">
-                <div class="url-box" id="fURL" style="margin-top:20px;">Complete setup tabs first...</div>
-                <button class="btn" onclick="copyUrl()">COPY FOR LIGHTSTREAM</button>
+                <h3>2. Kick</h3>
+                <input type="text" id="kIn" placeholder="Type Kick Username (Ex: Justquitbro7)">
+                <button id="kBtn" class="btn btn-kick" onclick="resolveKick()">FETCH KICK ID</button>
+                <div id="kDone" class="hidden">✅ Kick ID: <code id="kCode"></code></div>
             </div>
         </div>
 
-        <div id="tts" class="tab-content">
-            <h2>Live Bot Control</h2>
+        <div id="overlay" class="tab-content hidden">
+            <h2>Overlay Link</h2>
             <div class="card">
-                <button class="btn" id="sB" onclick="startBot()" style="height:60px;">START JAILEX ENGINE</button>
-                <div id="log">Ready for connection...</div>
+                <p>Browser Source URL:</p>
+                <code id="fURL" style="color: var(--blue);">Connect accounts in Setup first...</code>
+                <button class="btn" onclick="copyUrl()">COPY URL</button>
             </div>
         </div>
-
-        <div id="timers" class="tab-content">
-            <h2>Auto-Timers</h2>
-            <div class="card">
-                <div id="tL"></div>
-                <button class="btn btn-add" onclick="addTimerRow()">+ Add Timer</button>
-            </div>
-        </div>
-
-        <div id="keywords" class="tab-content">
-            <h2>Keyword Responses</h2>
-            <div class="card">
-                <div id="kL"></div>
-                <button class="btn btn-add" onclick="addKeywordRow()">+ Add Keyword</button>
-            </div>
-        </div>
-
     </div>
 
     <script>
@@ -109,130 +64,91 @@
         const RED = window.location.origin + window.location.pathname;
 
         function showTab(id, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+            document.getElementById(id).classList.remove('hidden');
             el.classList.add('active');
             updateFinalURL();
         }
 
-        // --- AUTH & KICK LOGIC ---
-        function startTwitch() { 
-            window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${CID}&redirect_uri=${encodeURIComponent(RED)}&response_type=token&scope=chat:read&force_verify=true`; 
+        // --- THE PURGE: Use this if IDs show up unexpectedly ---
+        function fullPurge() {
+            if(confirm("This will wipe all saved IDs and Tokens. Continue?")) {
+                localStorage.clear();
+                window.location.href = RED;
+            }
+        }
+
+        function connectTwitch() {
+            window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${CID}&redirect_uri=${encodeURIComponent(RED)}&response_type=token&scope=chat:read&force_verify=true`;
         }
 
         async function resolveKick() {
             const user = document.getElementById('kIn').value.trim();
-            if(!user) return alert("Enter a username!");
+            if(!user) return alert("Please type a username first!");
+            const btn = document.getElementById('kBtn');
+            btn.innerText = "Connecting...";
+            
             try {
                 const res = await fetch(`https://corsproxy.io/?https://kick.com/api/v1/channels/${user}`);
                 const data = await res.json();
-                const kid = data.chatroom.id;
-                document.getElementById('kCode').innerText = kid;
-                document.getElementById('kDone').classList.remove('hidden');
-                saveAll();
-            } catch (e) { alert("Kick user not found."); }
-        }
-
-        // --- STORAGE & GENERATOR ---
-        function saveAll() {
-            const config = {
-                tTok: localStorage.getItem('jailex_twitch_token') || "",
-                kID: document.getElementById('kCode').innerText,
-                kUser: document.getElementById('kIn').value,
-                fS: document.getElementById('fS').value,
-                sT: document.getElementById('sT').value,
-                timers: Array.from(document.querySelectorAll('#tL .item-row')).map(r => ({m:r.querySelector('.t-m').value, t:r.querySelector('.t-t').value})),
-                keywords: Array.from(document.querySelectorAll('#kL .item-row')).map(r => ({k:r.querySelector('.k-t').value, r:r.querySelector('.k-r').value}))
-            };
-            localStorage.setItem('jailex_master_v4', JSON.stringify(config));
-            document.getElementById('sV').innerText = config.fS;
-            document.getElementById('tV').innerText = config.sT;
-            updateFinalURL();
-        }
-
-        function loadAll() {
-            const raw = localStorage.getItem('jailex_master_v4');
-            if(!raw) return;
-            const c = JSON.parse(raw);
-            document.getElementById('kCode').innerText = c.kID;
-            if(c.kID) document.getElementById('kDone').classList.remove('hidden');
-            document.getElementById('kIn').value = c.kUser || "";
-            document.getElementById('fS').value = c.fS;
-            document.getElementById('sT').value = c.sT;
-            c.timers.forEach(t => addTimerRow(t.m, t.t));
-            c.keywords.forEach(k => addKeywordRow(k.k, k.r));
-            
-            const tok = localStorage.getItem('jailex_twitch_token');
-            if(tok) {
-                document.getElementById('tCode').innerText = "TOKEN_LOADED";
-                document.getElementById('tDone').classList.remove('hidden');
-                document.getElementById('tBtn').classList.add('hidden');
+                if(data.chatroom && data.chatroom.id) {
+                    const kid = data.chatroom.id;
+                    localStorage.setItem('j_k_id', kid);
+                    localStorage.setItem('j_k_u', user);
+                    
+                    document.getElementById('kCode').innerText = kid;
+                    document.getElementById('kDone').classList.remove('hidden');
+                    btn.innerText = "FETCH KICK ID";
+                    updateFinalURL();
+                }
+            } catch (e) { 
+                alert("Error finding Kick user."); 
+                btn.innerText = "FETCH KICK ID";
             }
-            saveAll();
         }
 
         function updateFinalURL() {
-            const tok = localStorage.getItem('jailex_twitch_token');
-            const kid = document.getElementById('kCode').innerText;
-            const kuser = document.getElementById('kIn').value;
-            const fs = document.getElementById('fS').value;
-            const st = document.getElementById('sT').value;
-            if(tok && kid) {
-                document.getElementById('fURL').innerText = `${window.location.origin}/overlay.html?twitch=${kuser}&kick=${kid}&size=${fs}&stay=${st}`;
+            const t = localStorage.getItem('j_t_t');
+            const k = localStorage.getItem('j_k_id');
+            const u = localStorage.getItem('j_k_u');
+            if(t && k) {
+                document.getElementById('fURL').innerText = `${window.location.origin}/overlay.html?twitch=${u}&kick=${k}&token=${t}&size=22&stay=20`;
             }
         }
 
-        // --- BOT ENGINE ---
-        function startBot() {
-            const tTok = localStorage.getItem('jailex_twitch_token');
-            const kID = document.getElementById('kCode').innerText;
-            const kName = document.getElementById('kIn').value;
-            if(!tTok || !kID) return alert("Complete Setup First!");
-
-            addLog("System Initializing...");
-            
-            // Twitch Connection
-            const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-            tws.onopen = () => { tws.send('PASS oauth:' + tTok); tws.send('NICK justinfan' + Math.floor(Math.random()*999)); tws.send('JOIN #' + kName.toLowerCase()); addLog("Twitch Chat: CONNECTED"); };
-            tws.onmessage = (e) => { if(e.data.includes('PRIVMSG')) { const u = e.data.split('!')[0].substring(1); const m = e.data.substring(e.data.indexOf(':', 1) + 1); handleMsg(u, m, 'Twitch'); } };
-
-            // Kick Connection
-            const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
-            kws.onopen = () => { kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kID}.v2` } })); addLog("Kick Chat: CONNECTED"); };
-            kws.onmessage = (e) => { const d = JSON.parse(e.data); if (d.event.includes("ChatMessageEvent")) { const m = JSON.parse(d.data); handleMsg(m.sender.username, m.content, 'Kick'); } };
-            
-            document.getElementById('sB').disabled = true;
-            document.getElementById('sB').innerText = "ENGINE ACTIVE";
+        function copyUrl() {
+            navigator.clipboard.writeText(document.getElementById('fURL').innerText);
+            alert("URL Copied!");
         }
-
-        function handleMsg(u, m, p) {
-            addLog(`${p} | ${u}: ${m}`);
-            window.speechSynthesis.speak(new SpeechSynthesisUtterance(u + " says " + m));
-            // Keyword check
-            document.querySelectorAll('#kL .item-row').forEach(row => {
-                const trigger = row.querySelector('.k-t').value.toLowerCase();
-                if(trigger && m.toLowerCase().includes(trigger)) window.speechSynthesis.speak(new SpeechSynthesisUtterance(row.querySelector('.k-r').value));
-            });
-        }
-
-        // --- UI UTILS ---
-        function addLog(m) { const l = document.getElementById('log'); l.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${m}</div>`; l.scrollTop = l.scrollHeight; }
-        function addTimerRow(m="", t=15) { const d = document.createElement('div'); d.className = 'item-row'; d.innerHTML = `<input type="text" value="${m}" class="t-m" placeholder="Message"><input type="number" value="${t}" class="t-t" style="width:60px">m <button onclick="this.parentElement.remove(); saveAll()">X</button>`; document.getElementById('tL').appendChild(d); }
-        function addKeywordRow(k="", r="") { const d = document.createElement('div'); d.className = 'item-row'; d.innerHTML = `<input type="text" value="${k}" class="k-t" placeholder="Keyword"><input type="text" value="${r}" class="k-r" placeholder="Response"> <button onclick="this.parentElement.remove(); saveAll()">X</button>`; document.getElementById('kL').appendChild(d); }
-        function copyUrl() { navigator.clipboard.writeText(document.getElementById('fURL').innerText); alert("URL Copied!"); }
-        function fullReset() { localStorage.clear(); location.reload(); }
 
         window.onload = function() {
+            // 1. Process Twitch Return
             if (window.location.hash) {
                 const p = new URLSearchParams(window.location.hash.substring(1));
                 const tok = p.get('access_token');
                 if (tok) {
-                    localStorage.setItem('jailex_twitch_token', tok);
+                    localStorage.setItem('j_t_t', tok);
                     history.replaceState(null, null, window.location.pathname);
                 }
             }
-            loadAll();
+
+            // 2. Load UI from memory using NEW keys to avoid old "zombie" data
+            const st = localStorage.getItem('j_t_t');
+            const sk = localStorage.getItem('j_k_id');
+            const su = localStorage.getItem('j_k_u');
+
+            if (st) {
+                document.getElementById('tArea').classList.add('hidden');
+                document.getElementById('tCode').innerText = "TOKEN_SECURED";
+                document.getElementById('tDone').classList.remove('hidden');
+            }
+            if (sk) {
+                document.getElementById('kIn').value = su;
+                document.getElementById('kCode').innerText = sk;
+                document.getElementById('kDone').classList.remove('hidden');
+            }
+            updateFinalURL();
         };
     </script>
 </body>
