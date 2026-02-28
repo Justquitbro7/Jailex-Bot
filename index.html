@@ -3,126 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex - Streaming Made Easy</title>
+    <title>JAILEX | Professional Streaming Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
-        /* --- MASTER BEARS THEME --- */
+        :root {
+            --navy: #0B162A;
+            --orange: #C83803;
+            --dark-bg: #070D19;
+            --card: #152238;
+        }
+
         body { 
-            background-color: #0B162A; /* Bears Navy */
+            background-color: var(--navy); 
             color: #FFFFFF; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Inter', sans-serif; 
             margin: 0; 
             display: flex; 
             height: 100vh; 
             overflow: hidden; 
         }
 
-        /* Sidebar Navigation */
+        /* --- PROFESSIONAL SIDEBAR --- */
         .sidebar { 
-            width: 260px; 
-            background-color: #070D19; 
-            border-right: 4px solid #C83803; /* Bears Orange */
-            padding: 20px; 
+            width: 280px; 
+            background-color: var(--dark-bg); 
+            border-right: 3px solid var(--orange); 
+            padding: 40px 20px; 
             display: flex; 
             flex-direction: column; 
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
         }
 
         .sidebar h1 { 
-            color: #C83803; 
-            font-size: 2rem; 
+            color: var(--orange); 
+            font-size: 2.2rem; 
             text-align: center; 
-            margin-bottom: 40px; 
-            letter-spacing: 3px;
+            margin-bottom: 50px; 
+            letter-spacing: 5px;
             font-weight: 900;
         }
 
         .nav-item { 
-            padding: 15px; 
-            color: white; 
-            border-radius: 8px; 
+            padding: 18px 25px; 
+            color: rgba(255,255,255,0.6); 
+            border-radius: 12px; 
             margin-bottom: 12px; 
             cursor: pointer; 
             transition: 0.3s; 
             font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
         }
 
-        .nav-item:hover, .active { 
-            background-color: #C83803; 
-            box-shadow: 0 4px 15px rgba(200, 56, 3, 0.4);
+        .nav-item:hover { color: #fff; background-color: rgba(200, 56, 3, 0.1); }
+        .nav-item.active { 
+            background-color: var(--orange); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(200, 56, 3, 0.3);
         }
 
-        /* Main Workspace */
+        /* --- MAIN WORKSPACE --- */
         .main { 
             flex-grow: 1; 
             padding: 60px; 
             display: flex; 
             flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            background: radial-gradient(circle at center, #152238 0%, #0B162A 100%);
+            background: radial-gradient(circle at center, #1c2e4a 0%, #0B162A 100%);
+            overflow-y: auto;
         }
 
+        .workspace-header { 
+            width: 100%; 
+            max-width: 900px; 
+            margin: 0 auto 40px auto; 
+        }
+
+        .workspace-header h2 { 
+            font-size: 2.2rem; 
+            font-weight: 900; 
+            text-transform: uppercase; 
+            border-left: 6px solid var(--orange); 
+            padding-left: 20px;
+        }
+
+        /* --- THE HUD CARD --- */
         .card { 
-            background-color: #152238; 
-            border: 2px solid #C83803; 
-            border-radius: 15px; 
+            background-color: var(--card); 
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 24px; 
             padding: 50px; 
             width: 100%; 
-            max-width: 550px; 
+            max-width: 650px; 
+            margin: 0 auto;
             text-align: center; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.7); 
+            box-shadow: 0 30px 80px rgba(0,0,0,0.8); 
         }
 
-        h2 { color: #C83803; margin-top: 0; font-size: 1.8rem; }
+        .card p { color: #8e9aaf; font-size: 1.1rem; line-height: 1.6; margin-bottom: 35px; }
 
-        /* The Sync Button */
+        /* THE SYNC BUTTON */
         .sync-btn { 
-            background-color: #C83803; 
+            background-color: var(--orange); 
             color: white; 
             border: none; 
-            padding: 20px 40px; 
-            font-size: 1.3rem; 
-            font-weight: bold; 
-            border-radius: 10px; 
+            padding: 22px 40px; 
+            font-size: 1.2rem; 
+            font-weight: 800; 
+            border-radius: 14px; 
             cursor: pointer; 
             width: 100%; 
-            margin-top: 25px; 
             text-transform: uppercase; 
             letter-spacing: 2px;
-            transition: 0.2s;
+            transition: 0.4s;
         }
 
         .sync-btn:hover { 
             background-color: #FF4500; 
-            transform: translateY(-3px);
-            box-shadow: 0 5px 20px rgba(255, 69, 0, 0.4);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(200, 56, 3, 0.4);
         }
 
         #sync-status { 
             display: block; 
-            margin-top: 25px; 
-            font-size: 1.2rem; 
-            font-weight: bold; 
-            color: #C83803; 
+            margin-top: 30px; 
+            font-size: 1.3rem; 
+            font-weight: 900; 
+            color: var(--orange); 
             letter-spacing: 1px;
         }
 
-        /* Debug Box for real-time updates */
+        /* LOGGING / STATUS CONSOLE */
         #debug-log { 
             font-size: 0.75rem; 
-            color: #777; 
-            margin-top: 30px; 
+            color: #5d6d7e; 
+            margin-top: 40px; 
             text-align: left; 
             background: #000; 
-            padding: 12px; 
-            border-radius: 8px; 
-            height: 70px; 
+            padding: 15px; 
+            border-radius: 10px; 
+            height: 90px; 
             overflow-y: auto; 
-            font-family: 'Courier New', monospace; 
-            border: 1px solid #222; 
+            font-family: monospace; 
+            border: 1px solid #1c2e4a; 
         }
 
-        .footer { margin-top: auto; font-size: 0.8rem; color: #334; text-align: center; letter-spacing: 1px; }
+        .footer-tag { margin-top: auto; font-size: 0.7rem; color: #2c3e50; text-align: center; font-weight: 800; }
     </style>
 </head>
 <body>
@@ -132,20 +158,25 @@
         <div class="nav-item active">Credentials</div>
         <div class="nav-item">Bot Commands</div>
         <div class="nav-item">TTS Settings</div>
-        <div class="nav-item">Overlay</div>
-        <div class="footer">STREAMING MADE EASY V1.0</div>
+        <div class="nav-item">Keywords</div>
+        <div class="nav-item">Socials Timer</div>
+        <div class="footer-tag">JAILEX ENGINE V1.0 - BEARS EDITION</div>
     </div>
 
     <div class="main">
+        <div class="workspace-header">
+            <h2>System Credentials</h2>
+        </div>
+
         <div class="card">
-            <h2>Bot Integration</h2>
-            <p>Sync your Twitch account to activate the <strong>Jailex</strong> auto-login and chat systems.</p>
+            <h3 style="margin-top:0; font-size: 1.5rem;">Twitch Link</h3>
+            <p>Sync your main broadcasting account to enable chat monitoring, automated commands, and real-time bot interactions.</p>
             
             <button id="sync-button" class="sync-btn">
-                Sync Twitch Account
+                Link Twitch Account
             </button>
 
-            <span id="sync-status">STATUS: OFFLINE</span>
+            <span id="sync-status">STATUS: STANDBY</span>
             
             <div id="debug-log">System: Ready for handshake...</div>
         </div>
@@ -160,28 +191,26 @@
             debug.scrollTop = debug.scrollHeight;
         }
 
-        // --- THE WORKING SYNC LOGIC ---
+        // BUTTON TRIGGER
         document.getElementById('sync-button').onclick = function() {
-            log("Opening Twitch Authorization...");
-            // Using the EXACT link that worked for the test
+            log("Opening Secure Handshake...");
             const redirectUri = "https://jailex-h16lm8t8s-justquitbro7s-projects.vercel.app/setup.html";
             const scope = encodeURIComponent('chat:read chat:edit');
             const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
-            
             window.open(authUrl, 'JailexSync', 'width=450,height=600');
         };
 
-        // --- HANDSHAKE LISTENER ---
+        // HANDSHAKE LISTENER
         window.addEventListener('message', (event) => {
             if (event.data.type === 'TWITCH_TOKEN') {
                 const token = event.data.token;
                 localStorage.setItem('jailex_token', token);
-                log("Token received! Connecting to Twitch...");
+                log("Authentication successful! Connecting...");
                 connectBot(token);
             }
         });
 
-        // --- TWITCH API CONNECTION ---
+        // CONNECT TO TWITCH
         async function connectBot(token) {
             const status = document.getElementById('sync-status');
             status.innerText = "STATUS: CONNECTING...";
@@ -193,8 +222,8 @@
                 if (data.data && data.data[0]) {
                     const user = data.data[0].display_name;
                     status.innerText = `STATUS: LIVE AS ${user.toUpperCase()}`;
-                    status.style.color = "#00FF00"; // Victory Green
-                    log(`Successfully linked to ${user}`);
+                    status.style.color = "#00FF00";
+                    log(`Bot successfully linked to ${user}`);
                 }
             } catch (err) {
                 log("Error: " + err.message);
@@ -202,12 +231,11 @@
             }
         }
 
-        // --- AUTO-LOGIN ON LOAD ---
+        // AUTO-LOGIN ON LOAD
         window.onload = () => {
-            log("Jailex Master Dashboard Loaded.");
             const savedToken = localStorage.getItem('jailex_token');
             if (savedToken) {
-                log("Restoring saved session...");
+                log("Restoring active session...");
                 connectBot(savedToken);
             }
         };
