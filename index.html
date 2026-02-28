@@ -2,30 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jailex Bot | Unified Overlay</title>
+    <title>Jailex Bot | Unified Overlay + TTS</title>
     <style>
         body { background: rgba(0,0,0,0); margin: 0; padding: 20px; font-family: 'Inter', sans-serif; color: white; overflow: hidden; }
-        #chat-container { display: flex; flex-direction: column; justify-content: flex-end; height: 90vh; max-width: 400px; }
-        .message { background: rgba(0,0,0,0.7); margin-bottom: 10px; padding: 12px; border-radius: 8px; animation: slideIn 0.2s ease-out; }
-        .twitch { border-left: 5px solid #9146ff; }
-        .kick { border-left: 5px solid #53fc18; }
+        #chat-container { display: flex; flex-direction: column; justify-content: flex-end; height: 90vh; max-width: 450px; }
+        .message { background: rgba(0,0,0,0.8); margin-bottom: 10px; padding: 12px; border-radius: 8px; border-left: 5px solid #fff; animation: slideIn 0.2s ease-out; font-size: 1.2rem; }
+        .twitch { border-left-color: #9146ff; }
+        .kick { border-left-color: #53fc18; }
         .user { font-weight: bold; margin-right: 5px; }
         @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
 <body>
     <div id="chat-container">
-        <div class="message system">Jailex: Hardwired & Ready...</div>
+        <div class="message system">Jailex: TTS Engine Online...</div>
     </div>
+
     <script src="twitch.js"></script>
     <script src="kick.js"></script>
+
     <script>
+        // THE TTS ENGINE
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0; // Speed (0.1 to 10)
+            utterance.pitch = 1.0; // Pitch (0 to 2)
+            utterance.volume = 1.0; // Volume (0 to 1)
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // UPDATED ADD MESSAGE FUNCTION
         function addMessage(platform, user, text, color = "#fff") {
             const container = document.getElementById('chat-container');
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${platform}`;
             msgDiv.innerHTML = `<span class="user" style="color:${color}">${user}:</span> ${text}`;
             container.appendChild(msgDiv);
+
+            // This line triggers the TTS for every message!
+            speak(`${user} says ${text}`);
+
+            // Auto-scroll to bottom
+            window.scrollTo(0, document.body.scrollHeight);
         }
     </script>
 </body>
