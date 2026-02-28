@@ -7,51 +7,42 @@ function loginWithTwitch() {
     window.location.href = authUrl;
 }
 
-async function initTwitch() {
+async function runJailexAuth() {
     const hash = window.location.hash;
     
-    // 1. If there's a token in the URL, grab it and CLEAN the URL immediately
+    // If we have a token, GRAB IT and CLEAN THE URL immediately
     if (hash.includes('access_token=')) {
         const params = new URLSearchParams(hash.substring(1));
         const token = params.get('access_token');
 
-        // WIPE the URL so it can't loop
+        // This line KILLS the loop by clearing the address bar
         window.history.replaceState({}, document.title, "/");
 
-        if (token) {
-            console.log("Token found, fetching ID...");
-            fetchTwitchID(token);
-        }
-        return; 
-    }
-}
-
-async function fetchTwitchID(token) {
-    try {
-        const response = await fetch('https://api.twitch.tv/helix/users', {
-            headers: {
-                'Client-ID': TWITCH_CLIENT_ID,
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        console.log("Token captured. Fetching ID...");
         
-        const data = await response.json();
-        
-        if (data.data && data.data.length > 0) {
-            const user = data.data[0];
-            // Show the result clearly on the screen
-            addMessage('twitch', 'Jailex-Bot', `CONNECTED! User: ${user.display_name} | ID: ${user.id}`, '#9146ff');
+        try {
+            const response = await fetch('https://api.twitch.tv/helix/users', {
+                headers: {
+                    'Client-ID': TWITCH_CLIENT_ID,
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
             
-            // Hide the button so you don't click it again
-            const btn = document.querySelector('.btn-twitch');
-            if (btn) btn.style.display = 'none';
-        } else {
-            addMessage('twitch', 'System', 'Error: Could not retrieve Twitch ID.', '#ff4b4b');
+            if (data.data && data.data[0]) {
+                const user = data.data[0];
+                // Show the success message and hide the button
+                if (typeof addMessage === "function") {
+                    addMessage('twitch', 'Jailex', `SUCCESS! Connected to: ${user.display_name} (ID: ${user.id})`, '#9146ff');
+                }
+                const btn = document.querySelector('.btn-twitch');
+                if (btn) btn.style.display = 'none';
+            }
+        } catch (err) {
+            console.error("Auth failed:", err);
         }
-    } catch (err) {
-        console.error("Fetch failed:", err);
     }
 }
 
-// Start the check as soon as the file loads
-initTwitch();
+// Run this once when the page loads
+runJailexAuth();
