@@ -5,19 +5,36 @@
     <title>Jailex Overlay v3.0</title>
     <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
     <style>
-        body { background: transparent; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; margin: 0; padding: 10px; }
-        #chat-container { display: flex; flex-direction: column-reverse; height: 100vh; width: 100%; gap: 8px; }
-        .msg { background: rgba(11, 22, 42, 0.85); border-left: 4px solid #FF6A00; padding: 10px; border-radius: 4px; animation: slideIn 0.3s ease; max-width: 90%; }
-        .user { font-weight: bold; color: #00F3FF; font-size: 0.9em; margin-bottom: 2px; display: flex; align-items: center; gap: 5px; }
-        .platform { font-size: 0.7em; padding: 2px 5px; border-radius: 3px; background: rgba(255,255,255,0.1); }
-        .content { font-size: var(--fs); line-height: 1.2; word-break: break-all; }
-        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        body { background: transparent; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; margin: 0; padding: 20px; }
+        /* Messages start at the bottom and stack up */
+        #chat-container { 
+            display: flex; 
+            flex-direction: column-reverse; 
+            height: 95vh; 
+            width: 100%; 
+            gap: 10px; 
+            justify-content: flex-start;
+        }
+        .msg { 
+            background: rgba(11, 22, 42, 0.9); /* Chicago Bears Navy */
+            border-left: 5px solid #FF6A00; /* Chicago Bears Orange */
+            padding: 12px; 
+            border-radius: 6px; 
+            animation: slideIn 0.3s ease-out; 
+            max-width: 85%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .user { font-weight: bold; color: #00F3FF; font-size: 0.95em; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+        .platform { font-size: 0.7em; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.15); text-transform: uppercase; }
+        .content { font-size: var(--fs); line-height: 1.3; word-wrap: break-word; }
+        @keyframes slideIn { from { transform: translateX(-30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
     <div id="chat-container"></div>
 
     <script>
+        // 1. Get Settings from the URL
         const params = new URLSearchParams(window.location.search);
         const twitchChannel = params.get('twitch') || 'justquitbro7';
         const kickId = params.get('kick') || '92474944';
@@ -32,32 +49,45 @@
             div.className = 'msg';
             div.innerHTML = `
                 <div class="user">
-                    <span class="platform">${platform}</span>
+                    <span class="platform" style="color: ${platform === 'Twitch' ? '#9146FF' : '#53FC18'}">${platform}</span>
                     ${user}
                 </div>
                 <div class="content">${message}</div>
             `;
-            container.prepend(div);
-            setTimeout(() => { div.style.opacity = '0'; div.style.transition = '1s'; setTimeout(() => div.remove(), 1000); }, stayTime);
+            container.prepend(div); // Adds to the bottom (because of column-reverse)
+            
+            // Auto-remove after stayTime
+            setTimeout(() => { 
+                div.style.opacity = '0'; 
+                div.style.transition = '1s'; 
+                setTimeout(() => div.remove(), 1000); 
+            }, stayTime);
         }
 
-        // --- Twitch Connection ---
+        // --- TWITCH CONNECTION (Mirroring your Dashboard Logic) ---
         const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-        tws.onopen = () => { tws.send('PASS ignore'); tws.send('NICK justinfan' + Math.floor(Math.random()*999)); tws.send('JOIN #' + twitchChannel.toLowerCase()); };
+        tws.onopen = () => { 
+            tws.send('PASS ignore'); 
+            tws.send('NICK justinfan' + Math.floor(Math.random()*99999)); 
+            tws.send('JOIN #' + twitchChannel.toLowerCase()); 
+            console.log("Twitch Overlay Connected");
+        };
         tws.onmessage = (e) => {
             if(e.data.includes('PRIVMSG')) {
-                const u = e.data.split('!')[0].substring(1);
+                const parts = e.data.split('!');
+                const u = parts[0].substring(1);
                 const m = e.data.substring(e.data.indexOf(':', 1) + 1);
                 addMessage(u, m, 'Twitch');
             }
             if(e.data.includes('PING')) tws.send('PONG :tmi.twitch.tv');
         };
 
-        // --- Kick Connection ---
+        // --- KICK CONNECTION ---
         const pusher = new Pusher('32cbd69e4b950bf97679', { cluster: 'us2' });
         const channel = pusher.subscribe(`chatrooms.${kickId}.v2`);
         channel.bind('App\\Events\\ChatMessageEvent', (data) => {
-            addMessage(data.sender.username, data.content, 'Kick');
+            const msgData = JSON.parse(data); // Kick data usually needs an extra parse
+            addMessage(msgData.sender.username, msgData.content, 'Kick');
         });
     </script>
 </body>
