@@ -3,195 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex | Streaming Made Easy</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <title>JAILEX STUDIO | v9.6.8</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --navy: #0B162A;
-            --orange: #C83803;
-            --sidebar-bg: #070D19;
-            --card-bg: #152238;
-        }
-
-        body { 
-            background-color: var(--navy); 
-            color: #FFFFFF; 
-            font-family: 'Inter', sans-serif; 
-            margin: 0; 
-            display: flex; 
-            height: 100vh; 
-            overflow: hidden; 
-        }
-
-        /* --- CLEAN SIDEBAR --- */
-        .sidebar { 
-            width: 280px; 
-            background-color: var(--sidebar-bg); 
-            border-right: 2px solid rgba(255,255,255,0.05); 
-            padding: 40px 20px; 
-            display: flex; 
-            flex-direction: column; 
-        }
-
-        .sidebar h1 { 
-            color: #FFFFFF; 
-            font-size: 2.2rem; 
-            text-align: center; 
-            margin-bottom: 5px; 
-            font-weight: 900;
-            letter-spacing: -1px;
-        }
-
-        .sidebar .tagline {
-            color: var(--orange);
-            text-align: center;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 50px;
-        }
-
-        .nav-item { 
-            padding: 16px 20px; 
-            color: rgba(255,255,255,0.5); 
-            border-radius: 10px; 
-            margin-bottom: 8px; 
-            cursor: pointer; 
-            transition: 0.2s; 
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .nav-item:hover { color: #fff; background-color: rgba(255,255,255,0.05); }
-        .nav-item.active { 
-            background-color: rgba(200, 56, 3, 0.15); 
-            color: var(--orange); 
-        }
-
-        /* --- MAIN AREA --- */
-        .main { 
-            flex-grow: 1; 
-            padding: 60px; 
-            display: flex; 
-            flex-direction: column; 
-            background: linear-gradient(180deg, #101d33 0%, #0B162A 100%);
-            overflow-y: auto;
-        }
-
-        .content-header { margin-bottom: 40px; }
-        .content-header h2 { font-size: 1.8rem; font-weight: 800; margin: 0; }
-
-        /* --- CENTRAL CARD --- */
-        .card { 
-            background-color: var(--card-bg); 
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 20px; 
-            padding: 50px; 
-            width: 100%; 
-            max-width: 600px; 
-            box-shadow: 0 40px 100px rgba(0,0,0,0.5); 
-        }
-
-        .card h3 { font-size: 1.4rem; margin-top: 0; }
-        .card p { color: #94a3b8; line-height: 1.6; margin-bottom: 30px; }
-
-        .sync-btn { 
-            background-color: var(--orange); 
-            color: white; 
-            border: none; 
-            padding: 20px; 
-            font-size: 1.1rem; 
-            font-weight: 700; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            width: 100%; 
-            transition: 0.3s;
-        }
-
-        .sync-btn:hover { background-color: #e64002; transform: translateY(-2px); }
-
-        #sync-status { 
-            display: block; 
-            margin-top: 25px; 
-            text-align: center;
-            font-weight: 700; 
-            color: var(--orange); 
-            font-size: 0.9rem;
-            text-transform: uppercase;
-        }
-
-        #console { 
-            font-size: 0.75rem; 
-            color: #475569; 
-            margin-top: 40px; 
-            background: rgba(0,0,0,0.2); 
-            padding: 15px; 
-            border-radius: 8px; 
-            height: 60px; 
-            overflow-y: auto; 
-            font-family: monospace; 
-        }
+        :root { --navy: #020617; --orange: #C83803; --blue: #00F3FF; }
+        body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 240px; border-right: 1px solid rgba(200, 56, 3, 0.2); background: rgba(15, 23, 42, 0.9); flex-shrink: 0; display: flex; flex-direction: column; backdrop-filter: blur(15px); }
+        .nav-item { padding: 18px 28px; cursor: pointer; transition: 0.3s; color: #64748b; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; border-left: 3px solid transparent; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.03); color: white; }
+        .nav-item.active { background: rgba(200, 56, 3, 0.1); color: var(--orange); border-left: 3px solid var(--orange); }
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 70% 20%, #0f172a, #020617); }
+        .tab-content { display: none; max-width: 1000px; margin: 0 auto; animation: slideUp 0.4s ease-out; }
+        .tab-content.active { display: block; }
+        .hud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 24px; }
+        .hud-card { background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(0, 243, 255, 0.15); padding: 28px; border-radius: 20px; margin-bottom: 24px; backdrop-filter: blur(10px); }
+        .hud-btn { background: var(--orange); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: 900; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        .hud-btn:hover { background: #e04a05; transform: translateY(-2px); box-shadow: 0 5px 20px rgba(200, 56, 3, 0.4); }
+        input { background: rgba(0,0,0,0.5); border: 1px solid #334155; color: #f8fafc; padding: 12px; border-radius: 10px; width: 100%; font-family: 'Consolas', monospace; font-size: 0.85rem; }
+        .status-pill { background: #1e293b; padding: 4px 10px; border-radius: 6px; font-size: 9px; font-weight: 900; border: 1px solid #334155; transition: 0.5s; }
+        .status-on { color: var(--blue); border-color: var(--blue); box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <h1>JAILEX</h1>
-        <div class="tagline">Streaming Made Easy</div>
-        
-        <div class="nav-item active">Credentials</div>
-        <div class="nav-item">Bot Commands</div>
-        <div class="nav-item">Keywords</div>
-        <div class="nav-item">Socials Timer</div>
-        <div class="nav-item">Overlay</div>
+        <div class="p-10 text-center">
+            <h2 class="text-4xl font-black text-orange-600 tracking-tighter leading-none">JAILEX</h2>
+            <p class="text-[9px] font-black uppercase tracking-[0.1em] mt-3 italic"><span class="text-white">Streaming Made</span> <span class="text-blue-400">Easy</span></p>
+            <p class="text-[8px] font-bold text-slate-500 uppercase mt-1 opacity-60">Build Version 9.6.8</p>
+        </div>
+        <nav class="flex-1">
+            <div class="nav-item active" onclick="showTab('sync', this)">🔄 Quick Sync</div>
+            <div class="nav-item" onclick="showTab('engine', this)">🔊 Engine Master</div>
+            <div class="nav-item" onclick="showTab('dash', this)">📊 Live Dashboard</div>
+            <div class="nav-item" onclick="showTab('overlay', this)">📡 Overlay Hub</div>
+            <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
+            <div class="nav-item" onclick="showTab('timers', this)">⏰ Auto Timers</div>
+        </nav>
     </div>
 
-    <div class="main">
-        <div class="content-header">
-            <h2>Account Integration</h2>
+    <div class="main-content">
+        <div id="sync" class="tab-content active">
+            <div class="hud-header"><h1 class="text-3xl font-black italic text-white uppercase tracking-tighter">Sync <span class="text-blue-400">Terminal</span></h1></div>
+            
+            <div class="grid grid-cols-2 gap-6">
+                <div class="hud-card border-purple-500/20">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-[10px] font-black text-purple-400 uppercase tracking-widest">Twitch Broadcast</h3>
+                        <div id="t-pill" class="status-pill">OFFLINE</div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mb-6 text-center italic">One-click secure authorization</p>
+                    <button class="hud-btn w-full bg-purple-800 py-6 mb-4" onclick="startTwitchSync()">Authorize Sync</button>
+                    <div id="t-user-display" class="text-center text-[12px] font-black text-blue-400 italic opacity-0 transition-opacity">NOT LINKED</div>
+                </div>
+
+                <div class="hud-card border-emerald-500/20">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Kick Signal</h3>
+                        <div id="k-pill" class="status-pill">OFFLINE</div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mb-6 text-center italic">Enter your unique Kick ID</p>
+                    <input type="text" id="k-id-box" placeholder="KICK ID (e.g. 24968498)" class="mb-4">
+                    <button class="hud-btn w-full bg-emerald-700" onclick="linkKick()">Link Signal</button>
+                </div>
+            </div>
         </div>
 
-        <div class="card">
-            <h3>Twitch Connection</h3>
-            <p>Connect your account to enable the Jailex automated streaming suite. This allows the bot to monitor your chat and post your scheduled reminders.</p>
-            
-            <button id="sync-button" class="sync-btn">Link Twitch Account</button>
-            <span id="sync-status">Status: Disconnected</span>
-            
-            <div id="console">System initialized...</div>
+        <div id="engine" class="tab-content">
+            <div class="hud-header"><h1 class="text-3xl font-black italic text-white uppercase tracking-tighter">Engine <span class="text-blue-400">Master</span></h1></div>
+            <div class="hud-card border-orange-600/30">
+                <button class="hud-btn w-full py-6 text-xl shadow-2xl mb-4" onclick="igniteEngine()">Ignite Multi-Platform Engine</button>
+                <div id="log" class="mt-4 bg-black/40 p-5 rounded-xl border border-slate-800 h-48 overflow-y-auto font-mono text-xs text-green-500">System Ready.</div>
+            </div>
         </div>
     </div>
 
     <script>
         const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
+        const REDIRECT_URI = "https://jailex-h16lm8t8s-justquitbro7s-projects.vercel.app/setup.html";
 
-        function log(msg) {
-            const con = document.getElementById('console');
-            if (con) con.innerHTML += `<div>> ${msg}</div>`;
-            con.scrollTop = con.scrollHeight;
+        function showTab(id, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
         }
 
-        document.getElementById('sync-button').onclick = function() {
-            log("Starting handshake...");
-            const redirectUri = "https://jailex-h16lm8t8s-justquitbro7s-projects.vercel.app/setup.html";
+        // --- THE HANDSHAKE ---
+        function startTwitchSync() {
             const scope = encodeURIComponent('chat:read chat:edit');
-            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=${scope}`;
             window.open(authUrl, 'JailexSync', 'width=450,height=600');
-        };
+        }
 
         window.addEventListener('message', (event) => {
             if (event.data.type === 'TWITCH_TOKEN') {
                 const token = event.data.token;
-                localStorage.setItem('jailex_token', token);
-                log("Authentication successful.");
-                connectBot(token);
+                localStorage.setItem('jailex_t_token', token);
+                validateTwitch(token);
             }
         });
 
-        async function connectBot(token) {
-            const status = document.getElementById('sync-status');
-            status.innerText = "Status: Connecting...";
+        async function validateTwitch(token) {
             try {
                 const res = await fetch('https://api.twitch.tv/helix/users', {
                     headers: { 'Client-ID': CLIENT_ID, 'Authorization': `Bearer ${token}` }
@@ -199,19 +113,49 @@
                 const data = await res.json();
                 if (data.data && data.data[0]) {
                     const user = data.data[0].display_name;
-                    status.innerText = `Status: Live as ${user}`;
-                    status.style.color = "#10b981"; // Clean Green
-                    log(`Linked to ${user}`);
+                    localStorage.setItem('jailex_user', user);
+                    syncUI();
+                    window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Broadcast link confirmed. Welcome back ${user}.`));
                 }
-            } catch (err) {
-                log("Error: " + err.message);
-                status.innerText = "Status: Error";
+            } catch (err) { console.error(err); }
+        }
+
+        function linkKick() {
+            const val = document.getElementById('k-id-box').value.trim();
+            localStorage.setItem('jailex_kick_id', val);
+            syncUI();
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance("Kick signal locked."));
+        }
+
+        function syncUI() {
+            const kid = localStorage.getItem('jailex_kick_id');
+            const tkn = localStorage.getItem('jailex_t_token');
+            const user = localStorage.getItem('jailex_user');
+
+            if(kid) { 
+                document.getElementById('k-id-box').value = kid;
+                document.getElementById('k-pill').innerText = "ONLINE"; 
+                document.getElementById('k-pill').classList.add('status-on'); 
+            }
+            if(tkn) { 
+                document.getElementById('t-pill').innerText = "ONLINE"; 
+                document.getElementById('t-pill').classList.add('status-on'); 
+                const display = document.getElementById('t-user-display');
+                display.innerText = `LINKED AS: ${user.toUpperCase()}`;
+                display.classList.remove('opacity-0');
             }
         }
 
+        function igniteEngine() {
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance("Engine ignited. Monitoring broadcast signals."));
+            document.getElementById('log').innerHTML += `<div class="text-blue-400">[SYSTEM] Multi-Platform Engine Online.</div>`;
+        }
+
         window.onload = () => {
-            const savedToken = localStorage.getItem('jailex_token');
-            if (savedToken) connectBot(savedToken);
+            syncUI();
+            const existingToken = localStorage.getItem('jailex_t_token');
+            if (existingToken) validateTwitch(existingToken);
         };
     </script>
 </body>
