@@ -1,115 +1,240 @@
+<script>
+    // KILL-SWITCH: Pre-process Twitch tokens
+    (function() {
+        if (window.location.hash) {
+            const params = new URLSearchParams(window.location.hash.substring(1));
+            const token = params.get('access_token');
+            if (token) {
+                localStorage.setItem('jailex_twitch_token', 'oauth:' + token);
+                window.history.replaceState(null, null, window.location.pathname);
+            }
+        }
+    })();
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex v5.3 - Debug Mode</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Jailex Studio v5.5 | Stable Engine</title>
+    <style>
+        :root { --navy: #0B162A; --orange: #C83803; --blue: #00F3FF; }
+        * { box-sizing: border-box; }
+        body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; width: 100vw; overflow: hidden; }
+        .sidebar { width: 220px; background: rgba(0,0,0,0.6); border-right: 2px solid var(--orange); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
+        .sidebar-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
+        .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; color: #ccc; font-weight: bold; font-size: 0.9em; }
+        .nav-item.active { background: rgba(200, 56, 3, 0.2); color: var(--orange); border-left: 5px solid var(--orange); }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; background: var(--navy); position: relative; }
+        .tab-content { display: none; max-width: 800px; margin: 0 auto; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid var(--blue); padding: 25px; border-radius: 12px; margin-bottom: 20px; }
+        .btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; margin-top: 10px; }
+        .btn:disabled { background: #444; cursor: not-allowed; }
+        input { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #333; background: #000; color: white; margin-bottom: 10px; text-align: center; font-size: 1.1em; }
+        #log { height: 250px; overflow-y: auto; background: #000; padding: 15px; font-family: monospace; font-size: 0.85em; color: #00ff00; border-radius: 8px; border: 1px solid #333; line-height: 1.5; }
+        .item-row { display: flex; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px; align-items: center; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
-<body class="bg-slate-950 text-white p-8">
-    <div class="max-w-xl mx-auto bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-2xl">
-        <h1 class="text-xl font-bold text-blue-400 mb-4">Jailex Debug Console <span class="text-xs bg-slate-800 px-2 py-1 rounded ml-2">v5.3</span></h1>
-        
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="bg-black p-3 rounded border border-slate-800">
-                <p class="text-[10px] text-slate-500 uppercase">WebSocket</p>
-                <p id="ws-status" class="text-yellow-500 font-mono text-sm">INITIALIZING...</p>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header"><h2 style="color: var(--orange); margin:0;">JAILEX</h2><span style="font-size:0.7em;">v5.5 ENGINE</span></div>
+        <div class="nav-item active" onclick="showTab('sync', this)">🔄 Quick Sync</div>
+        <div class="nav-item" onclick="showTab('overlay', this)">📡 Overlay</div>
+        <div class="nav-item" onclick="showTab('tts', this)">🔊 Engine</div>
+        <div class="nav-item" onclick="showTab('timers', this)">⏰ Timers</div>
+        <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
+    </div>
+
+    <div class="main-content">
+        <div id="sync" class="tab-content active">
+            <h2>Step 1: Link Accounts</h2>
+            <div class="card">
+                <h3>Twitch Sync</h3>
+                <button id="tBtn" class="btn" style="background:#6441a5" onclick="startTwitch()">CONNECT TWITCH</button>
+                <div id="tDone" class="hidden" style="display:none">✅ Twitch Connected!</div>
             </div>
-            <div class="bg-black p-3 rounded border border-slate-800">
-                <p class="text-[10px] text-slate-500 uppercase">Audio Engine</p>
-                <p id="tts-status" class="text-red-500 font-mono text-sm">LOCKED</p>
+            <div class="card">
+                <h3>Kick Sync</h3>
+                <input type="text" id="kIn" placeholder="Type Kick Username">
+                <button id="kBtn" class="btn" style="background:#00E701; color:black" onclick="resolveKick()">FIND KICK ID</button>
+                <div id="kDone" style="display:none; margin-top:10px;">✅ Kick ID: <code id="kCode" style="color:#00ff00"></code></div>
+            </div>
+            <button class="btn" style="background:transparent; border:1px solid #444; color:#666; font-size:0.7em;" onclick="fullReset()">WIPE ALL SAVED DATA</button>
+        </div>
+
+        <div id="overlay" class="tab-content">
+            <h2>Step 2: Get Overlay URL</h2>
+            <div class="card">
+                <label>Font Size: <span id="sV">22</span>px</label><input type="range" id="fS" min="16" max="44" value="22" oninput="save()">
+                <label>Stay Time: <span id="tV">20</span>s</label><input type="range" id="sT" min="5" max="60" value="20" oninput="save()">
+                <div id="fL" style="background:#000; padding:15px; border-radius:8px; color:var(--blue); font-family:monospace; font-size:0.75em; word-break:break-all; border-left:4px solid var(--orange); margin-top:20px;">Complete setup first...</div>
+                <button class="btn" onclick="copyUrl()">COPY URL</button>
             </div>
         </div>
 
-        <button id="unlock-btn" class="w-full bg-blue-600 py-4 rounded-xl font-bold mb-6 hover:bg-blue-500 transition-all">
-            1. CLICK TO UNLOCK AUDIO
-        </button>
-
-        <div id="debug-log" class="bg-black p-4 h-64 overflow-y-auto rounded border border-slate-800 font-mono text-[11px] text-green-500 space-y-1">
-            <p>> System standby...</p>
+        <div id="tts" class="tab-content">
+            <h2>Step 3: Activate Bot</h2>
+            <div class="card">
+                <p style="font-size: 0.8em; color: #888; margin-bottom: 10px;">Click Start to enable Audio and connect to Kick Chat.</p>
+                <button class="btn" id="sB" onclick="startBotEngine()" style="height:60px; font-size: 1.2em;">START JAILEX ENGINE</button>
+                <div id="log" style="margin-top: 20px;">[System] Ready for ignition...</div>
+            </div>
         </div>
+
+        <div id="timers" class="tab-content"><h2>Timers</h2><div class="card"><div id="tL"></div><button class="btn" onclick="addTimerRow()">+ Add</button></div></div>
+        <div id="keywords" class="tab-content"><h2>Keywords</h2><div class="card"><div id="kL"></div><button class="btn" onclick="addKeywordRow()">+ Add</button></div></div>
     </div>
 
     <script>
-        // --- HARD-CODED CONFIG ---
-        const CHANNEL_ID = "24968498"; // Your Verified Kick ID
-        const PUSHER_KEY = "32cbd69e4b950bf97679";
+        const CID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
+        const RED = window.location.origin + window.location.pathname;
         
-        const debugLog = document.getElementById('debug-log');
-        const wsStatus = document.getElementById('ws-status');
-        const ttsStatus = document.getElementById('tts-status');
+        // ENGINE STATE
+        let ttsQueue = [];
+        let isSpeaking = false;
+        let kickWS = null;
 
-        function log(msg) {
-            console.log("JAILEX:", msg); // Force to browser console
-            const p = document.createElement('p');
-            p.innerText = `> ${msg}`;
-            debugLog.appendChild(p);
-            debugLog.scrollTop = debugLog.scrollHeight;
+        function showTab(id, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
         }
 
-        // --- 1. TTS UNLOCK ---
-        document.getElementById('unlock-btn').addEventListener('click', () => {
+        function startTwitch() { window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${CID}&redirect_uri=${encodeURIComponent(RED)}&response_type=token&scope=chat:read+chat:edit&force_verify=true`; }
+
+        async function resolveKick() {
+            const user = document.getElementById('kIn').value.trim();
+            if(!user) return alert("Enter Kick Name");
+            addLog(`Searching for Kick user: ${user}...`);
+            try {
+                // Using a proxy to avoid CORS issues
+                const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/api/v1/channels/'+user)}`);
+                const data = await res.json();
+                const parsed = JSON.parse(data.contents);
+                if(parsed.chatroom && parsed.chatroom.id) {
+                    document.getElementById('kCode').innerText = parsed.chatroom.id;
+                    document.getElementById('kDone').style.display = 'block';
+                    addLog(`Success! Kick ID ${parsed.chatroom.id} found.`);
+                    save();
+                }
+            } catch (e) { addLog("Error: Kick user not found."); alert("Kick search failed."); }
+        }
+
+        // --- THE ACTUAL ENGINE LOGIC ---
+        function startBotEngine() {
+            const kid = document.getElementById('kCode').innerText;
+            if(!kid) return alert("Please find your Kick ID in Step 1 first!");
+
+            // 1. Unlock Audio
             window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance("Audio system online");
-            window.speechSynthesis.speak(utter);
+            const intro = new SpeechSynthesisUtterance("Jailex Engine Online. Waiting for chat.");
+            window.speechSynthesis.speak(intro);
+
+            // 2. Connect to Kick Pusher
+            addLog("Connecting to Kick WebSocket...");
+            const pusherKey = "32cbd69e4b950bf97679";
+            const wsUrl = `wss://ws-us2.pusher.com/app/${pusherKey}?protocol=7&client=js&version=8.4.0-rc2&flash=false`;
             
-            ttsStatus.innerText = "ACTIVE";
-            ttsStatus.classList.replace('text-red-500', 'text-green-500');
-            log("Audio Engine Unlocked");
-        });
+            kickWS = new WebSocket(wsUrl);
 
-        // --- 2. WEBSOCKET CONNECTION ---
-        function connect() {
-            log("Attempting WebSocket connection...");
-            wsStatus.innerText = "CONNECTING...";
-
-            const url = `wss://ws-us2.pusher.com/app/${PUSHER_KEY}?protocol=7&client=js&version=8.4.0-rc2&flash=false`;
-            const ws = new WebSocket(url);
-
-            ws.onopen = () => {
-                log("Connected to Pusher Server");
-                wsStatus.innerText = "CONNECTED";
-                wsStatus.classList.replace('text-yellow-500', 'text-green-500');
-
-                // Subscribe to your specific chat
-                const subscribeMsg = {
+            kickWS.onopen = () => {
+                addLog("Connected to Kick Server.");
+                kickWS.send(JSON.stringify({
                     event: "pusher:subscribe",
-                    data: { channel: `chatrooms.${CHANNEL_ID}.v2` }
-                };
-                ws.send(JSON.stringify(subscribeMsg));
-                log(`Subscribed to Chatroom: ${CHANNEL_ID}`);
+                    data: { channel: `chatrooms.${kid}.v2` }
+                }));
+                document.getElementById('sB').innerText = "SYSTEM LIVE";
+                document.getElementById('sB').disabled = true;
+                document.getElementById('sB').style.background = "#22c55e";
             };
 
-            ws.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                
-                if (data.event === "App\\Events\\ChatMessageEvent") {
-                    const chat = JSON.parse(data.data);
+            kickWS.onmessage = (e) => {
+                const raw = JSON.parse(e.data);
+                if (raw.event === "App\\Events\\ChatMessageEvent") {
+                    const chat = JSON.parse(raw.data);
                     const user = chat.sender.username;
                     const msg = chat.content;
+
+                    addLog(`<span style="color:#00E701">${user}:</span> ${msg}`);
                     
-                    log(`MSG: ${user}: ${msg}`);
-                    
-                    // SPEAK
-                    const utter = new SpeechSynthesisUtterance(`${user} says ${msg}`);
-                    window.speechSynthesis.speak(utter);
+                    // Add to Queue
+                    ttsQueue.push(`${user} says ${msg}`);
+                    processQueue();
                 }
             };
 
-            ws.onerror = (err) => {
-                log("CONNECTION ERROR!");
-                wsStatus.innerText = "ERROR";
-            };
-
-            ws.onclose = () => {
-                log("Connection Lost. Retrying in 5s...");
-                wsStatus.innerText = "DISCONNECTED";
-                setTimeout(connect, 5000);
+            kickWS.onclose = () => {
+                addLog("Lost connection. Retrying...");
+                setTimeout(startBotEngine, 5000);
             };
         }
 
-        // Auto-start connection
-        connect();
+        function processQueue() {
+            if (isSpeaking || ttsQueue.length === 0) return;
+            
+            isSpeaking = true;
+            const text = ttsQueue.shift();
+            const utter = new SpeechSynthesisUtterance(text);
+            
+            utter.onend = () => {
+                isSpeaking = false;
+                processQueue();
+            };
+            
+            window.speechSynthesis.speak(utter);
+        }
+
+        function addLog(m) { 
+            const l = document.getElementById('log'); 
+            l.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${m}</div>`; 
+            l.scrollTop = l.scrollHeight; 
+            console.log("JAILEX:", m);
+        }
+
+        // Standard UI Save/Load
+        function save() {
+            const config = {
+                kiUser: document.getElementById('kIn').value,
+                kiId: document.getElementById('kCode').innerText,
+                fS: document.getElementById('fS').value,
+                sT: document.getElementById('sT').value
+            };
+            localStorage.setItem('jailex_master_save', JSON.stringify(config));
+            updateFinalURL();
+        }
+
+        function load() {
+            const raw = localStorage.getItem('jailex_master_save');
+            if(raw) {
+                const c = JSON.parse(raw);
+                document.getElementById('kIn').value = c.kiUser || "";
+                document.getElementById('kCode').innerText = c.kiId || "";
+                if(c.kiId) document.getElementById('kDone').style.display = 'block';
+                document.getElementById('fS').value = c.fS || 22;
+                document.getElementById('sT').value = c.sT || 20;
+            }
+            const tok = localStorage.getItem('jailex_twitch_token');
+            if(tok) { document.getElementById('tDone').style.display = 'block'; document.getElementById('tBtn').style.display = 'none'; }
+            updateFinalURL();
+        }
+
+        function updateFinalURL() {
+            document.getElementById('sV').innerText = document.getElementById('fS').value;
+            document.getElementById('tV').innerText = document.getElementById('sT').value;
+            const tok = localStorage.getItem('jailex_twitch_token');
+            const kid = document.getElementById('kCode').innerText;
+            if(tok && kid) {
+                document.getElementById('fL').innerText = `${window.location.origin}/overlay.html?kick=${kid}&token=${tok.replace('oauth:', '')}&size=${document.getElementById('fS').value}`;
+            }
+        }
+
+        function fullReset() { if(confirm("Wipe all data?")) { localStorage.clear(); location.reload(); } }
+        function copyUrl() { navigator.clipboard.writeText(document.getElementById('fL').innerText); alert("URL Copied!"); }
+
+        window.onload = load;
     </script>
 </body>
 </html>
