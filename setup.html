@@ -2,45 +2,42 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jailex Studio | Final Fix</title>
+    <title>Jailex Studio | Final Setup</title>
     <style>
         body { background: #0B162A; color: white; font-family: sans-serif; text-align: center; padding: 50px; }
-        .box { border: 2px solid #C83803; padding: 20px; background: #12213a; border-radius: 15px; }
-        .btn { padding: 15px; width: 80%; cursor: pointer; font-weight: bold; border-radius: 8px; border: none; background: #6441a5; color: white; font-size: 1.2rem; }
-        code { background: black; color: #00FF00; padding: 10px; display: block; margin-top: 20px; word-break: break-all; }
+        .box { border: 2px solid #C83803; padding: 30px; background: #12213a; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .btn { padding: 20px; width: 100%; max-width: 400px; cursor: pointer; font-weight: bold; border-radius: 12px; border: none; background: #6441a5; color: white; font-size: 1.2rem; }
+        code { background: black; color: #00FF00; padding: 15px; display: block; margin-top: 20px; word-break: break-all; border: 1px solid #333; }
     </style>
 </head>
 <body>
-    <h1>JAILEX SETUP (FINAL FIX)</h1>
-    <div class="box">
-        <p>Click the button below to authorize Twitch.</p>
-        <button class="btn" onclick="forceTwitch()">CONNECT TWITCH</button>
-        
-        <div id="result" style="display:none;">
-            <p>✅ YOUR TOKEN IS HERE:</p>
-            <code id="token"></code>
-            <p style="font-size: 0.8rem; color: #888;">Copy this for your overlay!</p>
+    <div style="max-width: 500px; margin: auto;">
+        <h1>JAILEX SETUP</h1>
+        <div class="box">
+            <p>Click below to link Twitch Chat.</p>
+            <button class="btn" onclick="startTwitch()">CONNECT TWITCH</button>
+            <div id="result" style="display:none;">
+                <p>✅ SUCCESS! YOUR TOKEN:</p>
+                <code id="token"></code>
+            </div>
         </div>
     </div>
 
     <script>
-        function forceTwitch() {
-            // WE ARE REMOVING ALL VARIABLES AND JUST USING THE RAW LINK
-            const url = "https://id.twitch.tv/oauth2/authorize" +
-                        "?client_id=rgarrgd2h205le1962c5g9goywdrcn" +
-                        "&redirect_uri=https://jailex-bot.vercel.app/setup.html" +
-                        "&response_type=token" +
-                        "&scope=chat:read+chat:edit" +
-                        "&force_verify=true";
+        function startTwitch() {
+            // 1. REPLACE THE TEXT BELOW WITH YOUR NEW CLIENT ID
+            const NEW_CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz'; 
+            
+            // 2. THE REST IS AUTOMATIC
+            const redirect = 'https://jailex-bot.vercel.app/setup.html';
+            const url = `https://id.twitch.tv/oauth2/authorize?client_id=${NEW_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirect)}&response_type=token&scope=chat:read+chat:edit&force_verify=true`;
             
             window.location.href = url;
         }
 
         window.onload = function() {
-            // Check if Twitch sent us back with a token
-            const hash = window.location.hash;
-            if (hash) {
-                const params = new URLSearchParams(hash.substring(1));
+            if (window.location.hash) {
+                const params = new URLSearchParams(window.location.hash.substring(1));
                 const token = params.get('access_token');
                 if (token) {
                     document.getElementById('token').innerText = token;
