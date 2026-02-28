@@ -53,7 +53,7 @@
                         <h3 class="text-[10px] font-black text-purple-400 uppercase tracking-widest">Twitch Broadcast</h3>
                         <div id="t-pill" class="status-pill">OFFLINE</div>
                     </div>
-                    <p class="text-[11px] text-slate-400 mb-6 text-center italic">One-click secure authorization</p>
+                    <p class="text-[11px] text-slate-400 mb-6 text-center italic">Secure one-click authorization</p>
                     <button class="hud-btn w-full bg-purple-800 py-6 mb-4" onclick="startTwitchSync()">Authorize Sync</button>
                     <div id="t-user-display" class="text-center text-[12px] font-black text-blue-400 italic opacity-0 transition-opacity">NOT LINKED</div>
                 </div>
@@ -90,7 +90,6 @@
             el.classList.add('active');
         }
 
-        // --- THE HANDSHAKE ---
         function startTwitchSync() {
             const scope = encodeURIComponent('chat:read chat:edit');
             const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=${scope}`;
