@@ -1,139 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jailex Studio | Unified Overlay</title>
+    <title>Jailex Unified Overlay</title>
+    <script src="https://cdn.jsdelivr.net/npm/tmi.js@1.8.5/dist/tmi.min.js"></script>
     <style>
-        /* Transparent background for streaming */
-        body { 
-            background-color: rgba(0, 0, 0, 0); 
-            margin: 0; 
-            padding: 20px; 
-            overflow: hidden; 
-            font-family: 'Segoe UI', Arial, sans-serif;
+        /* Transparent background for Lightstream */
+        body { background: transparent; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; margin: 0; }
+        
+        /* Chat container - messages flow from bottom up */
+        #chat { 
+            display: flex; 
+            flex-direction: column-reverse; 
+            height: 100vh; 
+            padding: 15px; 
+            box-sizing: border-box;
+        }
+        
+        /* The Message Box: Chicago Bears Navy and Orange */
+        .msg { 
+            background: rgba(11, 22, 42, 0.95); /* Deep Navy */
+            border-left: 5px solid #C83803; /* Bears Orange */
+            margin-bottom: 10px; 
+            padding: 12px; 
+            border-radius: 8px; 
+            animation: slideIn 0.3s ease-out;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            word-wrap: break-word;
         }
 
-        #chat-container {
-            display: flex;
-            flex-direction: column-reverse;
-            height: 95vh;
-            width: 400px; /* Standard overlay width */
-            gap: 10px;
-        }
+        /* Platform Identifiers */
+        .platform-tag { font-weight: bold; margin-right: 10px; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; text-transform: uppercase; vertical-align: middle; }
+        .twitch-tag { background: #6441a5; color: white; } /* Purple */
+        .kick-tag { background: #00E701; color: black; } /* Green */
+        
+        .user { font-weight: bold; color: #FFA500; margin-right: 5px; }
+        .content { color: #FFFFFF; }
 
-        .message {
-            background: rgba(11, 22, 42, 0.9); /* Jailex Navy */
-            border-left: 5px solid #C83803; /* Jailex Orange */
-            padding: 10px;
-            border-radius: 8px;
-            color: white;
-            animation: fadeIn 0.3s ease;
-            font-size: 18px;
-            text-shadow: 1px 1px 2px black;
-        }
-
-        .user-name {
-            font-weight: bold;
-            margin-bottom: 4px;
-            display: block;
-        }
-
-        /* Platform Badges */
-        .badge {
-            font-size: 12px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-right: 8px;
-            text-transform: uppercase;
-        }
-        .twitch-badge { background: #6441a5; color: white; }
-        .kick-badge { background: #00E701; color: black; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
+        @keyframes slideIn { from { transform: translateX(-30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
-
-    <div id="chat-container"></div>
+    <div id="chat"></div>
 
     <script>
-        // 1. GRAB THE DATA FROM THE URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const twitchToken = urlParams.get('token');
-        const kickId = urlParams.get('kick_id');
-        const kickUser = urlParams.get('kick_user') || 'justquitbro7'; // Defaults to you
+        const params = new URLSearchParams(window.location.search);
+        const twitchToken = params.get('token');
+        const kickId = params.get('kick_id');
+        const kickUser = params.get('kick_user') || 'justquitbro7';
 
-        const chatContainer = document.getElementById('chat-container');
-
-        // 2. HELPER TO ADD MESSAGES TO SCREEN
-        function addMessage(platform, user, text) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message';
-            
-            const badgeClass = platform === 'Twitch' ? 'twitch-badge' : 'kick-badge';
-            
-            msgDiv.innerHTML = `
-                <span class="user-name">
-                    <span class="badge ${badgeClass}">${platform}</span>${user}
-                </span>
-                <span class="text">${text}</span>
-            `;
-
-            chatContainer.prepend(msgDiv); // Newest messages at the bottom
-
-            // Auto-remove old messages to keep it clean
-            if (chatContainer.childNodes.length > 50) {
-                chatContainer.removeChild(chatContainer.lastChild);
-            }
-        }
-
-        // 3. TWITCH CONNECTION (TMI.js logic simplified)
+        // --- TWITCH CONNECTION ---
         if (twitchToken) {
-            // Using a simple WebSocket for Twitch
-            const twitchWS = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-
-            twitchWS.onopen = () => {
-                twitchWS.send(`PASS oauth:${twitchToken}`);
-                twitchWS.send(`NICK ${kickUser}`); // Uses your name to connect
-                twitchWS.send(`JOIN #${kickUser}`);
-            };
-
-            twitchWS.onmessage = (event) => {
-                if (event.data.includes('PRIVMSG')) {
-                    const parts = event.data.split('!');
-                    const user = parts[0].substring(1);
-                    const msg = event.data.split(' :')[1];
-                    addMessage('Twitch', user, msg);
-                }
-                // Keep connection alive
-                if (event.data.includes('PING')) twitchWS.send('PONG :tmi.twitch.tv');
-            };
+            const client = new tmi.Client({
+                options: { debug: false },
+                identity: { password: `oauth:${twitchToken}`, username: 'justquitbro7' },
+                channels: ['justquitbro7']
+            });
+            client.connect().catch(console.error);
+            client.on('message', (channel, tags, message, self) => {
+                addMessage('twitch', tags['display-name'] || tags.username, message);
+            });
         }
 
-        // 4. KICK CONNECTION (Using their EventSource or WebSocket)
+        // --- KICK CONNECTION (via Pusher WebSocket) ---
         if (kickId) {
-            // For Kick, we connect to their chatroom ID
-            const kickWS = new WebSocket('wss://ws-us2.pusher.com/app/eb1d5f283081a78b932c?protocol=7&client=js&version=7.4.0&flash=false');
-
-            kickWS.onopen = () => {
-                const subscribeData = {
-                    event: "pusher:subscribe",
-                    data: { channel: `chatrooms.${kickId}.v2` }
-                };
-                kickWS.send(JSON.stringify(subscribeData));
+            const ws = new WebSocket('wss://ws-us2.pusher.com/app/eb1d5f283081a78b932c?protocol=7&client=js&version=7.0.6&flash=false');
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ 
+                    event: "pusher:subscribe", 
+                    data: { auth: "", channel: `chatrooms.${kickId}.v2` } 
+                }));
             };
-
-            kickWS.onmessage = (event) => {
-                const data = JSON.parse(event.data);
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
                 if (data.event === "App\\Events\\ChatMessageEvent") {
                     const msgData = JSON.parse(data.data);
-                    addMessage('Kick', msgData.sender.username, msgData.content);
+                    addMessage('kick', msgData.sender.username, msgData.content);
                 }
             };
+            ws.onclose = () => console.log("Kick connection closed. Reconnecting...");
+        }
+
+        // --- DISPLAY LOGIC ---
+        function addMessage(platform, user, msg) {
+            const chat = document.getElementById('chat');
+            const div = document.createElement('div');
+            div.className = 'msg';
+            
+            const tagClass = platform === 'twitch' ? 'twitch-tag' : 'kick-tag';
+            
+            div.innerHTML = `
+                <span class="platform-tag ${tagClass}">${platform}</span>
+                <span class="user">${user}:</span>
+                <span class="content">${msg}</span>
+            `;
+
+            chat.prepend(div);
+            
+            // Keep only the last 50 messages to prevent lag
+            if (chat.childNodes.length > 50) {
+                chat.removeChild(chat.lastChild);
+            }
         }
     </script>
 </body>
