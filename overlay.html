@@ -3,38 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>Jailex Overlay v3.0</title>
-    <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
     <style>
-        body { background: transparent; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; margin: 0; padding: 20px; }
-        /* Messages start at the bottom and stack up */
-        #chat-container { 
-            display: flex; 
-            flex-direction: column-reverse; 
-            height: 95vh; 
-            width: 100%; 
-            gap: 10px; 
-            justify-content: flex-start;
-        }
+        body { background: transparent; color: white; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; margin: 0; padding: 20px; }
+        #chat-container { display: flex; flex-direction: column-reverse; height: 90vh; width: 100%; gap: 10px; }
         .msg { 
-            background: rgba(11, 22, 42, 0.9); /* Chicago Bears Navy */
-            border-left: 5px solid #FF6A00; /* Chicago Bears Orange */
-            padding: 12px; 
-            border-radius: 6px; 
-            animation: slideIn 0.3s ease-out; 
-            max-width: 85%;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            background: rgba(11, 22, 42, 0.9); /* Bears Navy */
+            border-left: 5px solid #FF6A00; /* Bears Orange */
+            padding: 12px; border-radius: 6px; animation: slideIn 0.3s ease-out; 
+            max-width: 80%; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
-        .user { font-weight: bold; color: #00F3FF; font-size: 0.95em; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-        .platform { font-size: 0.7em; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.15); text-transform: uppercase; }
+        .user { font-weight: bold; color: #00F3FF; font-size: 0.9em; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+        .platform { font-size: 0.7em; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); }
         .content { font-size: var(--fs); line-height: 1.3; word-wrap: break-word; }
+        #status-box { position: fixed; top: 10px; right: 10px; font-size: 10px; color: #555; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px; }
         @keyframes slideIn { from { transform: translateX(-30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
+    <div id="status-box">Twitch: ... | Kick: ...</div>
     <div id="chat-container"></div>
 
     <script>
-        // 1. Get Settings from the URL
         const params = new URLSearchParams(window.location.search);
         const twitchChannel = params.get('twitch') || 'justquitbro7';
         const kickId = params.get('kick') || '92474944';
@@ -42,53 +31,51 @@
         const stayTime = (params.get('stay') || '20') * 1000;
 
         document.documentElement.style.setProperty('--fs', fontSize + 'px');
+        const status = document.getElementById('status-box');
 
         function addMessage(user, message, platform) {
             const container = document.getElementById('chat-container');
             const div = document.createElement('div');
             div.className = 'msg';
-            div.innerHTML = `
-                <div class="user">
-                    <span class="platform" style="color: ${platform === 'Twitch' ? '#9146FF' : '#53FC18'}">${platform}</span>
-                    ${user}
-                </div>
-                <div class="content">${message}</div>
-            `;
-            container.prepend(div); // Adds to the bottom (because of column-reverse)
-            
-            // Auto-remove after stayTime
-            setTimeout(() => { 
-                div.style.opacity = '0'; 
-                div.style.transition = '1s'; 
-                setTimeout(() => div.remove(), 1000); 
-            }, stayTime);
+            div.innerHTML = `<div class="user"><span class="platform">${platform}</span>${user}</div><div class="content">${message}</div>`;
+            container.prepend(div);
+            setTimeout(() => { div.style.opacity = '0'; div.style.transition = '1s'; setTimeout(() => div.remove(), 1000); }, stayTime);
         }
 
-        // --- TWITCH CONNECTION (Mirroring your Dashboard Logic) ---
+        // TWITCH
         const tws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-        tws.onopen = () => { 
-            tws.send('PASS ignore'); 
-            tws.send('NICK justinfan' + Math.floor(Math.random()*99999)); 
-            tws.send('JOIN #' + twitchChannel.toLowerCase()); 
-            console.log("Twitch Overlay Connected");
+        tws.onopen = () => {
+            tws.send('PASS ignore');
+            tws.send('NICK justinfan' + Math.floor(Math.random()*9999));
+            tws.send('JOIN #' + twitchChannel.toLowerCase());
+            status.innerHTML = status.innerHTML.replace('Twitch: ...', 'Twitch: OK');
         };
         tws.onmessage = (e) => {
             if(e.data.includes('PRIVMSG')) {
-                const parts = e.data.split('!');
-                const u = parts[0].substring(1);
+                const u = e.data.split('!')[0].substring(1);
                 const m = e.data.substring(e.data.indexOf(':', 1) + 1);
                 addMessage(u, m, 'Twitch');
             }
             if(e.data.includes('PING')) tws.send('PONG :tmi.twitch.tv');
         };
 
-        // --- KICK CONNECTION ---
-        const pusher = new Pusher('32cbd69e4b950bf97679', { cluster: 'us2' });
-        const channel = pusher.subscribe(`chatrooms.${kickId}.v2`);
-        channel.bind('App\\Events\\ChatMessageEvent', (data) => {
-            const msgData = JSON.parse(data); // Kick data usually needs an extra parse
-            addMessage(msgData.sender.username, msgData.content, 'Kick');
-        });
+        // KICK (Native WebSocket)
+        const kws = new WebSocket('wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0');
+        kws.onopen = () => {
+            kws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${kickId}.v2` } }));
+            status.innerHTML = status.innerHTML.replace('Kick: ...', 'Kick: OK');
+            setInterval(() => kws.send(JSON.stringify({event:"pusher:ping",data:{}})), 20000);
+        };
+        kws.onmessage = (e) => {
+            const d = JSON.parse(e.data);
+            if (d.event === "App\\Events\\ChatMessageEvent") {
+                const msg = JSON.parse(d.data);
+                addMessage(msg.sender.username, msg.content, 'Kick');
+            }
+        };
+
+        // Hide status box after 15 seconds so it doesn't stay on stream
+        setTimeout(() => { status.style.display = 'none'; }, 15000);
     </script>
 </body>
 </html>
