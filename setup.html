@@ -15,29 +15,29 @@
         input { padding: 12px; width: 90%; margin-top: 10px; border-radius: 8px; border: none; text-align: center; font-size: 1rem; background: #0B162A; color: white; border: 1px solid #444; }
         code { background: black; color: #00FF00; padding: 12px; display: block; margin-top: 15px; word-break: break-all; border-radius: 8px; font-family: monospace; border: 1px solid #333; }
         .hidden { display: none; }
-        .step-done { opacity: 0.6; pointer-events: none; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>JAILEX STUDIO</h1>
-        <p>Follow the steps to build your overlay link.</p>
-
+        
         <div class="box" id="step1">
             <h3>1. Twitch Connection</h3>
             <button id="twitchBtn" class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
             <div id="twitchResult" class="hidden">
-                <p>✅ Twitch Linked!</p>
+                <p>✅ Twitch Linked</p>
                 <code id="twitchTokenText"></code>
             </div>
         </div>
 
         <div class="box" id="step2" style="border-color: #00E701;">
             <h3>2. Kick Connection</h3>
-            <input type="text" id="kickUser" placeholder="Enter Kick Username">
-            <button class="btn btn-kick" onclick="findKickID()">FIND KICK ID</button>
+            <p style="font-size: 0.8rem;">Enter name OR paste ID if you have it</p>
+            <input type="text" id="kickUser" placeholder="Kick Username (justquitbro7)">
+            <input type="text" id="manualID" placeholder="Optional: Paste ID here (92474944)">
+            <button class="btn btn-kick" onclick="findKickID()">LINK KICK</button>
             <div id="kickResult" class="hidden">
-                <p>✅ Kick ID Found:</p>
+                <p>✅ Kick Ready</p>
                 <code id="kickIDText"></code>
             </div>
         </div>
@@ -46,7 +46,7 @@
             <h3>3. Get Your Link</h3>
             <button class="btn btn-final" onclick="generateLink()">GENERATE OVERLAY URL</button>
             <div id="finalResult" class="hidden">
-                <p>Copy this into Lightstream/OBS:</p>
+                <p>Final Link for Lightstream:</p>
                 <code id="finalURL"></code>
                 <button class="btn" style="background: #444; color: white;" onclick="copyURL()">COPY TO CLIPBOARD</button>
             </div>
@@ -54,7 +54,6 @@
     </div>
 
     <script>
-        // YOUR BRAND NEW WORKING CLIENT ID
         const MY_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz'; 
         const MY_REDIRECT = 'https://jailex-bot.vercel.app/setup.html';
 
@@ -68,48 +67,48 @@
                 const params = new URLSearchParams(hash.substring(1));
                 const token = params.get('access_token');
                 if (token) {
-                    document.getElementById('twitchBtn').classList.add('hidden');
                     document.getElementById('twitchResult').classList.remove('hidden');
                     document.getElementById('twitchTokenText').innerText = token;
-                    document.getElementById('step1').classList.add('step-done');
+                    document.getElementById('twitchBtn').style.opacity = "0.5";
                 }
             }
         };
 
         async function findKickID() {
+            const manual = document.getElementById('manualID').value.trim();
             const user = document.getElementById('kickUser').value.trim().toLowerCase();
-            if(!user) return alert("Enter Kick name!");
+            
+            // If you already typed the ID, just use it!
+            if (manual) {
+                document.getElementById('kickIDText').innerText = manual;
+                document.getElementById('kickResult').classList.remove('hidden');
+                return;
+            }
+
             try {
-                // Using a proxy to avoid CORS issues
-                const res = await fetch(`https://corsproxy.io/?https://kick.com/api/v1/channels/${user}`);
-                const data = await res.json();
+                const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/api/v1/channels/' + user)}`);
+                const json = await res.json();
+                const data = JSON.parse(json.contents);
                 document.getElementById('kickIDText').innerText = data.chatroom.id;
                 document.getElementById('kickResult').classList.remove('hidden');
-                document.getElementById('step2').classList.add('step-done');
             } catch (e) { 
-                alert("User not found! Make sure the spelling is correct."); 
+                alert("Search failed. Please paste your ID (92474944) into the second box manually!"); 
             }
         }
 
         function generateLink() {
             const t = document.getElementById('twitchTokenText').innerText;
             const k = document.getElementById('kickIDText').innerText;
-            const u = document.getElementById('kickUser').value.trim();
-            
-            if(!t || !k) return alert("Please complete Steps 1 and 2 first!");
-            
-            const baseUrl = window.location.origin + "/overlay.html";
-            const final = `${baseUrl}?kick_id=${k}&kick_user=${u}&token=${t}`;
-            
+            const u = document.getElementById('kickUser').value.trim() || "justquitbro7";
+            if(!t || !k) return alert("Complete Step 1 and 2!");
+            const final = `${window.location.origin}/overlay.html?kick_id=${k}&kick_user=${u}&token=${t}`;
             document.getElementById('finalURL').innerText = final;
             document.getElementById('finalResult').classList.remove('hidden');
         }
 
         function copyURL() {
-            const text = document.getElementById('finalURL').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert("URL Copied! Paste this as a Browser Source in Lightstream.");
-            });
+            navigator.clipboard.writeText(document.getElementById('finalURL').innerText);
+            alert("Copied!");
         }
     </script>
 </body>
