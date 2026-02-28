@@ -2,77 +2,89 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jailex Studio | Master Setup</title>
+    <title>Jailex Studio | Setup Helper</title>
     <style>
-        body { background: #0B162A; color: white; font-family: sans-serif; text-align: center; padding: 40px; }
-        .box { border: 2px solid #C83803; padding: 20px; background: #12213a; border-radius: 15px; margin-bottom: 20px; }
-        .btn { padding: 15px; width: 100%; max-width: 300px; cursor: pointer; font-weight: bold; border-radius: 10px; border: none; font-size: 1rem; margin: 10px 0; }
+        :root { --navy: #0B162A; --orange: #C83803; --blue: #00F3FF; }
+        body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 40px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .box { border: 2px solid var(--orange); padding: 25px; background: rgba(255,255,255,0.05); border-radius: 15px; margin-bottom: 25px; }
+        .btn { padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 10px; border: none; font-size: 1rem; margin: 10px 0; transition: 0.2s; }
         .btn-twitch { background: #6441a5; color: white; }
         .btn-kick { background: #00E701; color: black; }
-        .btn-final { background: white; color: black; }
-        input { padding: 12px; width: 280px; border-radius: 8px; border: none; text-align: center; margin-bottom: 10px; }
-        code { background: black; color: #00FF00; padding: 10px; display: block; word-break: break-all; border-radius: 5px; margin-top: 10px; }
+        .btn-back { background: transparent; border: 1px solid #444; color: #888; margin-top: 20px; }
+        input { padding: 12px; width: 85%; border-radius: 8px; border: 1px solid #333; background: #000; color: white; text-align: center; margin-bottom: 10px; font-size: 1em; }
+        code { background: #000; color: #00FF00; padding: 15px; display: block; word-break: break-all; border-radius: 5px; margin-top: 15px; font-family: monospace; border-left: 4px solid var(--blue); }
         .hidden { display: none; }
     </style>
 </head>
 <body>
-    <h1>JAILEX STUDIO SETUP</h1>
+    <div class="container">
+        <h1 style="color: var(--orange);">JAILEX SETUP TOOL</h1>
+        <p style="opacity: 0.7;">Use this to grab the codes for your Main Dashboard.</p>
 
-    <div class="box">
-        <h3>1. Twitch</h3>
-        <button id="tBtn" class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
-        <div id="tDone" class="hidden">✅ Twitch Token: <code id="tCode"></code></div>
-    </div>
-
-    <div class="box">
-        <h3>2. Kick</h3>
-        <input type="text" id="kIn" placeholder="Enter Kick Name">
-        <button class="btn btn-kick" onclick="startKick()">LINK KICK</button>
-        <div id="kDone" class="hidden">✅ Kick ID: <code id="kCode"></code></div>
-    </div>
-
-    <div class="box">
-        <h3>3. Overlay Link</h3>
-        <button class="btn btn-final" onclick="makeLink()">GET MY LINK</button>
-        <div id="fDone" class="hidden">
-            <p>Paste this into Lightstream:</p>
-            <code id="fURL"></code>
+        <div class="box">
+            <h3>1. Get Twitch Token</h3>
+            <button id="tBtn" class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
+            <div id="tDone" class="hidden">
+                <p>✅ Copy this Token:</p>
+                <code id="tCode"></code>
+            </div>
         </div>
+
+        <div class="box">
+            <h3>2. Get Kick ID</h3>
+            <input type="text" id="kIn" placeholder="Type Kick Username (e.g. Justquitbro7)">
+            <button id="kBtn" class="btn btn-kick" onclick="resolveKick()">FIND MY ID</button>
+            <div id="kDone" class="hidden">
+                <p>✅ Your Numeric Room ID:</p>
+                <code id="kCode"></code>
+            </div>
+        </div>
+
+        <button class="btn btn-back" onclick="window.location.href='index.html'">← BACK TO DASHBOARD</button>
     </div>
 
     <script>
-        // YOUR CONFIRMED CLIENT ID
         const CID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
-        const RED = 'https://jailex-bot.vercel.app/setup.html';
+        const RED = window.location.origin + window.location.pathname;
 
+        // --- TWITCH ---
         function startTwitch() {
             window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${CID}&redirect_uri=${encodeURIComponent(RED)}&response_type=token&scope=chat:read+chat:edit&force_verify=true`;
         }
 
-        function startKick() {
-            const val = document.getElementById('kIn').value || "justquitbro7";
-            document.getElementById('kCode').innerText = "92474944"; // Your known ID
-            document.getElementById('kDone').classList.remove('hidden');
+        // --- KICK (Real ID Resolver) ---
+        async function resolveKick() {
+            const user = document.getElementById('kIn').value.trim();
+            if(!user) return alert("Please type your Kick name!");
+            const btn = document.getElementById('kBtn');
+            btn.innerText = "Searching...";
+
+            try {
+                const res = await fetch(`https://corsproxy.io/?https://kick.com/api/v1/channels/${user}`);
+                const data = await res.json();
+                if(data.chatroom && data.chatroom.id) {
+                    document.getElementById('kCode').innerText = data.chatroom.id;
+                    document.getElementById('kDone').classList.remove('hidden');
+                    btn.innerText = "FIND MY ID";
+                }
+            } catch (e) {
+                alert("Could not find user. Make sure spelling is correct.");
+                btn.innerText = "FIND MY ID";
+            }
         }
 
-        function makeLink() {
-            const t = document.getElementById('tCode').innerText;
-            const k = document.getElementById('kCode').innerText;
-            const u = document.getElementById('kIn').value || "justquitbro7";
-            if(!t || !k) return alert("Complete Steps 1 and 2!");
-            const final = `${window.location.origin}/overlay.html?kick_id=${k}&kick_user=${u}&token=${t}`;
-            document.getElementById('fURL').innerText = final;
-            document.getElementById('fDone').classList.remove('hidden');
-        }
-
+        // --- HASH CAPTURE ---
         window.onload = function() {
             if (window.location.hash) {
                 const p = new URLSearchParams(window.location.hash.substring(1));
                 const tok = p.get('access_token');
                 if (tok) {
-                    document.getElementById('tCode').innerText = tok;
+                    document.getElementById('tCode').innerText = "oauth:" + tok;
                     document.getElementById('tDone').classList.remove('hidden');
                     document.getElementById('tBtn').classList.add('hidden');
+                    // Stop the loop by cleaning URL
+                    history.replaceState(null, null, window.location.pathname);
                 }
             }
         };
