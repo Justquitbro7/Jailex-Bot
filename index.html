@@ -5,25 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jailex - Streaming Made Easy</title>
     <style>
-        /* UI THEME: BEARS NAVY & ORANGE */
+        /* BEARS EDITION UI */
         body { background-color: #0B162A; color: #FFFFFF; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         .sidebar { width: 260px; background-color: #070D19; border-right: 4px solid #C83803; padding: 20px; display: flex; flex-direction: column; }
-        .sidebar h1 { color: #C83803; font-size: 1.8rem; text-align: center; margin-bottom: 40px; }
+        .sidebar h1 { color: #C83803; font-size: 1.8rem; text-align: center; margin-bottom: 40px; letter-spacing: 2px; }
         .nav-item { padding: 15px; color: white; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.3s; }
         .nav-item:hover, .active { background-color: #C83803; font-weight: bold; }
         .main { flex-grow: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .card { background-color: #152238; border: 2px solid #C83803; border-radius: 12px; padding: 40px; width: 100%; max-width: 500px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
-        
-        /* THE SYNC BUTTON */
-        .sync-btn { 
-            background-color: #C83803; color: white; border: none; padding: 18px 35px; 
-            font-size: 1.2rem; font-weight: bold; border-radius: 8px; cursor: pointer; 
-            width: 100%; margin-top: 20px; text-transform: uppercase; 
-        }
-        .sync-btn:hover { background-color: #FF4500; }
-        
+        .sync-btn { background-color: #C83803; color: white; border: none; padding: 18px 35px; font-size: 1.2rem; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .sync-btn:hover { background-color: #FF4500; transform: scale(1.02); }
         #sync-status { display: block; margin-top: 20px; font-size: 1.1rem; font-weight: bold; color: #C83803; }
-        #debug-log { font-size: 0.7rem; color: #555; margin-top: 20px; text-align: left; background: #000; padding: 10px; border-radius: 5px; height: 80px; overflow-y: auto; font-family: monospace; border: 1px solid #222; }
+        #debug-log { font-size: 0.7rem; color: #777; margin-top: 20px; text-align: left; background: #000; padding: 10px; border-radius: 5px; height: 80px; overflow-y: auto; font-family: monospace; border: 1px solid #222; }
     </style>
 </head>
 <body>
@@ -42,18 +35,16 @@
             <h2 style="color: #C83803;">Twitch Integration</h2>
             <p>Sync your <strong>Jailex</strong> bot to start your session.</p>
             
-            <button id="sync-button" class="sync-btn">
+            <button id="sync-trigger" class="sync-btn">
                 Sync Twitch Account
             </button>
 
             <span id="sync-status">Status: Disconnected</span>
-            
-            <div id="debug-log">System: Initializing...</div>
+            <div id="debug-log">System: Ready...</div>
         </div>
     </div>
 
     <script>
-        // --- JAILEX ENGINE ---
         const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
 
         function log(msg) {
@@ -62,8 +53,9 @@
             debug.scrollTop = debug.scrollHeight;
         }
 
-        // 1. ATTACH BUTTON ACTION MANUALLY (Prevents "Not Defined" Errors)
-        document.getElementById('sync-button').onclick = function() {
+        // --- DIRECT BUTTON LISTENER ---
+        // This attaches the action to the button immediately
+        document.getElementById('sync-trigger').addEventListener('click', function() {
             log("Button clicked! Opening Twitch...");
             
             const redirectUri = `${window.location.origin}/setup.html`;
@@ -71,20 +63,19 @@
             const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
             
             window.open(authUrl, 'JailexSync', 'width=450,height=600');
-        };
+        });
 
-        // 2. LISTEN FOR HANDSHAKE
+        // --- HANDSHAKE LISTENER ---
         window.addEventListener('message', (event) => {
             if (event.origin !== window.location.origin) return;
             if (event.data.type === 'TWITCH_TOKEN') {
                 const token = event.data.token;
                 localStorage.setItem('jailex_token', token);
-                log("Token received! Authenticating user...");
+                log("Token received! Authenticating...");
                 connectBot(token);
             }
         });
 
-        // 3. FETCH USER DATA
         async function connectBot(token) {
             const status = document.getElementById('sync-status');
             status.innerText = "Status: Connecting...";
@@ -97,7 +88,7 @@
                     const user = data.data[0].display_name;
                     status.innerText = `Status: Live as ${user}`;
                     status.style.color = "#00FF00";
-                    log(`Successfully synced as ${user}`);
+                    log(`Success: Connected as ${user}`);
                 }
             } catch (err) {
                 log("Error: " + err.message);
@@ -105,9 +96,8 @@
             }
         }
 
-        // 4. AUTO-LOGIN ON LOAD
         window.onload = () => {
-            log("Jailex Dashboard Ready.");
+            log("Jailex Dashboard Loaded.");
             const savedToken = localStorage.getItem('jailex_token');
             if (savedToken) {
                 log("Restoring saved session...");
