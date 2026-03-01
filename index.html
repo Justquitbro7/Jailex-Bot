@@ -3,45 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAILEX STUDIO | v9.8.3</title>
+    <title>JAILEX STUDIO | v9.8.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --navy: #020617; --orange: #C83803; --blue: #00F3FF; }
-        /* THE BOUNCER: This stops the split-screen glitch */
-        html, body { 
-            margin: 0 !important; 
-            padding: 0 !important; 
-            width: 100vw !important; 
-            height: 100vh !important; 
-            overflow: hidden !important;
-            background: var(--navy);
-        }
-        body { display: flex; font-family: 'Segoe UI', sans-serif; color: white; }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
         .sidebar { width: 260px; border-right: 1px solid rgba(200, 56, 3, 0.2); background: rgba(15, 23, 42, 0.95); flex-shrink: 0; display: flex; flex-direction: column; }
         .neon-logo { text-shadow: 0 0 15px var(--blue); }
         .nav-item { padding: 18px 28px; cursor: pointer; transition: 0.3s; color: #64748b; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; border-left: 3px solid transparent; }
-        .nav-item:hover { background: rgba(255, 255, 255, 0.03); color: white; }
         .nav-item.active { background: rgba(200, 56, 3, 0.1); color: var(--orange); border-left: 3px solid var(--orange); }
-        
         .main-content { flex: 1; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 70% 20%, #0f172a, #020617); }
         .tab-content { display: none; max-width: 900px; margin: 0 auto; animation: slideUp 0.4s ease-out; }
         .tab-content.active { display: block; }
-        
         .hud-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(0, 243, 255, 0.1); padding: 30px; border-radius: 24px; margin-bottom: 24px; backdrop-filter: blur(12px); }
         .hud-btn { background: var(--orange); color: white; border: none; padding: 14px; border-radius: 12px; cursor: pointer; font-weight: 900; transition: 0.3s; text-transform: uppercase; font-size: 0.75rem; }
-        .hud-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(200, 56, 3, 0.4); }
-        
         input { background: rgba(0,0,0,0.5); border: 1px solid #334155; color: white; padding: 12px; border-radius: 12px; width: 100%; font-size: 0.85rem; outline: none; text-align: center; }
-        .status-pill { background: #1e293b; padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 900; border: 1px solid #334155; transition: 0.5s; }
+        .status-pill { background: #1e293b; padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 900; border: 1px solid #334155; }
         .status-on { color: var(--blue); border-color: var(--blue); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
-        
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body>
-
-    <aside class="sidebar">
+<body onclick="wakeVoice()"> <aside class="sidebar">
         <div class="p-10 text-center">
             <h1 class="text-4xl font-black text-orange-600 neon-logo tracking-tighter italic">JAILEX</h1>
             <p class="text-[9px] font-black uppercase mt-3 italic text-blue-400">Master Control</p>
@@ -49,12 +32,11 @@
         <nav class="flex-1">
             <div class="nav-item active" onclick="showTab('sync', this)">🔄 Quick Sync</div>
             <div class="nav-item" onclick="showTab('engine', this)">🔊 Engine Master</div>
-            <div class="nav-item" onclick="showTab('dash', this)">📊 Dashboard</div>
             <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
         </nav>
         <div class="p-6 bg-blue-900/10 border-t border-white/5 text-center">
             <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Build</p>
-            <p class="text-lg font-black text-white italic">v9.8.3</p>
+            <p class="text-lg font-black text-white italic">v9.8.4</p>
         </div>
     </aside>
 
@@ -64,13 +46,8 @@
                 <div class="hud-card text-center border-purple-500/20">
                     <h3 class="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-6">Twitch Status</h3>
                     <div id="t-pill" class="status-pill inline-block mb-8">OFFLINE</div>
-                    <div id="t-auth-box">
-                        <button class="hud-btn w-full bg-purple-800 py-6" onclick="startTwitchSync()">Authorize Account</button>
-                    </div>
-                    <div id="t-user-info" class="hidden">
-                        <p id="t-user-name" class="text-xl font-black text-blue-400 italic mb-4"></p>
-                        <button class="text-[10px] text-slate-500 hover:text-red-400 uppercase font-black underline" onclick="logout()">Logout / Reset</button>
-                    </div>
+                    <button id="t-btn" class="hud-btn w-full bg-purple-800 py-6" onclick="startTwitchSync()">Authorize Account</button>
+                    <p id="t-user" class="text-xl font-black text-blue-400 italic hidden"></p>
                 </div>
                 <div class="hud-card text-center border-emerald-500/20">
                     <h3 class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-6">Kick Status</h3>
@@ -84,8 +61,23 @@
         <div id="engine" class="tab-content">
             <div class="hud-card">
                 <h2 class="text-2xl font-black mb-8 italic text-orange-500 uppercase">Engine Master</h2>
-                <button class="hud-btn w-full bg-blue-700 py-6 mb-6 shadow-xl" onclick="sendTestChat()">🚀 Fire Multi-Signal Test</button>
-                <div id="log" class="bg-black/60 p-6 rounded-2xl border border-slate-800 h-40 overflow-y-auto font-mono text-[11px] text-green-400">> System Ready.</div>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <button class="hud-btn bg-blue-700" onclick="sendTestChat()">🚀 Signal Test</button>
+                    <button class="hud-btn bg-slate-800" onclick="connectChat()">🎧 Listen to Chat</button>
+                </div>
+                <div id="log" class="bg-black/60 p-6 rounded-2xl border border-slate-800 h-40 overflow-y-auto font-mono text-[11px] text-green-400">> System Ready. Click 'Listen' to start TTS.</div>
+            </div>
+        </div>
+
+        <div id="keywords" class="tab-content">
+            <div class="hud-card border-blue-500/20">
+                <h2 class="text-xl font-black mb-6 uppercase italic text-blue-400">Trigger Vault</h2>
+                <div class="grid grid-cols-5 gap-3 mb-6">
+                    <div class="col-span-2"><input type="text" id="k-cmd" placeholder="!command"></div>
+                    <div class="col-span-2"><input type="text" id="k-resp" placeholder="Bot response..."></div>
+                    <button class="hud-btn bg-emerald-700" onclick="addKeyword()">Save</button>
+                </div>
+                <div id="keyword-list" class="space-y-2"></div>
             </div>
         </div>
     </main>
@@ -93,8 +85,12 @@
     <script>
         const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
         const REDIRECT_URI = "https://jailex-bot.vercel.app/setup.html";
+        let socket;
+
+        function wakeVoice() { speak(""); } // Unlocks browser voice
 
         function speak(text) {
+            if(!text) return;
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
             window.speechSynthesis.speak(msg);
@@ -105,6 +101,51 @@
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             el.classList.add('active');
+        }
+
+        // TWITCH IRC CHAT LISTENER
+        function connectChat() {
+            const token = localStorage.getItem('jailex_t_token');
+            const user = localStorage.getItem('jailex_user');
+            if(!token || !user) { alert("Sync Twitch First!"); return; }
+
+            if(socket) socket.close();
+            socket = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+
+            socket.onopen = () => {
+                socket.send(`PASS oauth:${token}`);
+                socket.send(`NICK ${user.toLowerCase()}`);
+                socket.send(`JOIN #${user.toLowerCase()}`);
+                document.getElementById('log').innerHTML += `<br><span class="text-blue-400">[LISTENING] Connected to #${user}</span>`;
+                speak("Chat listener online. I am now monitoring your broadcast.");
+            };
+
+            socket.onmessage = (event) => {
+                const data = event.data;
+                if(data.includes('PRIVMSG')) {
+                    const parts = data.split(' :');
+                    const username = parts[0].split('!')[0].substring(1);
+                    const message = parts[1].trim();
+                    
+                    document.getElementById('log').innerHTML += `<br><b>${username}:</b> ${message}`;
+                    speak(`${username} says: ${message}`);
+                    
+                    // Auto-Keyword Check
+                    const k = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
+                    const trigger = k.find(item => item.cmd.toLowerCase() === message.toLowerCase());
+                    if(trigger) sendResponse(trigger.resp);
+                }
+            };
+        }
+
+        async function sendResponse(msg) {
+            const token = localStorage.getItem('jailex_t_token');
+            const uid = localStorage.getItem('jailex_user_id');
+            await fetch('https://api.twitch.tv/helix/chat/messages', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Client-Id': CLIENT_ID, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ broadcaster_id: uid, sender_id: uid, message: msg })
+            });
         }
 
         function startTwitchSync() {
@@ -130,61 +171,64 @@
                     localStorage.setItem('jailex_user', data.data[0].display_name);
                     localStorage.setItem('jailex_user_id', data.data[0].id);
                     syncUI();
-                    speak(`Signal locked. Welcome back, ${data.data[0].display_name}.`);
                 }
-            } catch (err) { logout(); }
+            } catch (err) {}
         }
 
         function saveKickID() {
             const val = document.getElementById('k-id-input').value.trim();
-            if(val) {
-                localStorage.setItem('jailex_kick_id', val);
-                syncUI();
-                speak("Kick signal locked to vault.");
-            }
+            localStorage.setItem('jailex_kick_id', val);
+            syncUI();
         }
 
-        function logout() { localStorage.clear(); location.reload(); }
+        function addKeyword() {
+            const cmd = document.getElementById('k-cmd').value.trim();
+            const resp = document.getElementById('k-resp').value.trim();
+            if(!cmd || !resp) return;
+            let k = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
+            k.push({ cmd, resp });
+            localStorage.setItem('jailex_keywords', JSON.stringify(k));
+            document.getElementById('k-cmd').value = '';
+            document.getElementById('k-resp').value = '';
+            syncUI();
+        }
 
         function syncUI() {
             const user = localStorage.getItem('jailex_user');
             const kick = localStorage.getItem('jailex_kick_id');
+            const k = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
+            
             if(user) {
                 document.getElementById('t-pill').innerText = "ONLINE";
                 document.getElementById('t-pill').classList.add('status-on');
-                document.getElementById('t-auth-box').classList.add('hidden');
-                document.getElementById('t-user-name').innerText = user.toUpperCase();
-                document.getElementById('t-user-info').classList.remove('hidden');
+                document.getElementById('t-btn').classList.add('hidden');
+                document.getElementById('t-user').innerText = user.toUpperCase();
+                document.getElementById('t-user').classList.remove('hidden');
             }
             if(kick) {
                 document.getElementById('k-pill').innerText = "ONLINE";
                 document.getElementById('k-pill').classList.add('status-on');
                 document.getElementById('k-id-input').value = kick;
             }
+
+            const list = document.getElementById('keyword-list');
+            list.innerHTML = k.length ? '' : '<p class="text-center text-slate-700 py-4 italic">No Triggers Found</p>';
+            k.forEach((item, i) => {
+                list.innerHTML += `<div class="bg-black/20 p-4 rounded-lg flex justify-between">
+                    <span><b class="text-blue-400">${item.cmd}</b>: ${item.resp}</span>
+                    <button class="text-red-500 font-bold text-[10px]" onclick="delK(${i})">REMOVE</button>
+                </div>`;
+            });
         }
 
-        async function sendTestChat() {
-            const token = localStorage.getItem('jailex_t_token');
-            const uid = localStorage.getItem('jailex_user_id');
-            const log = document.getElementById('log');
-            if(!token) return;
-            
-            speak("Firing broadcast signal.");
-            try {
-                await fetch('https://api.twitch.tv/helix/chat/messages', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Client-Id': CLIENT_ID, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ broadcaster_id: uid, sender_id: uid, message: "JAILEX ENGINE: Triple Signal Lock." })
-                });
-                log.innerHTML += `<br><span class="text-blue-400">[SYSTEM] Twitch Signal Success.</span>`;
-            } catch (err) { log.innerHTML += `<br>[ERROR] Signal Failed.`; }
-        }
-
-        window.onload = () => {
+        function delK(i) {
+            let k = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
+            k.splice(i, 1);
+            localStorage.setItem('jailex_keywords', JSON.stringify(k));
             syncUI();
-            const tkn = localStorage.getItem('jailex_t_token');
-            if(tkn) validateTwitch(tkn);
-        };
+        }
+
+        window.onload = syncUI;
     </script>
 </body>
 </html>
