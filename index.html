@@ -2,15 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>JAILEX HUD | Control Deck</title>
+  <title>JAILEX | Streaming Made Easy</title>
   <style>
     /* ====== JAILEX NEON SCI-FI UI ====== */
     body { margin: 0; padding: 0; background: radial-gradient(circle at center, #02030a 0%, #000000 80%); color: #f5f5f5; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; height: 100vh; }
     .app-container { display: flex; height: 100vh; }
     
     .sidebar { width: 240px; background: rgba(5,5,15,0.95); border-right: 1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; padding: 20px 12px; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
-    .sidebar-title { font-weight: 800; font-size: 22px; color: #ff7a18; text-shadow: 0 0 10px #ff7a18; margin-bottom: 2px; }
-    .sidebar-sub { font-size: 10px; opacity: 0.5; margin-bottom: 25px; letter-spacing: 2px; text-transform: uppercase; }
+    .sidebar-title { font-weight: 800; font-size: 26px; color: #ff7a18; text-shadow: 0 0 10px #ff7a18; margin-bottom: 2px; letter-spacing: 1px; }
+    .sidebar-sub { font-size: 11px; color: #00c8ff; opacity: 0.8; margin-bottom: 5px; font-weight: 600; text-transform: uppercase; }
+    .version-tag { font-size: 9px; opacity: 0.4; margin-bottom: 25px; letter-spacing: 1px; }
     
     .tab-button { width: 100%; text-align: left; padding: 14px; margin-bottom: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(15,15,30,0.8); color: #ccc; cursor: pointer; font-weight: 600; transition: 0.3s; }
     .tab-button:hover { border-color: #ff7a18; color: #fff; }
@@ -42,8 +43,9 @@
 
 <div class="app-container">
   <div class="sidebar">
-    <div class="sidebar-title">JAILEX HUD</div>
-    <div class="sidebar-sub">Core Command Deck</div>
+    <div class="sidebar-title">JAILEX</div>
+    <div class="sidebar-sub">Streaming Made Easy</div>
+    <div class="version-tag">Build: v1.3.0 Stable</div>
     
     <button class="tab-button active" data-target="tab-playback">AUDIO ENGINE • TTS</button>
     <button class="tab-button" data-target="tab-sync">Quick Sync Engine</button>
@@ -59,7 +61,10 @@
         <button id="testTtsBtn">Test Sequence</button>
         <div style="margin-top:20px; background:rgba(0,0,0,0.2); padding:15px; border-radius:10px;">
           <label style="cursor:pointer;"><input type="checkbox" id="readUsername" checked /> Read Usernames</label>
-          <p>Queue: <span id="queueLen" style="color:#00c8ff">0</span> | Speaking: <span id="speakingNow" style="color:#53fc18">None</span></p>
+          <div style="margin-top: 15px; font-weight: bold; font-family: monospace;">
+             <span>QUEUE: <span id="queueLen" style="color:#00c8ff">0</span></span>
+             <span style="margin-left: 20px;">NOW: <span id="speakingNow" style="color:#53fc18">None</span></span>
+          </div>
         </div>
       </div>
     </div>
@@ -71,7 +76,7 @@
           <div class="sync-card">
               <h3 style="color:#53fc18; margin:0 0 10px 0;">KICK</h3>
               <div id="kickActiveUI">
-                <p>User: <span id="kickDisplayUser">---</span></p>
+                <p>Linked: <span id="kickDisplayUser">---</span></p>
                 <span id="kickStatusPill" class="status-pill status-off">OFFLINE</span><br>
                 <button onclick="logoutKick()">De-Sync</button>
               </div>
@@ -83,7 +88,7 @@
           <div class="sync-card">
               <h3 style="color:#a970ff; margin:0 0 10px 0;">TWITCH</h3>
               <div id="twitchActiveUI">
-                <p>User: <span id="twitchDisplayUser">---</span></p>
+                <p>Linked: <span id="twitchDisplayUser">---</span></p>
                 <span id="twitchStatusPill" class="status-pill status-off">OFFLINE</span><br>
                 <button onclick="logoutTwitch()">De-Sync</button>
               </div>
@@ -98,9 +103,9 @@
 
     <div id="tab-voices" class="tab-panel">
       <div class="panel">
-        <h2>Voice Parameters</h2>
-        <label>Select Narrator</label><select id="voiceSelect"></select>
-        <label>Volume Control</label><input type="range" id="volume" min="0" max="1" step="0.1" value="1">
+        <h2>Voice Config</h2>
+        <label>Primary Narrator</label><select id="voiceSelect"></select>
+        <label>Volume</label><input type="range" id="volume" min="0" max="1" step="0.1" value="1">
       </div>
     </div>
 
@@ -112,5 +117,7 @@
 
 <script src="audio-engine.js"></script>
 <script src="script.js"></script>
-<script src="quick-sync.js"></script> </body>
+<script src="quick-sync.js"></script>
+
+</body>
 </html>
