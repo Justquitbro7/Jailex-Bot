@@ -1,6 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
+<head><!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAILEX STUDIO | v9.8.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --navy: #020617; --orange: #C83803; --blue: #00F3FF; }
+        body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 240px; border-right: 1px solid rgba(200, 56, 3, 0.2); background: rgba(15, 23, 42, 0.9); flex-shrink: 0; display: flex; flex-direction: column; }
+        .neon-logo { text-shadow: 0 0 15px var(--blue); }
+        .nav-item { padding: 18px 28px; cursor: pointer; transition: 0.3s; color: #64748b; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; border-left: 3px solid transparent; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.03); color: white; }
+        .nav-item.active { background: rgba(200, 56, 3, 0.1); color: var(--orange); border-left: 3px solid var(--orange); }
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 70% 20%, #0f172a, #020617); }
+        .tab-content { display: none; max-width: 1000px; margin: 0 auto; animation: slideUp 0.4s ease-out; }
+        .tab-content.active { display: block; }
+        .hud-card { background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(0, 243, 255, 0.15); padding: 28px; border-radius: 20px; margin-bottom: 24px; backdrop-filter: blur(10px); }
+        .hud-btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 900; transition: 0.3s; text-transform: uppercase; font-size: 0.7rem; }
+        input { background: rgba(0,0,0,0.4); border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; width: 100%; font-size: 0.8rem; outline: none; }
+        .status-pill { background: #1e293b; padding: 4px 10px; border-radius: 6px; font-size: 9px; font-weight: 900; border: 1px solid #334155; }
+        .status-on { color: var(--blue); border-color: var(--blue); box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); }
+        .version-tag { margin-top: auto; padding: 20px; background: rgba(0, 243, 255, 0.05); border-top: 1px solid rgba(0, 243, 255, 0.1); text-align: center; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="p-10 text-center">
+            <h2 class="text-4xl font-black text-orange-600 neon-logo tracking-tighter leading-none">JAILEX</h2>
+            <p class="text-[9px] font-black uppercase mt-3 italic text-blue-400">Streaming Made Easy</p>
+        </div>
+        <nav class="flex-1">
+            <div class="nav-item active" onclick="showTab('sync', this)">🔄 Quick Sync</div>
+            <div class="nav-item" onclick="showTab('engine', this)">🔊 Engine Master</div>
+            <div class="nav-item" onclick="showTab('dash', this)">📊 Live Dashboard</div>
+            <div class="nav-item" onclick="showTab('overlay', this)">📡 Overlay Hub</div>
+            <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
+            <div class="nav-item" onclick="showTab('timers', this)">⏰ Auto Timers</div>
+        </nav>
+        <div class="version-tag">
+            <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Active Build</p>
+            <p class="text-lg font-black text-white italic">v9.8.0</p>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div id="sync" class="tab-content active">
+            <div class="grid grid-cols-2 gap-6">
+                <div class="hud-card border-purple-500/20 text-center">
+                    <h3 class="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-4">Twitch Handshake</h3>
+                    <div id="t-pill" class="status-pill inline-block mb-6">OFFLINE</div>
+                    <button id="t-btn" class="hud-btn w-full bg-purple-800 py-6" onclick="startTwitchSync()">Authorize Account</button>
+                    <p id="t-user" class="text-blue-400 font-bold italic mt-4 hidden"></p>
+                </div>
+                <div class="hud-card border-emerald-500/20 text-center">
+                    <h3 class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-4">Kick Signal</h3>
+                    <div id="k-pill" class="status-pill inline-block mb-6">OFFLINE</div>
+                    <input type="text" id="k-id-box" placeholder="KICK ID (e.g. 24968498)" class="mb-4">
+                    <button class="hud-btn w-full bg-emerald-700" onclick="saveKickID()">Link Signal</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="engine" class="tab-content">
+            <div class="hud-card border-orange-600/30">
+                <h2 class="text-xl font-black mb-6 uppercase italic">Engine Master</h2>
+                <button class="hud-btn w-full bg-blue-600 py-4 mb-4" onclick="sendTestChat()">🚀 Send Test Chat Message</button>
+                <div id="log" class="mt-4 bg-black/40 p-5 rounded-xl border border-slate-800 h-32 overflow-y-auto font-mono text-xs text-green-500">> Ready.</div>
+            </div>
+        </div>
+
+        <div id="dash" class="tab-content">
+            <div class="hud-card">
+                <h2 class="text-xl font-black mb-6 uppercase italic">Live Stats</h2>
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div class="bg-black/20 p-4 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-500 font-black">VIEWERS</p>
+                        <p class="text-2xl font-black text-blue-400">0</p>
+                    </div>
+                    <div class="bg-black/20 p-4 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-500 font-black">FOLLOWS</p>
+                        <p class="text-2xl font-black text-emerald-400">--</p>
+                    </div>
+                    <div class="bg-black/20 p-4 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-slate-500 font-black">COMMANDS</p>
+                        <p class="text-2xl font-black text-orange-500" id="cmd-count">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="overlay" class="tab-content">
+            <div class="hud-card border-blue-500/20">
+                <h2 class="text-xl font-black mb-6 uppercase italic">Overlay URL</h2>
+                <p class="text-xs text-slate-400 mb-4 italic">Copy this URL into OBS as a "Browser Source":</p>
+                <div class="flex gap-2">
+                    <input type="text" readonly value="https://jailex-overlay.vercel.app/" class="bg-black/50 border border-slate-700">
+                    <button class="hud-btn px-6 bg-slate-800" onclick="alert('Link Copied!')">Copy</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="keywords" class="tab-content">
+            <div class="hud-card">
+                <h2 class="text-xl font-black mb-6 uppercase italic">Keyword Triggers</h2>
+                <div class="grid grid-cols-5 gap-3 mb-6">
+                    <div class="col-span-2"><input type="text" id="k-cmd" placeholder="!command"></div>
+                    <div class="col-span-2"><input type="text" id="k-resp" placeholder="Bot response..."></div>
+                    <button class="hud-btn bg-emerald-700" onclick="addKeyword()">Save</button>
+                </div>
+                <div id="keyword-list" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <div id="timers" class="tab-content">
+            <div class="hud-card">
+                <h2 class="text-xl font-black mb-6 uppercase italic">Auto Timers</h2>
+                <p class="text-xs text-slate-400 italic mb-6">Bot will post these to chat automatically every 20 minutes.</p>
+                <div class="bg-black/20 p-6 rounded-xl border border-slate-800 border-dashed text-center">
+                    <p class="text-slate-600 uppercase font-black text-[10px]">Timer Logic Coming in v9.8.1</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
+        const REDIRECT_URI = "https://jailex-bot.vercel.app/setup.html";
+
+        function showTab(id, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function startTwitchSync() {
+            const scope = encodeURIComponent('chat:read chat:edit user:write:chat');
+            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=${scope}`;
+            window.open(authUrl, 'JailexSync', 'width=450,height=600');
+        }
+
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'TWITCH_TOKEN') {
+                localStorage.setItem('jailex_t_token', event.data.token);
+                validateTwitch(event.data.token);
+            }
+        });
+
+        async function validateTwitch(token) {
+            try {
+                const res = await fetch('https://api.twitch.tv/helix/users', {
+                    headers: { 'Client-ID': CLIENT_ID, 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.data && data.data[0]) {
+                    localStorage.setItem('jailex_user', data.data[0].display_name);
+                    localStorage.setItem('jailex_user_id', data.data[0].id);
+                    syncUI();
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function saveKickID() {
+            const val = document.getElementById('k-id-box').value.trim();
+            localStorage.setItem('jailex_kick_id', val);
+            syncUI();
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance("Kick signal locked and saved."));
+        }
+
+        function addKeyword() {
+            const cmd = document.getElementById('k-cmd').value.trim();
+            const resp = document.getElementById('k-resp').value.trim();
+            if(!cmd || !resp) return;
+            let keywords = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
+            keywords.push({ cmd, resp });
+            localStorage.setItem('jailex_keywords', JSON.stringify(keywords));
+            document.getElementById('k-cmd').value = '';
+            document.getElementById('k-resp').value = '';
+            syncUI();
+        }
+
+        function syncUI() {
+            const tkn = localStorage.getItem('jailex_t_token');
+            const user = localStorage.getItem('jailex_user');
+            const kid = localStorage.getItem('jailex_kick_id');
+            const keywords = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
+
+            if(tkn && user) {
+                document.getElementById('t-pill').innerText="ONLINE"; 
+                document.getElementById('t-pill').classList.add('status-on'); 
+                document.getElementById('t-btn').classList.add('hidden');
+                document.getElementById('t-user').innerText = `LIVE AS: ${user.toUpperCase()}`;
+                document.getElementById('t-user').classList.remove('hidden');
+            }
+            if(kid) {
+                document.getElementById('k-pill').innerText="ONLINE";
+                document.getElementById('k-pill').classList.add('status-on');
+                document.getElementById('k-id-box').value = kid;
+            }
+
+            const list = document.getElementById('keyword-list');
+            list.innerHTML = keywords.length ? '' : '<p class="text-center text-slate-700 text-[10px] py-4">No Active Triggers</p>';
+            keywords.forEach((k, i) => {
+                list.innerHTML += `<div class="bg-black/20 p-4 rounded-lg flex justify-between">
+                    <span><span class="text-blue-400 font-bold">${k.cmd}</span>: ${k.resp}</span>
+                    <button class="text-red-500 text-[10px] font-black" onclick="deleteK(${i})">REMOVE</button>
+                </div>`;
+            });
+            document.getElementById('cmd-count').innerText = keywords.length;
+        }
+
+        function deleteK(index) {
+            let k = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
+            k.splice(index, 1);
+            localStorage.setItem('jailex_keywords', JSON.stringify(k));
+            syncUI();
+        }
+
+        async function sendTestChat() {
+            const token = localStorage.getItem('jailex_t_token');
+            const uid = localStorage.getItem('jailex_user_id');
+            if(!token) return;
+            try {
+                await fetch('https://api.twitch.tv/helix/chat/messages', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Client-Id': CLIENT_ID, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ broadcaster_id: uid, sender_id: uid, message: "JAILEX ENGINE ONLINE: v9.8 Full Suite Active." })
+                });
+                document.getElementById('log').innerHTML += `<div class="text-blue-400">> Full System Signal Broadcasted.</div>`;
+            } catch (err) { console.error(err); }
+        }
+
+        window.onload = () => {
+            const savedToken = localStorage.getItem('jailex_t_token');
+            if (savedToken) validateTwitch(savedToken);
+            syncUI();
+        };
+    </script>
+</body>
+</html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JAILEX STUDIO | v9.7.6</title>
