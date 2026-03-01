@@ -1,25 +1,115 @@
 <!DOCTYPE html>
-<html>
-<head><title>Jailex Auth Handler</title></head>
-<body style="background:#020617; color:white; text-align:center; padding:50px; font-family:sans-serif;">
-    <h2 id="status">SYNCING WITH JAILEX...</h2>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Jailex Studio | Master Setup</title>
+    <style>
+        body { background: #0B162A; color: white; font-family: sans-serif; text-align: center; padding: 40px 20px; }
+        .container { max-width: 500px; margin: auto; }
+        .box { border: 2px solid #C83803; padding: 25px; background: #12213a; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        h1 { color: #C83803; letter-spacing: 2px; text-shadow: 2px 2px black; }
+        .btn { padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 10px; border: none; margin-top: 10px; font-size: 1rem; transition: 0.3s; }
+        .btn-twitch { background: #6441a5; color: white; }
+        .btn-kick { background: #00E701; color: black; }
+        .btn-final { background: white; color: black; }
+        input { padding: 12px; width: 90%; margin-top: 10px; border-radius: 8px; border: none; text-align: center; font-size: 1rem; background: #0B162A; color: white; border: 1px solid #444; }
+        code { background: black; color: #00FF00; padding: 12px; display: block; margin-top: 15px; word-break: break-all; border-radius: 8px; font-family: monospace; border: 1px solid #333; }
+        .hidden { display: none; }
+        .step-done { opacity: 0.6; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JAILEX STUDIO</h1>
+        <p>Follow the steps to build your overlay link.</p>
+
+        <div class="box" id="step1">
+            <h3>1. Twitch Connection</h3>
+            <button id="twitchBtn" class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
+            <div id="twitchResult" class="hidden">
+                <p>✅ Twitch Linked!</p>
+                <code id="twitchTokenText"></code>
+            </div>
+        </div>
+
+        <div class="box" id="step2" style="border-color: #00E701;">
+            <h3>2. Kick Connection</h3>
+            <input type="text" id="kickUser" placeholder="Enter Kick Username">
+            <button class="btn btn-kick" onclick="findKickID()">FIND KICK ID</button>
+            <div id="kickResult" class="hidden">
+                <p>✅ Kick ID Found:</p>
+                <code id="kickIDText"></code>
+            </div>
+        </div>
+
+        <div class="box" style="border-color: white;">
+            <h3>3. Get Your Link</h3>
+            <button class="btn btn-final" onclick="generateLink()">GENERATE OVERLAY URL</button>
+            <div id="finalResult" class="hidden">
+                <p>Copy this into Lightstream/OBS:</p>
+                <code id="finalURL"></code>
+                <button class="btn" style="background: #444; color: white;" onclick="copyURL()">COPY TO CLIPBOARD</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const hash = window.location.hash;
-        if (hash) {
-            const params = new URLSearchParams(hash.substring(1));
-            const token = params.get('access_token');
-            if (token && window.opener) {
-                // EXPLICIT TARGET: Replace '*' with your actual Vercel URL for security
-                window.opener.postMessage({ 
-                    type: 'TWITCH_TOKEN', 
-                    token: token 
-                }, "https://jailex.vercel.app"); 
-                
-                document.getElementById('status').innerText = "SYNC SUCCESSFUL!";
-                setTimeout(() => window.close(), 800);
+        // YOUR BRAND NEW WORKING CLIENT ID
+        const MY_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz'; 
+        const MY_REDIRECT = 'https://jailex-bot.vercel.app/setup.html';
+
+        function startTwitch() {
+            window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${MY_ID}&redirect_uri=${encodeURIComponent(MY_REDIRECT)}&response_type=token&scope=chat:read+chat:edit&force_verify=true`;
+        }
+
+        window.onload = function() {
+            const hash = window.location.hash;
+            if (hash) {
+                const params = new URLSearchParams(hash.substring(1));
+                const token = params.get('access_token');
+                if (token) {
+                    document.getElementById('twitchBtn').classList.add('hidden');
+                    document.getElementById('twitchResult').classList.remove('hidden');
+                    document.getElementById('twitchTokenText').innerText = token;
+                    document.getElementById('step1').classList.add('step-done');
+                }
             }
-        } else {
-            document.getElementById('status').innerText = "NO SIGNAL DETECTED.";
+        };
+
+        async function findKickID() {
+            const user = document.getElementById('kickUser').value.trim().toLowerCase();
+            if(!user) return alert("Enter Kick name!");
+            try {
+                // Using a proxy to avoid CORS issues
+                const res = await fetch(`https://corsproxy.io/?https://kick.com/api/v1/channels/${user}`);
+                const data = await res.json();
+                document.getElementById('kickIDText').innerText = data.chatroom.id;
+                document.getElementById('kickResult').classList.remove('hidden');
+                document.getElementById('step2').classList.add('step-done');
+            } catch (e) { 
+                alert("User not found! Make sure the spelling is correct."); 
+            }
+        }
+
+        function generateLink() {
+            const t = document.getElementById('twitchTokenText').innerText;
+            const k = document.getElementById('kickIDText').innerText;
+            const u = document.getElementById('kickUser').value.trim();
+            
+            if(!t || !k) return alert("Please complete Steps 1 and 2 first!");
+            
+            const baseUrl = window.location.origin + "/overlay.html";
+            const final = `${baseUrl}?kick_id=${k}&kick_user=${u}&token=${t}`;
+            
+            document.getElementById('finalURL').innerText = final;
+            document.getElementById('finalResult').classList.remove('hidden');
+        }
+
+        function copyURL() {
+            const text = document.getElementById('finalURL').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("URL Copied! Paste this as a Browser Source in Lightstream.");
+            });
         }
     </script>
 </body>
