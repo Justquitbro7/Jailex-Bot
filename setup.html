@@ -100,7 +100,7 @@
             if(!user) return alert("Enter Kick name!");
 
             const btn = document.getElementById('kickBtn');
-            btn.innerText = "SEARCHING..."; // Visual feedback for the user
+            btn.innerText = "SEARCHING..."; 
 
             let roomID = null;
 
@@ -112,7 +112,7 @@
                 roomID = data1.chatroom.id;
             } catch (e1) {
                 try {
-                    // ATTEMPT 2: corsproxy (Fallback if Cloudflare blocked the first one)
+                    // ATTEMPT 2: corsproxy (Fallback)
                     const res2 = await fetch(`https://corsproxy.io/?https://kick.com/api/v1/channels/${user}`);
                     const data2 = await res2.json();
                     roomID = data2.chatroom.id;
@@ -123,7 +123,6 @@
                 }
             }
 
-            // If we successfully found the ID through either method:
             if (roomID) {
                 // --- 3. AUTO-SAVE THE FOUND DATA ---
                 localStorage.setItem('jx_kick_id', roomID);
