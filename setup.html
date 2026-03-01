@@ -35,7 +35,7 @@
         <div class="box" id="step2" style="border-color: #00E701;">
             <h3>2. Kick Connection</h3>
             <input type="text" id="kickUser" placeholder="Enter Kick Username">
-            <button class="btn btn-kick" onclick="findKickID()">FIND KICK ID</button>
+            <button id="kickBtn" class="btn btn-kick" onclick="findKickID()">FIND KICK ID</button>
             <div id="kickResult" class="hidden">
                 <p>✅ Kick ID Found:</p>
                 <code id="kickIDText"></code>
@@ -64,7 +64,7 @@
         }
 
         window.onload = function() {
-            // --- 1. TWITCH AUTO-SAVE ---
+            // --- 1. CAPTURE & SAVE TWITCH TOKEN ---
             const hash = window.location.hash;
             if (hash) {
                 const params = new URLSearchParams(hash.substring(1));
@@ -75,7 +75,7 @@
                 }
             }
 
-            // --- 2. AUTO-LOAD ON REFRESH ---
+            // --- 2. AUTO-LOAD FOR RETURNING USERS ---
             const savedToken = localStorage.getItem('jx_twitch_token');
             const savedKickID = localStorage.getItem('jx_kick_id');
             const savedKickUser = localStorage.getItem('jx_kick_user');
@@ -98,38 +98,41 @@
         async function findKickID() {
             const user = document.getElementById('kickUser').value.trim().toLowerCase();
             if(!user) return alert("Enter Kick name!");
-            
-            try {
-                // Trying a new proxy to bypass Kick's Cloudflare
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://kick.com/api/v1/channels/' + user)}`;
-                const res = await fetch(proxyUrl);
-                
-                if (!res.ok) throw new Error("Blocked");
-                
-                const data = await res.json();
-                const roomID = data.chatroom.id;
 
-                // --- AUTO-SAVE DATA ---
+            const btn = document.getElementById('kickBtn');
+            btn.innerText = "SEARCHING..."; // Visual feedback for the user
+
+            let roomID = null;
+
+            try {
+                // ATTEMPT 1: allorigins
+                const res1 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/api/v1/channels/' + user)}`);
+                const json1 = await res1.json();
+                const data1 = JSON.parse(json1.contents);
+                roomID = data1.chatroom.id;
+            } catch (e1) {
+                try {
+                    // ATTEMPT 2: corsproxy (Fallback if Cloudflare blocked the first one)
+                    const res2 = await fetch(`https://corsproxy.io/?https://kick.com/api/v1/channels/${user}`);
+                    const data2 = await res2.json();
+                    roomID = data2.chatroom.id;
+                } catch (e2) {
+                    alert("User not found or Kick's security is blocking the search. Make sure the username is exact!");
+                    btn.innerText = "FIND KICK ID";
+                    return;
+                }
+            }
+
+            // If we successfully found the ID through either method:
+            if (roomID) {
+                // --- 3. AUTO-SAVE THE FOUND DATA ---
                 localStorage.setItem('jx_kick_id', roomID);
                 localStorage.setItem('jx_kick_user', user);
 
-                // --- UI UPDATE ---
                 document.getElementById('kickIDText').innerText = roomID;
                 document.getElementById('kickResult').classList.remove('hidden');
                 document.getElementById('step2').classList.add('step-done');
-
-            } catch (e) { 
-                // FAILSAFE: If Kick blocks the search, let the user type it manually so the app doesn't break.
-                const manualID = prompt("Kick's security blocked the auto-search! \n\nIf you know your Kick ID, paste it below to continue:");
-                
-                if (manualID) {
-                    localStorage.setItem('jx_kick_id', manualID.trim());
-                    localStorage.setItem('jx_kick_user', user);
-
-                    document.getElementById('kickIDText').innerText = manualID.trim();
-                    document.getElementById('kickResult').classList.remove('hidden');
-                    document.getElementById('step2').classList.add('step-done');
-                }
+                btn.innerText = "FIND KICK ID";
             }
         }
 
