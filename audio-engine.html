@@ -1,6 +1,6 @@
-/* ====== JAILEX AUDIO ENGINE (BLUEPRINT TRANSLATION) ====== */
+/* ====== JAILEX AUDIO ENGINE (v1.3.0) ====== */
 
-// 1. GLOBAL STATE (Attached to window so Quick Sync can see it)
+// 1. ENGINE STATE
 window.queue = [];
 window.isSpeaking = false; 
 window.audioEnabled = false;
@@ -8,117 +8,102 @@ window.isPlaying = true;
 window.isMuted = false;
 window.voices = [];
 
-// 2. BOT FILTERING LOGIC (From Blueprint)
-const KICK_BOTS = [
-  "botrix", "kickbot", "kick", "streamelements", "nightbot", "moobot",
-  "fossabot", "wizebot", "deepbot", "coebot", "phantombot", "ankhbot",
-  "vivbot", "streamlabs", "cloudbot", "stay_hydrated_bot", "restreambot",
-  "sery_bot", "commanderroot", "lurxx", "electricalskateboard",
-  "electricallongboard", "alizeepathfinder", "virgoproz", "creatisbot",
-  "slocool", "p0lizei_", "lolrankbot", "0ax2", "thepositivebot",
-  "communityshowcase",
-];
+// 2. BOT FILTERING (From Blueprint)
+const KICK_BOTS = ["botrix", "kickbot", "kick", "streamelements", "nightbot", "moobot", "fossabot", "wizebot", "deepbot", "coebot", "phantombot", "ankhbot", "vivbot", "streamlabs", "cloudbot", "stay_hydrated_bot", "restreambot", "sery_bot", "commanderroot", "lurxx", "electricalskateboard", "electricallongboard", "alizeepathfinder", "virgoproz", "creatisbot", "slocool", "p0lizei_", "lolrankbot", "0ax2", "thepositivebot", "communityshowcase"];
 
-const isKickBot = (username) => {
-  const lowerUsername = username.toLowerCase().trim();
-  if (KICK_BOTS.includes(lowerUsername)) return true;
-  if (lowerUsername.endsWith("bot") || lowerUsername.endsWith("_bot") || lowerUsername.includes("bot_")) {
-    return true;
-  }
-  return false;
+const isBot = (username) => {
+    const lower = username.toLowerCase().trim();
+    if (KICK_BOTS.includes(lower)) return true;
+    if (lower.endsWith("bot") || lower.endsWith("_bot") || lower.includes("bot_")) return true;
+    return false;
 };
 
-// 3. THE HANDSHAKE (The function your Quick Sync Engine calls)
+// 3. THE HANDSHAKE (Receives messages from Quick Sync Engine)
 window.addMessage = function(msg) {
-  console.log("JAILEX Engine Received:", msg);
+    if (isBot(msg.username)) return;
 
-  // Bot Filter Check
-  if (isKickBot(msg.username)) {
-    console.log("Kick: Filtered bot message from", msg.username);
-    return;
-  }
+    // Visual Update
+    const log = document.getElementById("chatLog");
+    if (log) {
+        const div = document.createElement("div");
+        div.className = "chat-line";
+        const color = msg.platform === "kick" ? "#53fc18" : "#a970ff";
+        div.innerHTML = `<span style="color:${color};font-weight:800">[${msg.platform.toUpperCase()}] ${msg.username}:</span> ${msg.message}`;
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+    }
 
-  // Update Chat HUD Feed
-  const log = document.getElementById("chatLog");
-  if (log) {
-    const div = document.createElement("div");
-    div.className = "chat-line";
-    const color = msg.platform === "kick" ? "#53fc18" : "#a970ff";
-    div.innerHTML = `<span style="color:${color};font-weight:800">[${msg.platform.toUpperCase()}] ${msg.username}:</span> ${msg.message}`;
-    log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
-  }
-
-  // Push to Blueprint Queue
-  window.queue.push(msg);
-  const qLen = document.getElementById("queueLen");
-  if (qLen) qLen.textContent = window.queue.length;
+    // Queue Update
+    window.queue.push(msg);
+    if (document.getElementById("queueLen")) {
+        document.getElementById("queueLen").textContent = window.queue.length;
+    }
 };
 
-// 4. TTS PLAYBACK QUEUE SYSTEM (Blueprint 100ms Logic)
+// 4. TTS QUEUE PROCESSING (Blueprint Logic: 100ms Interval)
 const processQueue = () => {
-  if (!window.audioEnabled || !window.isPlaying || window.isMuted || window.isSpeaking || window.queue.length === 0) {
-    return;
-  }
+    // Don't process if paused, muted, already speaking, or queue empty
+    if (!window.audioEnabled || !window.isPlaying || window.isMuted || window.isSpeaking || window.queue.length === 0) {
+        return;
+    }
 
-  const nextMessage = window.queue.shift();
-  
-  if (document.getElementById("queueLen")) document.getElementById("queueLen").textContent = window.queue.length;
-  if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = nextMessage.username;
+    // Get next message
+    const next = window.queue.shift();
+    
+    // UI Update
+    if (document.getElementById("queueLen")) document.getElementById("queueLen").textContent = window.queue.length;
+    if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = next.username;
 
-  window.isSpeaking = true;
+    window.isSpeaking = true;
 
-  const readUserCheck = document.getElementById("readUsername");
-  const textToSpeak = (readUserCheck && readUserCheck.checked) 
-    ? `${nextMessage.username} says: ${nextMessage.message}` 
-    : nextMessage.message;
+    // Build Text
+    const readUser = document.getElementById("readUsername").checked;
+    const text = readUser ? `${next.username} says: ${next.message}` : next.message;
 
-  const utterance = new SpeechSynthesisUtterance(textToSpeak);
-  
-  // Apply Volume
-  const volInput = document.getElementById("volume");
-  utterance.volume = volInput ? parseFloat(volInput.value) : 1;
-  utterance.rate = 1;
-  utterance.pitch = 1;
-  
-  // Select Voice
-  const voiceChoice = document.getElementById("voiceSelect");
-  if (voiceChoice && window.voices.length > 0) {
-    const selectedVoice = window.voices.find(v => v.name === voiceChoice.value);
-    if (selectedVoice) utterance.voice = selectedVoice;
-  }
+    // Create Utterance
+    const utter = new SpeechSynthesisUtterance(text);
+    
+    // Apply Settings
+    const vol = document.getElementById("volume");
+    utter.volume = vol ? parseFloat(vol.value) : 1;
+    
+    const vSelect = document.getElementById("voiceSelect");
+    if (vSelect && window.voices.length > 0) {
+        const selectedVoice = window.voices.find(v => v.name === vSelect.value);
+        if (selectedVoice) utter.voice = selectedVoice;
+    }
 
-  utterance.onend = () => {
-    window.isSpeaking = false;
-    if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = "None";
-  };
+    // Handlers
+    utter.onend = () => {
+        window.isSpeaking = false;
+        document.getElementById("speakingNow").textContent = "None";
+    };
+    utter.onerror = () => {
+        window.isSpeaking = false;
+        document.getElementById("speakingNow").textContent = "None";
+    };
 
-  utterance.onerror = () => {
-    window.isSpeaking = false;
-    if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = "None";
-  };
-
-  speechSynthesis.speak(utterance);
+    speechSynthesis.speak(utter);
 };
 
-// 100ms Interval Heartbeat
+// Start Heartbeat
 setInterval(processQueue, 100);
 
-// 5. INITIALIZE VOICES
+// 5. VOICE LOADER
 function loadVoices() {
-  window.voices = speechSynthesis.getVoices();
-  const selector = document.getElementById("voiceSelect");
-  if (selector && window.voices.length > 0) {
-    selector.innerHTML = "";
-    window.voices.forEach(v => {
-      const opt = document.createElement("option");
-      opt.value = v.name;
-      opt.textContent = v.name;
-      selector.appendChild(opt);
-    });
-  } else {
-    setTimeout(loadVoices, 300);
-  }
+    window.voices = speechSynthesis.getVoices();
+    const selector = document.getElementById("voiceSelect");
+    if (selector && window.voices.length > 0) {
+        selector.innerHTML = "";
+        window.voices.forEach(v => {
+            const opt = document.createElement("option");
+            opt.value = v.name;
+            opt.textContent = v.name;
+            selector.appendChild(opt);
+        });
+    } else {
+        setTimeout(loadVoices, 300);
+    }
 }
 speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
