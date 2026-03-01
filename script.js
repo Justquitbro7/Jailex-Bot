@@ -13,21 +13,15 @@ document.querySelectorAll(".tab-button").forEach(btn => {
   };
 });
 
-// 2. INITIALIZE ENGINE (REQUIRED)
+// 2. INITIALIZE ENGINE (REQUIRED FOR AUDIO)
 document.getElementById("enableAudioBtn").onclick = () => {
   window.audioEnabled = true;
-  const starter = new SpeechSynthesisUtterance("Audio engine fully operational.");
+  const starter = new SpeechSynthesisUtterance("Jailex Audio Engine is now online.");
   speechSynthesis.speak(starter);
-  console.log("JAILEX: Audio Engine Initialized");
+  console.log("JAILEX: Audio Engine Activated");
 };
 
-// 3. PLAY/PAUSE LOGIC
-document.getElementById("playPauseBtn").onclick = function() {
-  window.isPlaying = !window.isPlaying;
-  this.textContent = window.isPlaying ? "PAUSE LOOP" : "RESUME LOOP";
-};
-
-// 4. TEST SEQUENCE (Fix for the broken button)
+// 3. TEST SEQUENCE
 document.getElementById("testTtsBtn").onclick = () => {
   if (!window.audioEnabled) {
     alert("CRITICAL: You must click 'Initialize Engine' first.");
@@ -36,6 +30,6 @@ document.getElementById("testTtsBtn").onclick = () => {
   window.addMessage({
     platform: "system",
     username: "Jailex HUD",
-    message: "Blueprint sync successful. Audio engine is now online."
+    message: "Diagnostic check complete. System ready."
   });
 };
