@@ -1,13 +1,38 @@
-<script>
-  const hash = window.location.hash;
-  if (hash) {
-    const params = new URLSearchParams(hash.substring(1));
-    const token = params.get('access_token');
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jailex Auth Handler</title>
+</head>
+<body style="background: #0B162A; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif;">
+    <div style="text-align: center;">
+        <h2>Syncing with Jailex...</h2>
+        <p>Please do not close this window.</p>
+    </div>
 
-    if (token) {
-      // Send the token back to the main Jailex window
-      window.opener.postMessage({ type: 'TWITCH_TOKEN', token: token }, window.location.origin);
-      window.close(); // Close the popup automatically
-    }
-  }
-</script>
+    <script>
+        // Catch the token from the URL hash
+        const hash = window.location.hash;
+        if (hash) {
+            const params = new URLSearchParams(hash.substring(1));
+            const token = params.get('access_token');
+
+            if (token) {
+                // Send the token back to the main Jailex Dashboard
+                if (window.opener) {
+                    window.opener.postMessage({ 
+                        type: 'TWITCH_TOKEN', 
+                        token: token 
+                    }, window.location.origin);
+                    
+                    // Close this popup after a split second
+                    setTimeout(() => { window.close(); }, 500);
+                } else {
+                    document.body.innerHTML = "<h2>Error: Connection to main window lost.</h2>";
+                }
+            }
+        } else {
+            document.body.innerHTML = "<h2>No token found. Please try again.</h2>";
+        }
+    </script>
+</body>
+</html>
