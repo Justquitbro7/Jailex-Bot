@@ -1,131 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><!DOCTYPE html>
-<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAILEX STUDIO | v9.8.0</title>
+    <title>JAILEX STUDIO | v9.8.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --navy: #020617; --orange: #C83803; --blue: #00F3FF; }
-        body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 240px; border-right: 1px solid rgba(200, 56, 3, 0.2); background: rgba(15, 23, 42, 0.9); flex-shrink: 0; display: flex; flex-direction: column; }
+        * { margin: 0; padding: 0; box-sizing: border-box; } /* Force reset to stop doubling */
+        body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; width: 100vw; overflow: hidden; }
+        .sidebar { width: 260px; border-right: 1px solid rgba(200, 56, 3, 0.2); background: rgba(15, 23, 42, 0.95); flex-shrink: 0; display: flex; flex-direction: column; z-index: 50; }
         .neon-logo { text-shadow: 0 0 15px var(--blue); }
         .nav-item { padding: 18px 28px; cursor: pointer; transition: 0.3s; color: #64748b; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; border-left: 3px solid transparent; }
         .nav-item:hover { background: rgba(255, 255, 255, 0.03); color: white; }
         .nav-item.active { background: rgba(200, 56, 3, 0.1); color: var(--orange); border-left: 3px solid var(--orange); }
-        .main-content { flex: 1; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 70% 20%, #0f172a, #020617); }
-        .tab-content { display: none; max-width: 1000px; margin: 0 auto; animation: slideUp 0.4s ease-out; }
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 70% 20%, #0f172a, #020617); position: relative; }
+        .tab-content { display: none; max-width: 900px; margin: 0 auto; animation: slideUp 0.4s ease-out; }
         .tab-content.active { display: block; }
-        .hud-card { background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(0, 243, 255, 0.15); padding: 28px; border-radius: 20px; margin-bottom: 24px; backdrop-filter: blur(10px); }
-        .hud-btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 900; transition: 0.3s; text-transform: uppercase; font-size: 0.7rem; }
-        input { background: rgba(0,0,0,0.4); border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; width: 100%; font-size: 0.8rem; outline: none; }
-        .status-pill { background: #1e293b; padding: 4px 10px; border-radius: 6px; font-size: 9px; font-weight: 900; border: 1px solid #334155; }
-        .status-on { color: var(--blue); border-color: var(--blue); box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); }
-        .version-tag { margin-top: auto; padding: 20px; background: rgba(0, 243, 255, 0.05); border-top: 1px solid rgba(0, 243, 255, 0.1); text-align: center; }
+        .hud-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(0, 243, 255, 0.1); padding: 30px; border-radius: 24px; margin-bottom: 24px; backdrop-filter: blur(12px); }
+        .hud-btn { background: var(--orange); color: white; border: none; padding: 14px; border-radius: 12px; cursor: pointer; font-weight: 900; transition: 0.3s; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; }
+        .hud-btn:hover { background: #e04a05; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(200, 56, 3, 0.3); }
+        input { background: rgba(0,0,0,0.5); border: 1px solid #334155; color: white; padding: 12px; border-radius: 12px; width: 100%; font-size: 0.85rem; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--blue); box-shadow: 0 0 10px rgba(0, 243, 255, 0.1); }
+        .status-pill { background: #1e293b; padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 900; border: 1px solid #334155; transition: 0.5s; }
+        .status-on { color: var(--blue); border-color: var(--blue); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-    <div class="sidebar">
+    <aside class="sidebar">
         <div class="p-10 text-center">
-            <h2 class="text-4xl font-black text-orange-600 neon-logo tracking-tighter leading-none">JAILEX</h2>
-            <p class="text-[9px] font-black uppercase mt-3 italic text-blue-400">Streaming Made Easy</p>
+            <h1 class="text-4xl font-black text-orange-600 neon-logo tracking-tighter italic">JAILEX</h1>
+            <p class="text-[9px] font-black uppercase mt-3 italic text-blue-400">Master Control</p>
         </div>
         <nav class="flex-1">
             <div class="nav-item active" onclick="showTab('sync', this)">🔄 Quick Sync</div>
             <div class="nav-item" onclick="showTab('engine', this)">🔊 Engine Master</div>
-            <div class="nav-item" onclick="showTab('dash', this)">📊 Live Dashboard</div>
+            <div class="nav-item" onclick="showTab('dash', this)">📊 Dashboard</div>
             <div class="nav-item" onclick="showTab('overlay', this)">📡 Overlay Hub</div>
             <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
-            <div class="nav-item" onclick="showTab('timers', this)">⏰ Auto Timers</div>
         </nav>
-        <div class="version-tag">
-            <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Active Build</p>
-            <p class="text-lg font-black text-white italic">v9.8.0</p>
+        <div class="p-6 bg-blue-900/10 border-t border-white/5 text-center">
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Build Version</p>
+            <p class="text-lg font-black text-white italic">v9.8.1</p>
         </div>
-    </div>
+    </aside>
 
-    <div class="main-content">
+    <main class="main-content">
         <div id="sync" class="tab-content active">
-            <div class="grid grid-cols-2 gap-6">
-                <div class="hud-card border-purple-500/20 text-center">
-                    <h3 class="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-4">Twitch Handshake</h3>
-                    <div id="t-pill" class="status-pill inline-block mb-6">OFFLINE</div>
-                    <button id="t-btn" class="hud-btn w-full bg-purple-800 py-6" onclick="startTwitchSync()">Authorize Account</button>
-                    <p id="t-user" class="text-blue-400 font-bold italic mt-4 hidden"></p>
+            <div class="grid grid-cols-2 gap-8">
+                <div class="hud-card text-center">
+                    <h3 class="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-6">Twitch Status</h3>
+                    <div id="t-pill" class="status-pill inline-block mb-8">OFFLINE</div>
+                    <div id="t-auth-box">
+                        <button class="hud-btn w-full bg-purple-800 py-6" onclick="startTwitchSync()">Authorize Account</button>
+                    </div>
+                    <div id="t-user-info" class="hidden">
+                        <p id="t-user-name" class="text-xl font-black text-blue-400 italic mb-4"></p>
+                        <button class="text-[10px] text-slate-500 hover:text-red-400 uppercase font-black underline" onclick="logout()">Logout</button>
+                    </div>
                 </div>
-                <div class="hud-card border-emerald-500/20 text-center">
-                    <h3 class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-4">Kick Signal</h3>
-                    <div id="k-pill" class="status-pill inline-block mb-6">OFFLINE</div>
-                    <input type="text" id="k-id-box" placeholder="KICK ID (e.g. 24968498)" class="mb-4">
+                <div class="hud-card text-center">
+                    <h3 class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-6">Kick Status</h3>
+                    <div id="k-pill" class="status-pill inline-block mb-8">OFFLINE</div>
+                    <input type="text" id="k-id-input" placeholder="KICK ID (e.g. 24968498)" class="mb-4 text-center">
                     <button class="hud-btn w-full bg-emerald-700" onclick="saveKickID()">Link Signal</button>
                 </div>
             </div>
         </div>
 
         <div id="engine" class="tab-content">
-            <div class="hud-card border-orange-600/30">
-                <h2 class="text-xl font-black mb-6 uppercase italic">Engine Master</h2>
-                <button class="hud-btn w-full bg-blue-600 py-4 mb-4" onclick="sendTestChat()">🚀 Send Test Chat Message</button>
-                <div id="log" class="mt-4 bg-black/40 p-5 rounded-xl border border-slate-800 h-32 overflow-y-auto font-mono text-xs text-green-500">> Ready.</div>
+            <div class="hud-card">
+                <h2 class="text-2xl font-black mb-8 italic text-orange-500 uppercase">Engine Master Control</h2>
+                <button class="hud-btn w-full bg-blue-700 py-6 mb-6 shadow-xl" onclick="sendTestChat()">🚀 Fire Signal Test</button>
+                <div id="log" class="bg-black/60 p-6 rounded-2xl border border-slate-800 h-40 overflow-y-auto font-mono text-[11px] text-green-400">
+                    [SYSTEM] All modules stand by.
+                </div>
             </div>
         </div>
 
         <div id="dash" class="tab-content">
-            <div class="hud-card">
-                <h2 class="text-xl font-black mb-6 uppercase italic">Live Stats</h2>
-                <div class="grid grid-cols-3 gap-4 text-center">
-                    <div class="bg-black/20 p-4 rounded-xl border border-slate-800">
-                        <p class="text-[10px] text-slate-500 font-black">VIEWERS</p>
-                        <p class="text-2xl font-black text-blue-400">0</p>
-                    </div>
-                    <div class="bg-black/20 p-4 rounded-xl border border-slate-800">
-                        <p class="text-[10px] text-slate-500 font-black">FOLLOWS</p>
-                        <p class="text-2xl font-black text-emerald-400">--</p>
-                    </div>
-                    <div class="bg-black/20 p-4 rounded-xl border border-slate-800">
-                        <p class="text-[10px] text-slate-500 font-black">COMMANDS</p>
-                        <p class="text-2xl font-black text-orange-500" id="cmd-count">0</p>
-                    </div>
-                </div>
+            <div class="hud-card text-center py-20">
+                <h2 class="text-slate-500 font-black italic uppercase tracking-widest">Telemetry Offline</h2>
+                <p class="text-[10px] text-slate-600 mt-2 uppercase">Connect accounts to view live stats</p>
             </div>
         </div>
-
-        <div id="overlay" class="tab-content">
-            <div class="hud-card border-blue-500/20">
-                <h2 class="text-xl font-black mb-6 uppercase italic">Overlay URL</h2>
-                <p class="text-xs text-slate-400 mb-4 italic">Copy this URL into OBS as a "Browser Source":</p>
-                <div class="flex gap-2">
-                    <input type="text" readonly value="https://jailex-overlay.vercel.app/" class="bg-black/50 border border-slate-700">
-                    <button class="hud-btn px-6 bg-slate-800" onclick="alert('Link Copied!')">Copy</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="keywords" class="tab-content">
-            <div class="hud-card">
-                <h2 class="text-xl font-black mb-6 uppercase italic">Keyword Triggers</h2>
-                <div class="grid grid-cols-5 gap-3 mb-6">
-                    <div class="col-span-2"><input type="text" id="k-cmd" placeholder="!command"></div>
-                    <div class="col-span-2"><input type="text" id="k-resp" placeholder="Bot response..."></div>
-                    <button class="hud-btn bg-emerald-700" onclick="addKeyword()">Save</button>
-                </div>
-                <div id="keyword-list" class="space-y-2"></div>
-            </div>
-        </div>
-
-        <div id="timers" class="tab-content">
-            <div class="hud-card">
-                <h2 class="text-xl font-black mb-6 uppercase italic">Auto Timers</h2>
-                <p class="text-xs text-slate-400 italic mb-6">Bot will post these to chat automatically every 20 minutes.</p>
-                <div class="bg-black/20 p-6 rounded-xl border border-slate-800 border-dashed text-center">
-                    <p class="text-slate-600 uppercase font-black text-[10px]">Timer Logic Coming in v9.8.1</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    </main>
 
     <script>
         const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
@@ -154,7 +114,7 @@
         async function validateTwitch(token) {
             try {
                 const res = await fetch('https://api.twitch.tv/helix/users', {
-                    headers: { 'Client-ID': CLIENT_ID, 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${token}`, 'Client-ID': CLIENT_ID }
                 });
                 const data = await res.json();
                 if (data.data && data.data[0]) {
@@ -162,279 +122,57 @@
                     localStorage.setItem('jailex_user_id', data.data[0].id);
                     syncUI();
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { logout(); }
         }
 
         function saveKickID() {
-            const val = document.getElementById('k-id-box').value.trim();
-            localStorage.setItem('jailex_kick_id', val);
-            syncUI();
-            window.speechSynthesis.speak(new SpeechSynthesisUtterance("Kick signal locked and saved."));
-        }
-
-        function addKeyword() {
-            const cmd = document.getElementById('k-cmd').value.trim();
-            const resp = document.getElementById('k-resp').value.trim();
-            if(!cmd || !resp) return;
-            let keywords = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
-            keywords.push({ cmd, resp });
-            localStorage.setItem('jailex_keywords', JSON.stringify(keywords));
-            document.getElementById('k-cmd').value = '';
-            document.getElementById('k-resp').value = '';
-            syncUI();
-        }
-
-        function syncUI() {
-            const tkn = localStorage.getItem('jailex_t_token');
-            const user = localStorage.getItem('jailex_user');
-            const kid = localStorage.getItem('jailex_kick_id');
-            const keywords = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
-
-            if(tkn && user) {
-                document.getElementById('t-pill').innerText="ONLINE"; 
-                document.getElementById('t-pill').classList.add('status-on'); 
-                document.getElementById('t-btn').classList.add('hidden');
-                document.getElementById('t-user').innerText = `LIVE AS: ${user.toUpperCase()}`;
-                document.getElementById('t-user').classList.remove('hidden');
+            const val = document.getElementById('k-id-input').value.trim();
+            if(val) {
+                localStorage.setItem('jailex_kick_id', val);
+                syncUI();
             }
-            if(kid) {
-                document.getElementById('k-pill').innerText="ONLINE";
-                document.getElementById('k-pill').classList.add('status-on');
-                document.getElementById('k-id-box').value = kid;
-            }
-
-            const list = document.getElementById('keyword-list');
-            list.innerHTML = keywords.length ? '' : '<p class="text-center text-slate-700 text-[10px] py-4">No Active Triggers</p>';
-            keywords.forEach((k, i) => {
-                list.innerHTML += `<div class="bg-black/20 p-4 rounded-lg flex justify-between">
-                    <span><span class="text-blue-400 font-bold">${k.cmd}</span>: ${k.resp}</span>
-                    <button class="text-red-500 text-[10px] font-black" onclick="deleteK(${i})">REMOVE</button>
-                </div>`;
-            });
-            document.getElementById('cmd-count').innerText = keywords.length;
-        }
-
-        function deleteK(index) {
-            let k = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
-            k.splice(index, 1);
-            localStorage.setItem('jailex_keywords', JSON.stringify(k));
-            syncUI();
-        }
-
-        async function sendTestChat() {
-            const token = localStorage.getItem('jailex_t_token');
-            const uid = localStorage.getItem('jailex_user_id');
-            if(!token) return;
-            try {
-                await fetch('https://api.twitch.tv/helix/chat/messages', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Client-Id': CLIENT_ID, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ broadcaster_id: uid, sender_id: uid, message: "JAILEX ENGINE ONLINE: v9.8 Full Suite Active." })
-                });
-                document.getElementById('log').innerHTML += `<div class="text-blue-400">> Full System Signal Broadcasted.</div>`;
-            } catch (err) { console.error(err); }
-        }
-
-        window.onload = () => {
-            const savedToken = localStorage.getItem('jailex_t_token');
-            if (savedToken) validateTwitch(savedToken);
-            syncUI();
-        };
-    </script>
-</body>
-</html>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAILEX STUDIO | v9.7.6</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        :root { --navy: #020617; --orange: #C83803; --blue: #00F3FF; }
-        body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 240px; border-right: 1px solid rgba(200, 56, 3, 0.2); background: rgba(15, 23, 42, 0.9); flex-shrink: 0; display: flex; flex-direction: column; }
-        .neon-logo { text-shadow: 0 0 15px var(--blue); }
-        .nav-item { padding: 18px 28px; cursor: pointer; transition: 0.3s; color: #64748b; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; border-left: 3px solid transparent; }
-        .nav-item.active { background: rgba(200, 56, 3, 0.1); color: var(--orange); border-left: 3px solid var(--orange); }
-        .main-content { flex: 1; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 70% 20%, #0f172a, #020617); }
-        .tab-content { display: none; max-width: 1000px; margin: 0 auto; animation: slideUp 0.4s ease-out; }
-        .tab-content.active { display: block; }
-        .hud-card { background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(0, 243, 255, 0.15); padding: 28px; border-radius: 20px; margin-bottom: 24px; backdrop-filter: blur(10px); }
-        .hud-btn { background: var(--orange); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 900; transition: 0.3s; text-transform: uppercase; font-size: 0.7rem; }
-        .status-pill { background: #1e293b; padding: 4px 10px; border-radius: 6px; font-size: 9px; font-weight: 900; border: 1px solid #334155; }
-        .status-on { color: var(--blue); border-color: var(--blue); box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); }
-        input { background: rgba(0,0,0,0.4); border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; width: 100%; font-size: 0.8rem; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--blue); }
-        .keyword-item { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        <div class="p-10 text-center">
-            <h2 class="text-4xl font-black text-orange-600 neon-logo tracking-tighter leading-none">JAILEX</h2>
-            <p class="text-[9px] font-black uppercase mt-3 italic text-blue-400">Streaming Made Easy</p>
-        </div>
-        <nav class="flex-1">
-            <div class="nav-item active" onclick="showTab('sync', this)">🔄 Quick Sync</div>
-            <div class="nav-item" onclick="showTab('engine', this)">🔊 Engine Master</div>
-            <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
-        </nav>
-        <div class="p-5 text-center bg-blue-900/10 border-t border-white/5">
-            <p class="text-[8px] font-black text-slate-500 uppercase">System Build</p>
-            <p class="text-xs font-black text-white italic">v9.7.6</p>
-        </div>
-    </div>
-
-    <div class="main-content">
-        <div id="sync" class="tab-content active">
-            <div class="hud-card border-purple-500/20 text-center">
-                <h3 class="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-4">Twitch Handshake</h3>
-                <div id="t-pill" class="status-pill inline-block mb-6">OFFLINE</div>
-                <div id="sync-controls">
-                    <button class="hud-btn w-full bg-purple-800 py-6 mb-4" onclick="startTwitchSync()">Authorize Handshake</button>
-                </div>
-                <div id="t-user-area" class="mt-4 opacity-0 transition-opacity">
-                    <p id="t-user" class="text-blue-400 font-bold italic mb-4"></p>
-                    <button class="text-[10px] text-slate-500 underline uppercase font-bold" onclick="logout()">Disconnect</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="engine" class="tab-content">
-            <div class="hud-card border-orange-600/30">
-                <h2 class="text-xl font-black mb-6 uppercase italic">Engine Master</h2>
-                <button class="hud-btn w-full bg-blue-600 py-4 mb-4" onclick="sendTestChat()">🚀 Send Test Chat Message</button>
-                <div id="log" class="mt-4 bg-black/40 p-5 rounded-xl border border-slate-800 h-32 overflow-y-auto font-mono text-xs text-green-500">> Standing by.</div>
-            </div>
-        </div>
-
-        <div id="keywords" class="tab-content">
-            <div class="hud-card border-blue-500/20">
-                <h2 class="text-xl font-black mb-6 uppercase italic text-blue-400">Keyword Triggers</h2>
-                
-                <div class="grid grid-cols-5 gap-3 mb-8">
-                    <div class="col-span-2"><input type="text" id="k-cmd" placeholder="!command"></div>
-                    <div class="col-span-2"><input type="text" id="k-resp" placeholder="Bot response..."></div>
-                    <button class="hud-btn bg-emerald-700" onclick="addKeyword()">Save</button>
-                </div>
-
-                <div id="keyword-list" class="space-y-2">
-                    </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
-        const REDIRECT_URI = "https://jailex-bot.vercel.app/setup.html";
-
-        function showTab(id, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            el.classList.add('active');
-        }
-
-        // --- AUTH LOGIC ---
-        function startTwitchSync() {
-            const scope = encodeURIComponent('chat:read chat:edit user:write:chat');
-            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=${scope}`;
-            window.open(authUrl, 'JailexSync', 'width=450,height=600');
-        }
-
-        window.addEventListener('message', (event) => {
-            if (event.data.type === 'TWITCH_TOKEN') {
-                localStorage.setItem('jailex_t_token', event.data.token);
-                validateTwitch(event.data.token);
-            }
-        });
-
-        async function validateTwitch(token) {
-            try {
-                const res = await fetch('https://api.twitch.tv/helix/users', {
-                    headers: { 'Client-ID': CLIENT_ID, 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (data.data && data.data[0]) {
-                    localStorage.setItem('jailex_user', data.data[0].display_name);
-                    localStorage.setItem('jailex_user_id', data.data[0].id);
-                    syncUI();
-                }
-            } catch (err) { console.error(err); }
         }
 
         function logout() { localStorage.clear(); location.reload(); }
 
         function syncUI() {
-            const tkn = localStorage.getItem('jailex_t_token');
             const user = localStorage.getItem('jailex_user');
-            if(tkn && user) {
-                document.getElementById('t-pill').innerText="ONLINE"; 
-                document.getElementById('t-pill').classList.add('status-on'); 
-                document.getElementById('t-user').innerText = `LIVE AS: ${user.toUpperCase()}`;
-                document.getElementById('t-user-area').classList.remove('opacity-0');
-                document.getElementById('sync-controls').classList.add('hidden');
+            const kick = localStorage.getItem('jailex_kick_id');
+            
+            if(user) {
+                document.getElementById('t-pill').innerText = "ONLINE";
+                document.getElementById('t-pill').classList.add('status-on');
+                document.getElementById('t-auth-box').classList.add('hidden');
+                document.getElementById('t-user-name').innerText = user.toUpperCase();
+                document.getElementById('t-user-info').classList.remove('hidden');
             }
-            renderKeywords();
-        }
-
-        // --- KEYWORD LOGIC ---
-        function addKeyword() {
-            const cmd = document.getElementById('k-cmd').value.trim();
-            const resp = document.getElementById('k-resp').value.trim();
-            if(!cmd || !resp) return;
-
-            let keywords = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
-            keywords.push({ cmd, resp });
-            localStorage.setItem('jailex_keywords', JSON.stringify(keywords));
-            
-            document.getElementById('k-cmd').value = '';
-            document.getElementById('k-resp').value = '';
-            renderKeywords();
-            window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Trigger ${cmd} added.`));
-        }
-
-        function deleteKeyword(index) {
-            let keywords = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
-            keywords.splice(index, 1);
-            localStorage.setItem('jailex_keywords', JSON.stringify(keywords));
-            renderKeywords();
-        }
-
-        function renderKeywords() {
-            const list = document.getElementById('keyword-list');
-            const keywords = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
-            list.innerHTML = keywords.length ? '' : '<p class="text-center text-slate-600 text-[10px] uppercase italic py-4">No Active Triggers</p>';
-            
-            keywords.forEach((k, i) => {
-                list.innerHTML += `
-                    <div class="keyword-item">
-                        <div>
-                            <span class="text-blue-400 font-black mr-4">${k.cmd}</span>
-                            <span class="text-slate-400 text-xs">${k.resp}</span>
-                        </div>
-                        <button onclick="deleteKeyword(${i})" class="text-red-500 text-[10px] font-black uppercase">Remove</button>
-                    </div>
-                `;
-            });
+            if(kick) {
+                document.getElementById('k-pill').innerText = "ONLINE";
+                document.getElementById('k-pill').classList.add('status-on');
+                document.getElementById('k-id-input').value = kick;
+            }
         }
 
         async function sendTestChat() {
             const token = localStorage.getItem('jailex_t_token');
             const uid = localStorage.getItem('jailex_user_id');
-            if(!token) return;
+            const log = document.getElementById('log');
+            if(!token) { log.innerHTML += `<br>[ERROR] Not Synced.`; return; }
+            
             try {
                 await fetch('https://api.twitch.tv/helix/chat/messages', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Client-Id': CLIENT_ID, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ broadcaster_id: uid, sender_id: uid, message: "JAILEX ENGINE ONLINE: Triggers Ready." })
+                    body: JSON.stringify({ broadcaster_id: uid, sender_id: uid, message: "JAILEX ENGINE: Test Signal Success." })
                 });
-                document.getElementById('log').innerHTML += `<div class="text-blue-400">> Signal Sent.</div>`;
-            } catch (err) { console.error(err); }
+                log.innerHTML += `<br><span class="text-blue-400">[SYSTEM] Test Signal Transmitted.</span>`;
+            } catch (err) { log.innerHTML += `<br>[FAIL] Signal Lost.`; }
         }
 
         window.onload = () => {
-            const savedToken = localStorage.getItem('jailex_t_token');
-            if (savedToken) validateTwitch(savedToken);
+            syncUI();
+            const tkn = localStorage.getItem('jailex_t_token');
+            if(tkn) validateTwitch(tkn);
         };
     </script>
 </body>
