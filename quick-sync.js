@@ -1,160 +1,89 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Jailex Studio | Master Setup</title>
-    <style>
-        body { background: #0B162A; color: white; font-family: sans-serif; text-align: center; padding: 40px 20px; }
-        .container { max-width: 500px; margin: auto; }
-        .box { border: 2px solid #C83803; padding: 25px; background: #12213a; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
-        h1 { color: #C83803; letter-spacing: 2px; text-shadow: 2px 2px black; }
-        .btn { padding: 15px; width: 100%; cursor: pointer; font-weight: bold; border-radius: 10px; border: none; margin-top: 10px; font-size: 1rem; transition: 0.3s; }
-        .btn-twitch { background: #6441a5; color: white; }
-        .btn-kick { background: #00E701; color: black; }
-        .btn-final { background: white; color: black; }
-        input { padding: 12px; width: 90%; margin-top: 10px; border-radius: 8px; border: none; text-align: center; font-size: 1rem; background: #0B162A; color: white; border: 1px solid #444; }
-        code { background: black; color: #00FF00; padding: 12px; display: block; margin-top: 15px; word-break: break-all; border-radius: 8px; font-family: monospace; border: 1px solid #333; }
-        .hidden { display: none; }
-        .step-done { opacity: 0.6; pointer-events: none; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>JAILEX STUDIO</h1>
-        <p>Follow the steps to build your overlay link.</p>
+/* ====== QUICK SYNC ENGINE ====== */
+let kickSocket = null;
+let twitchSocket = null;
 
-        <div class="box" id="step1">
-            <h3>1. Twitch Connection</h3>
-            <button id="twitchBtn" class="btn btn-twitch" onclick="startTwitch()">CONNECT TWITCH</button>
-            <div id="twitchResult" class="hidden">
-                <p>✅ Twitch Linked!</p>
-                <code id="twitchTokenText"></code>
-            </div>
-        </div>
+function updateSyncUI() {
+    const kickUser = localStorage.getItem('jx_kick_user');
+    const twitchUser = localStorage.getItem('jx_twitch_user');
+    document.getElementById("kickActiveUI").style.display = kickUser ? "block" : "none";
+    document.getElementById("kickLoginUI").style.display = kickUser ? "none" : "block";
+    if (kickUser) document.getElementById("kickDisplayUser").textContent = kickUser;
+    document.getElementById("twitchActiveUI").style.display = twitchUser ? "block" : "none";
+    document.getElementById("twitchLoginUI").style.display = twitchUser ? "none" : "block";
+    if (twitchUser) document.getElementById("twitchDisplayUser").textContent = twitchUser;
+}
 
-        <div class="box" id="step2" style="border-color: #00E701;">
-            <h3>2. Kick Connection</h3>
-            <input type="text" id="kickUser" placeholder="Enter Kick Username">
-            <button id="kickBtn" class="btn btn-kick" onclick="findKickID()">FIND KICK ID</button>
-            <div id="kickResult" class="hidden">
-                <p>✅ Kick ID Found:</p>
-                <code id="kickIDText"></code>
-            </div>
-        </div>
-
-        <div class="box" style="border-color: white;">
-            <h3>3. Get Your Link</h3>
-            <button class="btn btn-final" onclick="generateLink()">GENERATE OVERLAY URL</button>
-            <div id="finalResult" class="hidden">
-                <p>Copy this into Lightstream/OBS:</p>
-                <code id="finalURL"></code>
-                <button class="btn" style="background: #444; color: white;" onclick="copyURL()">COPY TO CLIPBOARD</button>
-            </div>
-        </div>
-        
-        <p onclick="localStorage.clear(); location.reload();" style="color: #ff4444; cursor: pointer; text-decoration: underline; font-size: 0.9rem; margin-top: 20px;">Logout / Clear Saved Data</p>
-    </div>
-
-    <script>
-        const MY_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz'; 
-        const MY_REDIRECT = 'https://jailex-bot.vercel.app/setup.html';
-
-        function startTwitch() {
-            window.location.href = `https://id.twitch.tv/oauth2/authorize?client_id=${MY_ID}&redirect_uri=${encodeURIComponent(MY_REDIRECT)}&response_type=token&scope=chat:read+chat:edit&force_verify=true`;
-        }
-
-        window.onload = function() {
-            // --- 1. CAPTURE & SAVE TWITCH TOKEN ---
-            const hash = window.location.hash;
-            if (hash) {
-                const params = new URLSearchParams(hash.substring(1));
-                const token = params.get('access_token');
-                if (token) {
-                    localStorage.setItem('jx_twitch_token', token);
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                }
-            }
-
-            // --- 2. AUTO-LOAD FOR RETURNING USERS ---
-            const savedToken = localStorage.getItem('jx_twitch_token');
-            const savedKickID = localStorage.getItem('jx_kick_id');
-            const savedKickUser = localStorage.getItem('jx_kick_user');
-
-            if (savedToken) {
-                document.getElementById('twitchBtn').classList.add('hidden');
-                document.getElementById('twitchResult').classList.remove('hidden');
-                document.getElementById('twitchTokenText').innerText = savedToken;
-                document.getElementById('step1').classList.add('step-done');
-            }
-
-            if (savedKickID) {
-                document.getElementById('kickUser').value = savedKickUser || "";
-                document.getElementById('kickIDText').innerText = savedKickID;
-                document.getElementById('kickResult').classList.remove('hidden');
-                document.getElementById('step2').classList.add('step-done');
+/* KICK LOGIN/SYNC */
+async function loginKick() {
+    const user = document.getElementById("kickInput").value.trim();
+    if (!user) return;
+    localStorage.setItem('jx_kick_user', user);
+    updateSyncUI();
+    connectKick(user);
+}
+function logoutKick() {
+    localStorage.removeItem('jx_kick_user');
+    if (kickSocket) kickSocket.close();
+    document.getElementById("kickStatusPill").textContent = "OFFLINE";
+    document.getElementById("kickStatusPill").className = "status-pill status-off";
+    updateSyncUI();
+}
+async function connectKick(username) {
+    if (!username) return;
+    const pill = document.getElementById("kickStatusPill");
+    try {
+        const res = await fetch(`https://kick.com/api/v2/channels/${username}`);
+        const data = await res.json();
+        kickSocket = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0-rc2&flash=false");
+        kickSocket.onopen = () => {
+            pill.textContent = "SYNCED"; pill.className = "status-pill status-on";
+            kickSocket.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${data.chatroom.id}.v2` } }));
+        };
+        kickSocket.onmessage = (e) => {
+            const msg = JSON.parse(e.data);
+            if (msg.event === "App\\Events\\ChatMessageEvent") {
+                const c = JSON.parse(msg.data);
+                window.addMessage({ platform: "kick", username: c.sender.username, message: c.content });
             }
         };
+    } catch (e) { console.error("Kick Sync Error", e); }
+}
 
-        async function findKickID() {
-            const user = document.getElementById('kickUser').value.trim().toLowerCase();
-            if(!user) return alert("Enter Kick name!");
-
-            const btn = document.getElementById('kickBtn');
-            btn.innerText = "SEARCHING..."; 
-
-            let roomID = null;
-
-            try {
-                // ATTEMPT 1: allorigins
-                const res1 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://kick.com/api/v1/channels/' + user)}`);
-                const json1 = await res1.json();
-                const data1 = JSON.parse(json1.contents);
-                roomID = data1.chatroom.id;
-            } catch (e1) {
-                try {
-                    // ATTEMPT 2: corsproxy (Fallback)
-                    const res2 = await fetch(`https://corsproxy.io/?https://kick.com/api/v1/channels/${user}`);
-                    const data2 = await res2.json();
-                    roomID = data2.chatroom.id;
-                } catch (e2) {
-                    alert("User not found or Kick's security is blocking the search. Make sure the username is exact!");
-                    btn.innerText = "FIND KICK ID";
-                    return;
-                }
-            }
-
-            if (roomID) {
-                // --- 3. AUTO-SAVE THE FOUND DATA ---
-                localStorage.setItem('jx_kick_id', roomID);
-                localStorage.setItem('jx_kick_user', user);
-
-                document.getElementById('kickIDText').innerText = roomID;
-                document.getElementById('kickResult').classList.remove('hidden');
-                document.getElementById('step2').classList.add('step-done');
-                btn.innerText = "FIND KICK ID";
-            }
+/* TWITCH LOGIN/SYNC */
+function loginTwitch() {
+    const user = document.getElementById("twitchInput").value.trim();
+    if (!user) return;
+    localStorage.setItem('jx_twitch_user', user);
+    updateSyncUI();
+    connectTwitch(user);
+}
+function logoutTwitch() {
+    localStorage.removeItem('jx_twitch_user');
+    if (twitchSocket) twitchSocket.close();
+    document.getElementById("twitchStatusPill").textContent = "OFFLINE";
+    document.getElementById("twitchStatusPill").className = "status-pill status-off";
+    updateSyncUI();
+}
+function connectTwitch(username) {
+    if (!username) return;
+    const pill = document.getElementById("twitchStatusPill");
+    twitchSocket = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+    twitchSocket.onopen = () => {
+        pill.textContent = "SYNCED"; pill.className = "status-pill status-on";
+        twitchSocket.send("NICK justinfan12345");
+        twitchSocket.send(`JOIN #${username.toLowerCase()}`);
+    };
+    twitchSocket.onmessage = (e) => {
+        if (e.data.includes("PRIVMSG")) {
+            const user = e.data.match(/:(\w+)!/)[1];
+            const msg = e.data.split("PRIVMSG")[1].split(":")[1].trim();
+            // FIX: Explicitly calling the global addMessage
+            window.addMessage({ platform: "twitch", username: user, message: msg });
         }
+        if (e.data.startsWith("PING")) twitchSocket.send("PONG :tmi.twitch.tv");
+    };
+}
 
-        function generateLink() {
-            const t = document.getElementById('twitchTokenText').innerText;
-            const k = document.getElementById('kickIDText').innerText;
-            const u = document.getElementById('kickUser').value.trim();
-            
-            if(!t || !k) return alert("Please complete Steps 1 and 2 first!");
-            
-            const baseUrl = window.location.origin + "/overlay.html";
-            const final = `${baseUrl}?kick_id=${k}&kick_user=${u}&token=${t}`;
-            
-            document.getElementById('finalURL').innerText = final;
-            document.getElementById('finalResult').classList.remove('hidden');
-        }
-
-        function copyURL() {
-            const text = document.getElementById('finalURL').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert("URL Copied! Paste this as a Browser Source in Lightstream.");
-            });
-        }
-    </script>
-</body>
-</html>
+updateSyncUI();
+connectKick(localStorage.getItem('jx_kick_user'));
+connectTwitch(localStorage.getItem('jx_twitch_user'));
