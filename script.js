@@ -1,65 +1,81 @@
-// JAILEX BOT CORE - Client ID Baked In
-const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
+/* ====== JAILEX CORE ENGINE ====== */
+let queue = [];
+let isPlaying = true;
+let isMuted = false;
+let isSpeaking = false;
+let audioEnabled = false;
+let voices = [];
+let volume = 1; let rate = 1;
+let timers = [];
+let ttsEngine = "browser";
+let speechifyApiKey = "";
+let speechifyVoiceId = "";
 
-function log(msg) {
-    console.log("Jailex Log:", msg);
-    const debug = document.getElementById('debug-log');
-    if (debug) debug.innerHTML += `<div>> ${msg}</div>`;
-}
-
-// 1. Listen for the token from the setup.html popup
-window.addEventListener('message', (event) => {
-    if (event.origin !== window.location.origin) return;
-
-    if (event.data.type === 'TWITCH_TOKEN') {
-        const token = event.data.token;
-        localStorage.setItem('jailex_twitch_token', token);
-        log("Token received! Starting bot...");
-        connectBot(token);
-    }
+/* ====== TAB SWITCHING ====== */
+document.querySelectorAll(".tab-button").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.getAttribute("data-target")).classList.add("active");
+  };
 });
 
-// 2. Open the Twitch Auth Popup
-function openTwitchSync() {
-    const redirectUri = `${window.location.origin}/setup.html`;
-    const scope = encodeURIComponent('chat:read chat:edit');
-    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
-    
-    log("Opening Twitch Authorization...");
-    window.open(authUrl, 'JailexSync', 'width=450,height=600');
+/* ====== BROWSER VOICES ====== */
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  if (voices.length === 0) { setTimeout(loadVoices, 200); return; }
+  ["kickVoice", "timerVoice"].forEach(id => {
+    const s = document.getElementById(id);
+    s.innerHTML = "";
+    voices.forEach(v => {
+      let opt = document.createElement("option");
+      opt.value = v.name; opt.textContent = v.name;
+      s.appendChild(opt);
+    });
+  });
+}
+speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
+
+/* ====== GLOBAL ADD MESSAGE ====== */
+function addMessage(msg) {
+  const log = document.getElementById("chatLog");
+  const div = document.createElement("div");
+  div.className = "chat-line";
+  const color = msg.platform === "kick" ? "#53fc18" : "#a970ff";
+  div.innerHTML = `<span style="color:${color};font-weight:600">[${msg.platform}] ${msg.username}:</span> ${msg.message}`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  queue.push(msg);
+  document.getElementById("queueLen").textContent = queue.length;
 }
 
-// 3. Connect to Twitch API & Chat
-async function connectBot(token) {
-    const status = document.getElementById('sync-status');
-    status.innerText = "Status: Connecting...";
+/* ====== TTS LOOP ====== */
+setInterval(async () => {
+  if (!audioEnabled || !isPlaying || isMuted || isSpeaking || queue.length === 0) return;
+  const next = queue.shift();
+  document.getElementById("queueLen").textContent = queue.length;
+  const text = document.getElementById("readUsername").checked ? `${next.username} says ${next.message}` : next.message;
+  isSpeaking = true;
+  document.getElementById("speakingNow").textContent = next.username;
 
-    try {
-        const res = await fetch('https://api.twitch.tv/helix/users', {
-            headers: {
-                'Client-ID': CLIENT_ID,
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        const data = await res.json();
-        
-        if (data.data && data.data[0]) {
-            const user = data.data[0].display_name;
-            status.innerText = `Status: Live as ${user}`;
-            status.style.color = "#C83803"; // Bears Orange
-            log(`Successfully synced as ${user}`);
-        }
-    } catch (err) {
-        log("Connection Error: " + err.message);
-        status.innerText = "Status: Sync Failed";
-    }
-}
+  if (ttsEngine === "speechify" && speechifyApiKey) {
+    // Speechify logic here (Placeholder for brevity, can add full fetch if needed)
+    isSpeaking = false; 
+  } else {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.volume = volume; utter.rate = rate;
+    const vName = next.platform === "kick" ? document.getElementById("kickVoice").value : document.getElementById("timerVoice").value;
+    utter.voice = voices.find(v => v.name === vName);
+    utter.onend = () => { isSpeaking = false; document.getElementById("speakingNow").textContent = "None"; };
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utter);
+  }
+}, 100);
 
-// 4. Check for saved session on load
-window.addEventListener('DOMContentLoaded', () => {
-    const savedToken = localStorage.getItem('jailex_twitch_token');
-    if (savedToken) {
-        log("Restoring saved session...");
-        connectBot(savedToken);
-    }
-});
+/* ====== BUTTON EVENTS ====== */
+document.getElementById("enableAudioBtn").onclick = () => {
+  audioEnabled = true;
+  speechSynthesis.speak(new SpeechSynthesisUtterance("Audio active"));
+};
+document.getElementById("testTtsBtn").onclick = () => addMessage({platform:"kick", username:"System", message:"Testing the Jailex HUD."});
