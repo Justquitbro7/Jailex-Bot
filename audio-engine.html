@@ -1,14 +1,14 @@
 /* ====== JAILEX AUDIO ENGINE (BLUEPRINT TRANSLATION) ====== */
 
-// 1. GLOBAL STATE (Blueprint equivalent of Refs/State)
+// 1. GLOBAL STATE (Attached to window so Quick Sync can see it)
 window.queue = [];
-window.isSpeaking = false; // Blueprint'isSpeakingRef'
+window.isSpeaking = false; 
 window.audioEnabled = false;
 window.isPlaying = true;
 window.isMuted = false;
 window.voices = [];
 
-// 2. BOT FILTERING LOGIC (Direct from Blueprint)
+// 2. BOT FILTERING LOGIC (From Blueprint)
 const KICK_BOTS = [
   "botrix", "kickbot", "kick", "streamelements", "nightbot", "moobot",
   "fossabot", "wizebot", "deepbot", "coebot", "phantombot", "ankhbot",
@@ -28,8 +28,10 @@ const isKickBot = (username) => {
   return false;
 };
 
-// 3. FRONT DOOR (Handshake for Quick Sync Engine)
+// 3. THE HANDSHAKE (The function your Quick Sync Engine calls)
 window.addMessage = function(msg) {
+  console.log("JAILEX Engine Received:", msg);
+
   // Bot Filter Check
   if (isKickBot(msg.username)) {
     console.log("Kick: Filtered bot message from", msg.username);
@@ -53,64 +55,56 @@ window.addMessage = function(msg) {
   if (qLen) qLen.textContent = window.queue.length;
 };
 
-// 4. TTS PLAYBACK QUEUE SYSTEM (Blueprint logic)
+// 4. TTS PLAYBACK QUEUE SYSTEM (Blueprint 100ms Logic)
 const processQueue = () => {
-  // Don't process if paused, muted, already speaking, queue empty, or engine not initialized
   if (!window.audioEnabled || !window.isPlaying || window.isMuted || window.isSpeaking || window.queue.length === 0) {
     return;
   }
 
-  // Get next message from queue
   const nextMessage = window.queue.shift();
   
-  // Update UI Stats
   if (document.getElementById("queueLen")) document.getElementById("queueLen").textContent = window.queue.length;
   if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = nextMessage.username;
 
   window.isSpeaking = true;
 
-  // Build text to speak (Blueprint 'readUsername' check)
   const readUserCheck = document.getElementById("readUsername");
   const textToSpeak = (readUserCheck && readUserCheck.checked) 
     ? `${nextMessage.username} says: ${nextMessage.message}` 
     : nextMessage.message;
 
-  // Create speech utterance
   const utterance = new SpeechSynthesisUtterance(textToSpeak);
   
-  // Apply voice settings from UI
+  // Apply Volume
   const volInput = document.getElementById("volume");
   utterance.volume = volInput ? parseFloat(volInput.value) : 1;
   utterance.rate = 1;
   utterance.pitch = 1;
   
-  // Select voice from dropdown
+  // Select Voice
   const voiceChoice = document.getElementById("voiceSelect");
   if (voiceChoice && window.voices.length > 0) {
     const selectedVoice = window.voices.find(v => v.name === voiceChoice.value);
     if (selectedVoice) utterance.voice = selectedVoice;
   }
 
-  // Handle completion (Blueprint 'onend')
   utterance.onend = () => {
     window.isSpeaking = false;
     if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = "None";
   };
 
-  // Handle errors
   utterance.onerror = () => {
     window.isSpeaking = false;
     if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = "None";
   };
 
-  // Speak the message
   speechSynthesis.speak(utterance);
 };
 
-// 5. ENGINE HEARTBEAT (100ms per Blueprint)
+// 100ms Interval Heartbeat
 setInterval(processQueue, 100);
 
-// 6. INITIALIZE VOICES
+// 5. INITIALIZE VOICES
 function loadVoices() {
   window.voices = speechSynthesis.getVoices();
   const selector = document.getElementById("voiceSelect");
