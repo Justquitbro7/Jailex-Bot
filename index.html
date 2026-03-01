@@ -8,7 +8,6 @@
     body { margin: 0; padding: 0; background: radial-gradient(circle at center, #02030a 0%, #000000 80%); color: #f5f5f5; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; height: 100vh; }
     .app-container { display: flex; height: 100vh; }
     
-    /* --- SIDEBAR --- */
     .sidebar { width: 240px; background: rgba(5,5,15,0.95); border-right: 1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; padding: 20px 12px; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
     .sidebar-title { font-weight: 800; font-size: 22px; color: #ff7a18; text-shadow: 0 0 10px #ff7a18; margin-bottom: 2px; }
     .sidebar-sub { font-size: 10px; opacity: 0.5; margin-bottom: 25px; letter-spacing: 2px; text-transform: uppercase; }
@@ -17,27 +16,29 @@
     .tab-button:hover { border-color: #ff7a18; color: #fff; }
     .tab-button.active { background: linear-gradient(135deg, rgba(255,122,24,0.9), rgba(0,200,255,0.7)); color: #fff; border-color: #fff; box-shadow: 0 0 20px rgba(255,122,24,0.6); }
 
-    /* --- MAIN AREA --- */
     .main { flex: 1; overflow-y: auto; padding: 30px; }
     .panel { backdrop-filter: blur(15px); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 30px; margin-bottom: 24px; max-width: 900px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .panel h2 { margin: 0 0 20px 0; color: #ff7a18; font-size: 24px; border-bottom: 2px solid rgba(255,122,24,0.3); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
 
-    /* --- UI ELEMENTS --- */
-    button { padding: 12px 20px; border-radius: 8px; border: 1px solid #ff7a18; background: rgba(255,122,24,0.1); color: #ff7a18; cursor: pointer; font-weight: 700; margin: 5px; transition: 0.2s; text-transform: uppercase; font-size: 12px; }
-    button:hover { background: #ff7a18; color: #000; box-shadow: 0 0 15px #ff7a18; transform: translateY(-1px); }
+    button { padding: 10px 15px; border-radius: 6px; border: 1px solid #ff7a18; background: rgba(255,122,24,0.1); color: #ff7a18; cursor: pointer; font-weight: 700; margin-top: 10px; transition: 0.2s; text-transform: uppercase; font-size: 11px; }
+    button:hover { background: #ff7a18; color: #000; box-shadow: 0 0 15px #ff7a18; }
+    .btn-logout { border-color: #ff3333; color: #ff3333; background: rgba(255, 51, 51, 0.05); }
+    .btn-logout:hover { background: #ff3333; color: #fff; box-shadow: 0 0 15px #ff3333; }
     
-    input, select { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.7); color: #fff; box-sizing: border-box; font-size: 14px; }
+    input, select { width: 100%; padding: 10px; margin-top: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.7); color: #fff; box-sizing: border-box; font-size: 13px; }
     
-    #chatLog { height: 380px; overflow-y: auto; font-family: 'Consolas', 'Courier New', monospace; font-size: 14px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; }
+    #chatLog { height: 380px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 14px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; }
     .chat-line { margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 4px solid #ff7a18; animation: slideIn 0.3s ease-out; }
     @keyframes slideIn { from { opacity: 0; transform: translateX(-15px); } to { opacity: 1; transform: translateX(0); } }
 
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
     
-    .status-pill { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+    .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
     .status-on { color: #53fc18; border: 1px solid #53fc18; background: rgba(83, 252, 24, 0.1); }
     .status-off { color: #ff3333; border: 1px solid #ff3333; background: rgba(255, 51, 51, 0.1); }
+    
+    .sync-card { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; justify-content: space-between; }
   </style>
 </head>
 <body>
@@ -55,79 +56,69 @@
   </div>
 
   <div class="main">
-    <div id="tab-playback" class="tab-panel active">
+    <div id="tab-sync" class="tab-panel active">
+      <div class="panel">
+        <h2>Quick Sync Engine</h2>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          
+          <div id="kickCard" class="sync-card">
+            <div>
+              <h3 style="color:#53fc18; margin:0 0 10px 0;">KICK</h3>
+              <div id="kickActiveUI">
+                <p style="font-size: 13px; opacity:0.7;">Linked Account: <span id="kickDisplayUser" style="color:#fff; font-weight:bold;">---</span></p>
+                <span id="kickStatusPill" class="status-pill status-off">OFFLINE</span>
+                <br><button class="btn-logout" onclick="logoutKick()">De-Sync Account</button>
+              </div>
+              <div id="kickLoginUI" style="display:none;">
+                <p style="font-size: 12px; opacity:0.6;">Enter username to initialize Pusher sync.</p>
+                <input type="text" id="kickInput" placeholder="Kick Username...">
+                <button onclick="loginKick()">Initialize Sync</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="twitchCard" class="sync-card">
+            <div>
+              <h3 style="color:#a970ff; margin:0 0 10px 0;">TWITCH</h3>
+              <div id="twitchActiveUI">
+                <p style="font-size: 13px; opacity:0.7;">Linked Account: <span id="twitchDisplayUser" style="color:#fff; font-weight:bold;">---</span></p>
+                <span id="twitchStatusPill" class="status-pill status-off">OFFLINE</span>
+                <br><button class="btn-logout" onclick="logoutTwitch()">De-Sync Account</button>
+              </div>
+              <div id="twitchLoginUI" style="display:none;">
+                <p style="font-size: 12px; opacity:0.6;">Enter username to initialize IRC sync.</p>
+                <input type="text" id="twitchInput" placeholder="Twitch Username...">
+                <button onclick="loginTwitch()">Initialize Sync</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-playback" class="tab-panel">
       <div class="panel">
         <h2>System Status</h2>
         <button id="enableAudioBtn">Initialize Engine</button>
-        <button id="playPauseBtn">Pause Loop</button>
         <button id="testTtsBtn">Test Voice</button>
-        <div style="margin-top:25px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
-          <label style="cursor:pointer;"><input type="checkbox" id="readUsername" checked /> Pronounce Usernames</label>
-          <div style="display:flex; gap: 40px; margin-top: 15px; font-weight: bold; font-family: monospace;">
-            <span>QUEUE: <span id="queueLen" style="color:#00c8ff">0</span></span>
-            <span>ACTIVE: <span id="speakingNow" style="color:#53fc18">None</span></span>
-          </div>
-        </div>
+        <p>Queue: <span id="queueLen">0</span> | Speaking: <span id="speakingNow">None</span></p>
       </div>
     </div>
 
-    <div id="tab-sync" class="tab-panel">
-      <div class="panel">
-        <h2>Quick Sync Engine</h2>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-          <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 12px; border: 1px solid rgba(83, 252, 24, 0.2);">
-            <h3 style="color:#53fc18; margin-top:0;">KICK</h3>
-            <p style="font-size: 13px; opacity:0.7;">Syncing with Pusher Protocol...</p>
-            <span id="kickStatusPill" class="status-pill status-off">IDLE</span>
-          </div>
-          <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 12px; border: 1px solid rgba(169, 112, 255, 0.2);">
-            <h3 style="color:#a970ff; margin-top:0;">TWITCH</h3>
-            <p style="font-size: 13px; opacity:0.7;">Syncing with IRC Protocol...</p>
-            <span id="twitchStatusPill" class="status-pill status-off">IDLE</span>
-          </div>
-        </div>
-        <p style="margin-top:25px; font-size:12px; opacity:0.5; font-style: italic;">
-          *Quick Sync Engine automatically connects using your saved credentials on launch.
-        </p>
-      </div>
-    </div>
-
-    <div id="tab-voices" class="tab-panel">
-      <div class="panel">
-        <h2>Voice Parameters</h2>
-        <label>Kick Narrator</label><select id="kickVoice"></select>
-        <label>Alert Narrator</label><select id="timerVoice"></select>
-        <label>Master Volume</label><input type="range" id="volume" min="0" max="1" step="0.1" value="1">
-      </div>
-    </div>
-
-    <div id="tab-chat" class="tab-panel">
-      <div class="panel">
-        <h2>Live Stream Data</h2>
-        <div id="chatLog"></div>
-      </div>
-    </div>
-
-    <div id="tab-timers" class="tab-panel">
-      <div class="panel">
-        <h2>Temporal Alerts</h2>
-        <input type="text" id="timerMessageInput" placeholder="Automated message content...">
-        <button id="addTimerBtn">Deploy Alert</button>
-        <div id="timersList" style="margin-top:20px;"></div>
-      </div>
-    </div>
+    <div id="tab-voices" class="tab-panel"><div class="panel"><h2>Voice Parameters</h2><select id="kickVoice"></select><input type="range" id="volume" min="0" max="1" step="0.1" value="1"></div></div>
+    <div id="tab-chat" class="tab-panel"><div class="panel"><h2>Live Feed</h2><div id="chatLog"></div></div></div>
   </div>
 </div>
 
 <script>
 /* ====== JAILEX ENGINE CORE ====== */
-const KICK_USER = "justquitbro7";
-const TWITCH_USER = "justquitbro7";
+let kickSocket = null;
+let twitchSocket = null;
 
 window.queue = [];
 window.isSpeaking = false;
 window.audioEnabled = false;
-window.isPlaying = true;
 window.voices = [];
 
 // ADD MESSAGE HUB
@@ -149,39 +140,29 @@ window.addMessage = function(msg) {
 function initVoices() {
     window.voices = speechSynthesis.getVoices();
     const kSelect = document.getElementById("kickVoice");
-    const tSelect = document.getElementById("timerVoice");
-    if (kSelect && tSelect && window.voices.length > 0) {
-        kSelect.innerHTML = ""; tSelect.innerHTML = "";
+    if (kSelect && window.voices.length > 0) {
+        kSelect.innerHTML = "";
         window.voices.forEach(v => {
             let opt = document.createElement("option");
             opt.value = v.name; opt.textContent = v.name;
-            kSelect.appendChild(opt.cloneNode(true));
-            tSelect.appendChild(opt.cloneNode(true));
+            kSelect.appendChild(opt);
         });
     } else { setTimeout(initVoices, 300); }
 }
-speechSynthesis.onvoiceschanged = initVoices;
-initVoices();
+speechSynthesis.onvoiceschanged = initVoices; initVoices();
 
 setInterval(() => {
-    if (!window.audioEnabled || !window.isPlaying || window.isSpeaking || window.queue.length === 0) return;
+    if (!window.audioEnabled || window.isSpeaking || window.queue.length === 0) return;
     const next = window.queue.shift();
     document.getElementById("queueLen").textContent = window.queue.length;
     document.getElementById("speakingNow").textContent = next.username;
-
-    const readUser = document.getElementById("readUsername").checked;
-    const text = readUser ? `${next.username} says ${next.message}` : next.message;
-
     window.isSpeaking = true;
-    const utter = new SpeechSynthesisUtterance(text);
+    const utter = new SpeechSynthesisUtterance(`${next.username} says ${next.message}`);
     utter.volume = parseFloat(document.getElementById("volume").value);
-    
-    const voiceName = next.platform === "kick" ? document.getElementById("kickVoice").value : document.getElementById("timerVoice").value;
-    utter.voice = window.voices.find(v => v.name === voiceName);
-
+    utter.voice = window.voices.find(v => v.name === document.getElementById("kickVoice").value);
     utter.onend = () => { window.isSpeaking = false; document.getElementById("speakingNow").textContent = "None"; };
     speechSynthesis.speak(utter);
-}, 150);
+}, 200);
 
 // UI NAVIGATION
 document.querySelectorAll(".tab-button").forEach(btn => {
@@ -195,57 +176,105 @@ document.querySelectorAll(".tab-button").forEach(btn => {
 
 document.getElementById("enableAudioBtn").onclick = () => {
     window.audioEnabled = true;
-    speechSynthesis.speak(new SpeechSynthesisUtterance("Quick Sync Engine fully operational."));
+    speechSynthesis.speak(new SpeechSynthesisUtterance("Engine synced."));
 };
 
-document.getElementById("testTtsBtn").onclick = () => {
-    if (!window.audioEnabled) return alert("Initialize Engine First.");
-    window.addMessage({ platform: "kick", username: "System", message: "Audio check successful. Sync stable." });
-};
+/* ====== QUICK SYNC LOGIC ====== */
 
-// KICK SYNC
-async function initKick() {
+function updateSyncUI() {
+    const kickUser = localStorage.getItem('jx_kick_user');
+    const twitchUser = localStorage.getItem('jx_twitch_user');
+
+    // Kick UI Toggle
+    document.getElementById("kickActiveUI").style.display = kickUser ? "block" : "none";
+    document.getElementById("kickLoginUI").style.display = kickUser ? "none" : "block";
+    if (kickUser) document.getElementById("kickDisplayUser").textContent = kickUser;
+
+    // Twitch UI Toggle
+    document.getElementById("twitchActiveUI").style.display = twitchUser ? "block" : "none";
+    document.getElementById("twitchLoginUI").style.display = twitchUser ? "none" : "block";
+    if (twitchUser) document.getElementById("twitchDisplayUser").textContent = twitchUser;
+}
+
+// KICK ACTIONS
+async function loginKick() {
+    const user = document.getElementById("kickInput").value.trim();
+    if (!user) return;
+    localStorage.setItem('jx_kick_user', user);
+    updateSyncUI();
+    connectKick(user);
+}
+
+function logoutKick() {
+    localStorage.removeItem('jx_kick_user');
+    if (kickSocket) kickSocket.close();
+    document.getElementById("kickStatusPill").textContent = "OFFLINE";
+    document.getElementById("kickStatusPill").className = "status-pill status-off";
+    updateSyncUI();
+}
+
+async function connectKick(username) {
+    if (!username) return;
     const pill = document.getElementById("kickStatusPill");
     try {
-        const res = await fetch(`https://kick.com/api/v2/channels/${KICK_USER}`);
+        const res = await fetch(`https://kick.com/api/v2/channels/${username}`);
         const data = await res.json();
-        const ws = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0-rc2&flash=false");
-        ws.onopen = () => {
-            pill.textContent = "CONNECTED"; pill.className = "status-pill status-on";
-            ws.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${data.chatroom.id}.v2` } }));
+        kickSocket = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0-rc2&flash=false");
+        kickSocket.onopen = () => {
+            pill.textContent = "SYNCED"; pill.className = "status-pill status-on";
+            kickSocket.send(JSON.stringify({ event: "pusher:subscribe", data: { channel: `chatrooms.${data.chatroom.id}.v2` } }));
         };
-        ws.onmessage = (e) => {
+        kickSocket.onmessage = (e) => {
             const msg = JSON.parse(e.data);
             if (msg.event === "App\\Events\\ChatMessageEvent") {
                 const c = JSON.parse(msg.data);
                 window.addMessage({ platform: "kick", username: c.sender.username, message: c.content });
             }
         };
-        ws.onclose = () => { pill.textContent = "RECONNECTING"; setTimeout(initKick, 5000); };
-    } catch (e) { setTimeout(initKick, 10000); }
+    } catch (e) { console.error("Kick Sync Failed", e); }
 }
-initKick();
 
-// TWITCH SYNC
-function initTwitch() {
+// TWITCH ACTIONS
+function loginTwitch() {
+    const user = document.getElementById("twitchInput").value.trim();
+    if (!user) return;
+    localStorage.setItem('jx_twitch_user', user);
+    updateSyncUI();
+    connectTwitch(user);
+}
+
+function logoutTwitch() {
+    localStorage.removeItem('jx_twitch_user');
+    if (twitchSocket) twitchSocket.close();
+    document.getElementById("twitchStatusPill").textContent = "OFFLINE";
+    document.getElementById("twitchStatusPill").className = "status-pill status-off";
+    updateSyncUI();
+}
+
+function connectTwitch(username) {
+    if (!username) return;
     const pill = document.getElementById("twitchStatusPill");
-    const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
-    ws.onopen = () => {
-        pill.textContent = "CONNECTED"; pill.className = "status-pill status-on";
-        ws.send("NICK justinfan12345");
-        ws.send(`JOIN #${TWITCH_USER.toLowerCase()}`);
+    twitchSocket = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+    twitchSocket.onopen = () => {
+        pill.textContent = "SYNCED"; pill.className = "status-pill status-on";
+        twitchSocket.send("NICK justinfan12345");
+        twitchSocket.send(`JOIN #${username.toLowerCase()}`);
     };
-    ws.onmessage = (e) => {
+    twitchSocket.onmessage = (e) => {
         if (e.data.includes("PRIVMSG")) {
             const parts = e.data.split("PRIVMSG")[1].split(":");
             const user = e.data.match(/:(\w+)!/)[1];
             window.addMessage({ platform: "twitch", username: user, message: parts[1].trim() });
         }
-        if (e.data.startsWith("PING")) ws.send("PONG :tmi.twitch.tv");
+        if (e.data.startsWith("PING")) twitchSocket.send("PONG :tmi.twitch.tv");
     };
-    ws.onclose = () => { pill.textContent = "IDLE"; setTimeout(initTwitch, 5000); };
 }
-initTwitch();
+
+// INITIAL STARTUP
+updateSyncUI();
+connectKick(localStorage.getItem('jx_kick_user'));
+connectTwitch(localStorage.getItem('jx_twitch_user'));
+
 </script>
 </body>
 </html>
