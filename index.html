@@ -1,410 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8" />
-<title>Jailex HUD</title>
-
-<style>
-  body {
-    margin: 0;
-    padding: 0;
-    background: radial-gradient(circle at center, #02030a 0%, #000000 80%);
-    color: #f5f5f5;
-    font-family: system-ui, sans-serif;
-    overflow: hidden;
-  }
-
-  .app-container {
-    display: flex;
-    height: 100vh;
-  }
-
-  .sidebar {
-    width: 220px;
-    background: rgba(5,5,15,0.95);
-    border-right: 1px solid rgba(255,255,255,0.15);
-    box-shadow: 0 0 20px rgba(0,0,0,0.8);
-    display: flex;
-    flex-direction: column;
-    padding: 16px 10px;
-  }
-
-  .sidebar-title {
-    font-weight: 700;
-    font-size: 18px;
-    margin-bottom: 4px;
-  }
-
-  .sidebar-sub {
-    font-size: 12px;
-    opacity: 0.7;
-    margin-bottom: 16px;
-  }
-
-  .tab-button {
-    width: 100%;
-    text-align: left;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.15);
-    background: rgba(10,10,20,0.9);
-    color: #f5f5f5;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
-    box-shadow:
-      0 0 10px rgba(255,122,24,0.25),
-      inset 0 0 4px rgba(0,200,255,0.2);
-    transition: 0.2s ease;
-  }
-
-  .tab-button:hover {
-    box-shadow:
-      0 0 16px rgba(255,122,24,0.6),
-      inset 0 0 8px rgba(0,200,255,0.5);
-    transform: translateY(-1px);
-  }
-
-  .tab-button.active {
-    background: linear-gradient(135deg, rgba(255,122,24,0.9), rgba(0,200,255,0.7));
-    box-shadow:
-      0 0 20px rgba(255,122,24,0.9),
-      0 0 14px rgba(0,200,255,0.8);
-    border-color: rgba(255,255,255,0.6);
-  }
-
-  .version-tag {
-    margin-top: auto;
-    font-size: 12px;
-    opacity: 0.7;
-    text-align: center;
-  }
-
-  .main {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 20px 40px 20px;
-  }
-
-  .panel {
-    backdrop-filter: blur(14px);
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 12px;
-    padding: 16px;
-    margin: 10px auto 20px auto;
-    width: 100%;
-    max-width: 900px;
-    box-shadow:
-      0 0 20px rgba(255,122,24,0.4),
-      0 0 10px rgba(0,200,255,0.3);
-    transition: 0.3s ease;
-  }
-
-  .panel:hover {
-    box-shadow:
-      0 0 30px rgba(255,122,24,0.6),
-      0 0 20px rgba(0,200,255,0.5);
-  }
-
-  .panel h2 {
-    margin-top: 0;
-    padding-bottom: 6px;
-    border-bottom: 2px solid rgba(255,122,24,0.6);
-    text-shadow: 0 0 8px #ff7a18;
-  }
-
-  button {
-    padding: 10px 16px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(10,10,20,0.8);
-    color: #fff;
-    cursor: pointer;
-    font-weight: 600;
-    margin-right: 8px;
-    margin-top: 6px;
-    transition: 0.25s ease;
-    box-shadow:
-      0 0 10px rgba(255,122,24,0.4),
-      inset 0 0 6px rgba(0,200,255,0.3);
-  }
-
-  button:hover {
-    box-shadow:
-      0 0 18px rgba(255,122,24,0.8),
-      inset 0 0 10px rgba(0,200,255,0.6);
-    transform: translateY(-2px);
-  }
-
-  input[type=range] {
-    width: 100%;
-    margin-top: 6px;
-    accent-color: #ff7a18;
-  }
-
-  input[type=text],
-  input[type=number],
-  input[type=password],
-  select {
-    width: 100%;
-    padding: 6px 8px;
-    margin-top: 6px;
-    border-radius: 6px;
-    border: 1px solid rgba(255,255,255,0.25);
-    background: rgba(5,5,10,0.9);
-    color: #f5f5f5;
-    box-sizing: border-box;
-  }
-
-  #chatLog {
-    max-height: 300px;
-    overflow-y: auto;
-    padding-right: 10px;
-  }
-
-  .chat-line {
-    margin-bottom: 6px;
-    font-size: 14px;
-    animation: holoSlide 0.35s ease;
-  }
-
-  @keyframes holoSlide {
-    0% { opacity: 0; transform: translateX(-12px); }
-    60% { opacity: 0.6; }
-    100% { opacity: 1; transform: translateX(0); }
-  }
-
-  .timer-item {
-    margin-bottom: 10px;
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.25);
-    background: rgba(5,5,10,0.8);
-    font-size: 13px;
-  }
-
-  .timer-meta {
-    opacity: 0.8;
-    font-size: 12px;
-  }
-
-  .tab-panel {
-    display: none;
-  }
-
-  .tab-panel.active {
-    display: block;
-  }
-
-  .status-pill {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    margin-left: 6px;
-  }
-
-  .status-on {
-    background: rgba(83,252,24,0.15);
-    color: #53fc18;
-    border: 1px solid rgba(83,252,24,0.6);
-  }
-
-  .status-off {
-    background: rgba(255,122,24,0.15);
-    color: #ff7a18;
-    border: 1px solid rgba(255,122,24,0.6);
-  }
-
-  .hint {
-    font-size: 11px;
-    opacity: 0.75;
-    margin-top: 4px;
-  }
-</style>
-</head>
-<body>
-
-<div class="app-container">
-  <div class="sidebar">
-    <div class="sidebar-title">Jailex HUD</div>
-    <div class="sidebar-sub">Control Deck</div>
-
-    <button class="tab-button active" data-target="tab-playback">Playback</button>
-    <button class="tab-button" data-target="tab-voices">Voices</button>
-    <button class="tab-button" data-target="tab-chat">Chat</button>
-    <button class="tab-button" data-target="tab-timers">Timers</button>
-    <button class="tab-button" data-target="tab-connections">Connections</button>
-
-    <div class="version-tag">
-      Version 1.2.0 (Speechify + Voice Dropdown)
-    </div>
-  </div>
-
-  <div class="main">
-    <div id="tab-playback" class="tab-panel active">
-      <div class="panel">
-        <h2>Playback Control</h2>
-        <button id="enableAudioBtn">Enable Audio</button>
-        <button id="playPauseBtn">Pause</button>
-        <button id="muteBtn">Mute</button>
-        <button id="testTtsBtn">TEST TTS</button>
-        <button id="testTimerBtn">TEST TIMER</button>
-
-        <div style="margin-top:12px">
-          <label>
-            <input type="checkbox" id="readUsername" checked />
-            Read username before message
-          </label>
-        </div>
-
-        <p style="opacity:0.8;font-size:14px;margin-top:10px">
-          Queue: <span id="queueLen">0</span>
-          &nbsp;|&nbsp;
-          Speaking: <span id="speakingNow">None</span>
-        </p>
-      </div>
-    </div>
-
-    <div id="tab-voices" class="tab-panel">
-      <div class="panel">
-        <h2>Voice Settings</h2>
-
-        <label>TTS Engine</label>
-        <select id="ttsEngineSelect">
-          <option value="browser">Browser TTS</option>
-          <option value="speechify">Speechify External TTS</option>
-        </select>
-        <div class="hint">
-          Browser TTS = system voices. Speechify = external API (Snoop, etc., if your plan supports it).
-        </div>
-
-        <div id="browserTtsSettings" style="margin-top:14px;">
-          <label>Kick Voice (Browser)</label>
-          <select id="kickVoice"></select>
-
-          <label style="margin-top:10px;display:block">Timer Voice (Browser)</label>
-          <select id="timerVoice"></select>
-
-          <label style="margin-top:10px;display:block">Volume</label>
-          <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
-
-          <label style="margin-top:10px;display:block">Rate</label>
-          <input type="range" id="rate" min="0.5" max="2" step="0.01" value="1">
-
-          <label style="margin-top:10px;display:block">Pitch</label>
-          <input type="range" id="pitch" min="0.5" max="2" step="0.01" value="1">
-        </div>
-
-        <div id="speechifySettings" style="margin-top:18px; display:none;">
-          <h3 style="margin:0 0 8px 0;">Speechify Settings</h3>
-
-          <label>Speechify API Key</label>
-          <input type="password" id="speechifyApiKeyInput" placeholder="Paste your Speechify API key">
-
-          <label style="margin-top:10px;">Speechify Voice ID</label>
-          <input type="text" id="speechifyVoiceIdInput" placeholder="Will update when you pick from dropdown">
-
-          <div class="hint">
-            You must have a Speechify account and a valid voice_id. This app will call their API directly.
-          </div>
-
-          <button id="speechifyLoadVoicesBtn" style="margin-top:10px;">Load Speechify Voices</button>
-          <select id="speechifyVoiceDropdown" style="margin-top:10px; width:100%;"></select>
-
-          <button id="speechifyTestBtn" style="margin-top:10px;">Test Speechify Voice</button>
-          <p id="speechifyStatus" style="font-size:12px; margin-top:6px; opacity:0.8;"></p>
-        </div>
-      </div>
-    </div>
-
-    <div id="tab-chat" class="tab-panel">
-      <div class="panel">
-        <h2>Chat Feed</h2>
-        <div id="chatLog"></div>
-      </div>
-    </div>
-
-    <div id="tab-timers" class="tab-panel">
-      <div class="panel">
-        <h2>Timers (up to 15)</h2>
-
-        <div>
-          <label>Timer Message</label>
-          <input type="text" id="timerMessageInput" placeholder="What should this timer say?">
-
-          <label style="margin-top:10px;display:block">Interval Preset</label>
-          <select id="timerPresetSelect">
-            <option value="30">30 seconds</option>
-            <option value="60">1 minute</option>
-            <option value="120">2 minutes</option>
-            <option value="300">5 minutes</option>
-            <option value="600">10 minutes</option>
-            <option value="900">15 minutes</option>
-            <option value="custom">Custom (seconds)</option>
-          </select>
-
-          <div id="customIntervalWrapper" style="display:none; margin-top:8px;">
-            <label>Custom Interval (seconds)</label>
-            <input type="number" id="customIntervalInput" min="1" value="60">
-          </div>
-
-          <button id="addTimerBtn" style="margin-top:10px;">Add Timer</button>
-          <p id="timerError" style="color:#ff7a18; font-size:12px; margin-top:6px;"></p>
-        </div>
-
-        <div style="margin-top:16px;">
-          <h3 style="margin:0 0 8px 0; font-size:16px;">Active Timers</h3>
-          <div id="timersList"></div>
-        </div>
-      </div>
-    </div>
-
-    <div id="tab-connections" class="tab-panel">
-      <div class="panel">
-        <h2>Connections</h2>
-
-        <h3 style="margin-top:0;">Kick</h3>
-        <label>Kick Username</label>
-        <input type="text" id="kickUsernameInput" readonly>
-
-        <div style="margin-top:8px;">
-          <label>
-            <input type="checkbox" id="kickEnableCheckbox" checked disabled />
-            Enable Kick
-          </label>
-          <span id="kickStatusPill" class="status-pill status-on">Connected (Auto)</span>
-        </div>
-
-        <hr style="margin:16px 0; border-color:rgba(255,255,255,0.2);">
-
-        <h3>Twitch</h3>
-        <label>Twitch Status</label>
-        <input type="text" id="twitchUsernameInput" readonly>
-
-        <label style="margin-top:8px;">Twitch OAuth Token (Hidden for security)</label>
-        <input type="password" id="twitchTokenInput" readonly>
-
-        <div style="margin-top:8px;">
-          <label>
-            <input type="checkbox" id="twitchEnableCheckbox" checked disabled />
-            Enable Twitch
-          </label>
-          <span id="twitchStatusPill" class="status-pill status-off">Checking...</span>
-        </div>
-
-        <p style="margin-top:12px; font-size:12px; opacity:0.8; color: #ff7a18;" id="authWarning">
-          </p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<audio id="speechifyAudio"></audio>
-
-<script>
 /* ====== AUTO-LOAD SAVED CREDENTIALS ====== */
 const savedKickID = localStorage.getItem('jx_kick_id');
 const savedKickUser = localStorage.getItem('jx_kick_user');
@@ -483,7 +76,9 @@ if (savedTwitchToken) {
 } else {
     twitchUsernameInput.value = "Not Connected";
     twitchStatusPill.textContent = "Disconnected";
-    authWarning.innerHTML = 'Twitch is missing. <a href="/setup.html" style="color:#0020ff;">Click here to connect it.</a>';
+    if (authWarning) {
+        authWarning.innerHTML = '<a href="/setup.html" style="color:#0020ff;">Click here to connect Twitch.</a>';
+    }
 }
 
 /* ====== SIDEBAR TABS ====== */
@@ -527,13 +122,13 @@ function loadVoices() {
   if (!timerVoiceName) timerVoiceName = voices[1]?.name || voices[0].name;
 
   kickVoiceSelect.value = kickVoiceName;
-  timerVoiceSelect.value = timerVoiceName;
+  if (timerVoiceSelect) timerVoiceSelect.value = timerVoiceName;
 }
 
 speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 
-/* ====== BOT FILTERING LOGIC (FROM BLUEPRINT) ====== */
+/* ====== BOT FILTERING LOGIC ====== */
 const KICK_BOTS = [
   "botrix", "kickbot", "kick", "streamelements", "nightbot", "moobot",
   "fossabot", "wizebot", "deepbot", "coebot", "phantombot", "ankhbot",
@@ -544,7 +139,7 @@ const KICK_BOTS = [
   "communityshowcase",
 ];
 
-const isKickBot = (username) => {
+const isBot = (username) => {
   const lowerUsername = username.toLowerCase().trim();
   if (KICK_BOTS.includes(lowerUsername)) return true;
   if (lowerUsername.endsWith("bot") || 
@@ -555,8 +150,8 @@ const isKickBot = (username) => {
   return false;
 };
 
-/* ====== KICK CONNECTION (FROM BLUEPRINT) ====== */
-let processedKickIds = new Set(); // To prevent duplicate messages
+/* ====== KICK CONNECTION ====== */
+let processedKickIds = new Set(); 
 
 function connectKick() {
   try {
@@ -570,46 +165,26 @@ function connectKick() {
       try {
         const data = JSON.parse(event.data);
 
-        // Step 3: Subscribe to the chatroom channel
         if (data.event === "pusher:connection_established") {
           ws.send(JSON.stringify({
             event: "pusher:subscribe",
-            data: { channel: `chatrooms.${savedKickID}.v2` } // Using saved ID
+            data: { channel: `chatrooms.${savedKickID}.v2` } 
           }));
         }
 
-        if (data.event === "pusher_internal:subscription_succeeded") {
-          console.log("Kick: Subscribed to chatroom");
-        }
-
-        // Step 4: Process incoming chat messages
         if (data.event === "App\\Events\\ChatMessageEvent") {
           const messageData = JSON.parse(data.data);
           const username = messageData.sender?.username || "Unknown";
           const messageId = messageData.id || `${Date.now()}-${Math.random()}`;
           
-          // Duplicate detection
-          if (processedKickIds.has(messageId)) {
-            console.log("Kick: Duplicate message filtered:", messageId);
-            return;
-          }
-          
-          // Bot filtering
-          if (isKickBot(username)) {
-            console.log("Kick: Filtered bot message from", username);
-            return;
-          }
+          if (processedKickIds.has(messageId)) return;
+          if (isBot(username)) return;
 
-          // Mark as processed
           processedKickIds.add(messageId);
-          
-          // Clean up old IDs (keep last 1000)
           if (processedKickIds.size > 1000) {
-            const idsArray = Array.from(processedKickIds);
-            processedKickIds = new Set(idsArray.slice(-1000));
+            processedKickIds = new Set(Array.from(processedKickIds).slice(-1000));
           }
 
-          // Add to Queue
           addMessage({
             id: `kick-${messageId}`,
             platform: "kick",
@@ -620,12 +195,11 @@ function connectKick() {
           });
         }
       } catch (error) {
-        console.error("Kick message parse error:", error);
+        // Silent catch for generic pusher messages
       }
     };
 
     ws.onerror = (error) => console.error("Kick WebSocket error:", error);
-
     ws.onclose = () => {
       console.log("Kick: Disconnected, reconnecting in 5s...");
       setTimeout(connectKick, 5000);
@@ -636,14 +210,87 @@ function connectKick() {
     setTimeout(connectKick, 10000);
   }
 }
-
 connectKick();
+
+/* ====== TWITCH CONNECTION ====== */
+let processedTwitchIds = new Set(); 
+
+function connectTwitch() {
+  // We'll use the kick username as a fallback if they didn't save a twitch one
+  const channelName = localStorage.getItem('jx_twitch_user') || savedKickUser; 
+  if (!channelName) return;
+
+  const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+
+  ws.onopen = () => {
+    console.log(`Twitch: Connected to #${channelName.toLowerCase()}`);
+    ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
+    ws.send("NICK justinfan12345"); // Anonymous connection to read chat
+    ws.send(`JOIN #${channelName.toLowerCase()}`);
+  };
+
+  ws.onmessage = (event) => {
+    const lines = event.data.split('\r\n');
+    
+    lines.forEach(line => {
+      if (!line) return;
+      
+      // Keep connection alive
+      if (line.startsWith("PING")) {
+        ws.send("PONG :tmi.twitch.tv");
+        return;
+      }
+
+      // Read Messages
+      if (line.includes("PRIVMSG")) {
+        const tagsPart = line.split(' ')[0];
+        const userMatch = line.match(/:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG/);
+        const msgMatch = line.match(/PRIVMSG #[^:]+:(.+)/);
+
+        if (userMatch && msgMatch) {
+          const username = userMatch[1];
+          const message = msgMatch[1];
+          
+          // Get ID and filter bots
+          let msgId = `${Date.now()}-${Math.random()}`;
+          const idMatch = tagsPart.match(/@.*id=([^;]+)/);
+          if (idMatch) msgId = idMatch[1];
+
+          if (processedTwitchIds.has(msgId)) return;
+          if (isBot(username)) return;
+
+          processedTwitchIds.add(msgId);
+          if (processedTwitchIds.size > 1000) {
+            processedTwitchIds = new Set(Array.from(processedTwitchIds).slice(-1000));
+          }
+
+          addMessage({
+            id: `twitch-${msgId}`,
+            platform: "twitch",
+            username: username,
+            message: message,
+            timestamp: new Date(),
+            color: "#a970ff"
+          });
+        }
+      }
+    });
+  };
+
+  ws.onerror = (error) => console.error("Twitch WebSocket error:", error);
+  ws.onclose = () => {
+    console.log("Twitch: Disconnected, reconnecting in 5s...");
+    setTimeout(connectTwitch, 5000);
+  };
+}
+connectTwitch();
+
 
 /* ====== CHAT / QUEUE ====== */
 function addMessage(msg) {
   const div = document.createElement("div");
   div.className = "chat-line";
-  const color = msg.color || (msg.platform === "kick" ? "#53fc18" : "#ff7a18");
+  const color = msg.color || "#ff7a18";
   div.innerHTML = `<span style="color:${color};font-weight:600">[${msg.platform}] ${msg.username}:</span> ${msg.message}`;
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
@@ -652,37 +299,31 @@ function addMessage(msg) {
   queueLen.textContent = queue.length;
 }
 
-/* ====== TTS PLAYBACK QUEUE SYSTEM (FROM BLUEPRINT) ====== */
+/* ====== TTS PLAYBACK QUEUE SYSTEM ====== */
 function processQueue() {
-  // Don't process if paused, muted, already speaking, or queue empty
   if (!isPlaying || isMuted || isSpeaking || queue.length === 0 || !audioEnabled) {
     return;
   }
 
-  // Get next message from queue
-  const nextMessage = queue.shift(); // .shift() removes and returns the first item
+  const nextMessage = queue.shift(); 
   queueLen.textContent = queue.length;
   
   isSpeaking = true;
   speakingNow.textContent = `${nextMessage.username}: ${nextMessage.message}`;
 
-  // Build text to speak based on readUsername setting
-  const textToSpeak = readUsernameBox.checked 
+  const textToSpeak = (readUsernameBox && readUsernameBox.checked) 
     ? `${nextMessage.username} says: ${nextMessage.message}`
     : nextMessage.message;
 
-  // Create speech utterance
   const utterance = new SpeechSynthesisUtterance(textToSpeak);
   
-  // Apply voice settings
-  utterance.volume = volume;  // 0 to 1
-  utterance.rate = rate;      // 0.5 to 2
-  utterance.pitch = pitch;    // 0.5 to 2
+  utterance.volume = volume;  
+  utterance.rate = rate;      
+  utterance.pitch = pitch;    
   
-  // Select voice based on platform
   let selectedVoiceName = "";
   if (nextMessage.platform === "twitch") {
-    selectedVoiceName = twitchVoiceName;
+    selectedVoiceName = twitchVoiceName || kickVoiceName;
   } else if (nextMessage.platform === "kick") {
     selectedVoiceName = kickVoiceName;
   } else if (nextMessage.platform === "timer") {
@@ -694,25 +335,20 @@ function processQueue() {
     utterance.voice = voice;
   }
 
-  // Handle completion
   utterance.onend = () => {
     isSpeaking = false;
     speakingNow.textContent = "None";
   };
 
-  // Handle errors
   utterance.onerror = () => {
     isSpeaking = false;
     speakingNow.textContent = "None";
   };
 
-  // Speak the message
   speechSynthesis.speak(utterance);
 }
 
-// Process queue every 100ms
 setInterval(processQueue, 100);
-
 
 /* ====== MULTI TIMER ====== */
 function renderTimers() {
@@ -810,10 +446,15 @@ addTimerBtn.onclick = addTimerFromUI;
 
 setInterval(() => {
   const now = Date.now();
+  let uiNeedsUpdate = false;
+
   timers.forEach(t => {
     if (!t.enabled) return;
+    
     if (!t.lastFired || now - t.lastFired >= t.intervalMs) {
       t.lastFired = now;
+      uiNeedsUpdate = true;
+      
       addMessage({
         platform: "timer",
         username: "Timer",
@@ -823,7 +464,10 @@ setInterval(() => {
       });
     }
   });
-  renderTimers();
+
+  if (uiNeedsUpdate) {
+    renderTimers();
+  }
 }, 500);
 
 /* ====== UI EVENTS ====== */
@@ -846,9 +490,9 @@ muteBtn.onclick = () => {
 };
 
 testTtsBtn.onclick = () => {
-  if (!audioEnabled) return alert("Enable audio first.");
+  if (!audioEnabled) return alert("Enable audio first by clicking the Enable Audio button.");
   addMessage({
-    platform: "kick", // Set to Kick to test the kick voice
+    platform: "kick",
     username: "System",
     message: "This is a Jailex TTS test.",
     id: "test-" + Date.now(),
@@ -867,12 +511,8 @@ testTimerBtn.onclick = () => {
 };
 
 kickVoiceSelect.onchange = () => kickVoiceName = kickVoiceSelect.value;
-timerVoiceSelect.onchange = () => timerVoiceName = timerVoiceSelect.value;
+if (timerVoiceSelect) timerVoiceSelect.onchange = () => timerVoiceName = timerVoiceSelect.value;
 
 volumeSlider.oninput = () => volume = parseFloat(volumeSlider.value);
 rateSlider.oninput = () => rate = parseFloat(rateSlider.value);
 pitchSlider.oninput = () => pitch = parseFloat(pitchSlider.value);
-</script>
-
-</body>
-</html>
