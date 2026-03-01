@@ -2,18 +2,16 @@
 window.queue = [];
 window.isSpeaking = false;
 window.audioEnabled = false;
-window.isPlaying = true;
 window.voices = [];
 
-// Global addMessage function
+// GLOBAL FRONT DOOR
 window.addMessage = function(msg) {
-    console.log("Adding message to HUD:", msg);
     const log = document.getElementById("chatLog");
     if (log) {
         const div = document.createElement("div");
         div.className = "chat-line";
         const color = msg.platform === "kick" ? "#53fc18" : "#a970ff";
-        div.innerHTML = `<span style="color:${color};font-weight:600">[${msg.platform.toUpperCase()}] ${msg.username}:</span> ${msg.message}`;
+        div.innerHTML = `<span style="color:${color};font-weight:800">[${msg.platform.toUpperCase()}] ${msg.username}:</span> ${msg.message}`;
         log.appendChild(div);
         log.scrollTop = log.scrollHeight;
     }
@@ -24,37 +22,36 @@ window.addMessage = function(msg) {
 function initVoices() {
     window.voices = speechSynthesis.getVoices();
     const kSelect = document.getElementById("kickVoice");
-    const tSelect = document.getElementById("timerVoice");
-    if (kSelect && tSelect && window.voices.length > 0) {
-        kSelect.innerHTML = ""; tSelect.innerHTML = "";
+    if (kSelect && window.voices.length > 0) {
+        kSelect.innerHTML = "";
         window.voices.forEach(v => {
             let opt = document.createElement("option");
             opt.value = v.name; opt.textContent = v.name;
-            kSelect.appendChild(opt.cloneNode(true));
-            tSelect.appendChild(opt.cloneNode(true));
+            kSelect.appendChild(opt);
         });
-    } else { setTimeout(initVoices, 200); }
+    } else { setTimeout(initVoices, 300); }
 }
-speechSynthesis.onvoiceschanged = initVoices;
-initVoices();
+speechSynthesis.onvoiceschanged = initVoices; initVoices();
 
-// Queue Loop (100ms)
+// MAIN TTS LOOP
 setInterval(() => {
-    if (!window.audioEnabled || !window.isPlaying || window.isSpeaking || window.queue.length === 0) return;
+    if (!window.audioEnabled || window.isSpeaking || window.queue.length === 0) return;
     const next = window.queue.shift();
     document.getElementById("queueLen").textContent = window.queue.length;
     document.getElementById("speakingNow").textContent = next.username;
-
+    
+    window.isSpeaking = true;
     const readUser = document.getElementById("readUsername").checked;
     const text = readUser ? `${next.username} says ${next.message}` : next.message;
-
-    window.isSpeaking = true;
+    
     const utter = new SpeechSynthesisUtterance(text);
     utter.volume = parseFloat(document.getElementById("volume").value);
+    utter.voice = window.voices.find(v => v.name === document.getElementById("kickVoice").value);
     
-    const voiceName = next.platform === "kick" ? document.getElementById("kickVoice").value : document.getElementById("timerVoice").value;
-    utter.voice = window.voices.find(v => v.name === voiceName);
-
-    utter.onend = () => { window.isSpeaking = false; document.getElementById("speakingNow").textContent = "None"; };
+    utter.onend = () => { 
+        window.isSpeaking = false; 
+        document.getElementById("speakingNow").textContent = "None"; 
+    };
+    
     speechSynthesis.speak(utter);
-}, 100);
+}, 250);
