@@ -1,24 +1,40 @@
-/* ====== JAILEX AUDIO ENGINE (FULL FILE) ====== */
+/* ====== JAILEX AUDIO ENGINE (BLUEPRINT EDITION) ====== */
 
-// 1. GLOBAL STATE
+// 1. STATE & CONFIG
 let queue = [];
-let isSpeaking = false;
-let audioEnabled = false;
-let isMuted = false;
 let isPlaying = true;
+let isMuted = false;
+let isSpeaking = false; // Vanilla JS equivalent of isSpeakingRef
+let audioEnabled = false;
+
 let voices = [];
+let kickVoiceName = "";
+let timerVoiceName = "";
+let volume = 1;
+let rate = 1;
+let pitch = 1;
 
-// Settings managed by UI sliders in script.js
-let ttsVolume = 1;
-let ttsRate = 1;
-let ttsPitch = 1;
+// 2. BOT FILTERING (From Blueprint)
+const KICK_BOTS = [
+  "botrix", "kickbot", "kick", "streamelements", "nightbot", "moobot",
+  "fossabot", "wizebot", "deepbot", "coebot", "phantombot", "ankhbot",
+  "vivbot", "streamlabs", "cloudbot", "stay_hydrated_bot", "restreambot",
+  "sery_bot", "commanderroot", "lurxx", "electricalskateboard",
+  "electricallongboard", "alizeepathfinder", "virgoproz", "creatisbot",
+  "slocool", "p0lizei_", "lolrankbot", "0ax2", "thepositivebot",
+  "communityshowcase",
+];
 
-// Engine choice: "browser" or "speechify"
-let ttsEngine = "browser"; 
-let speechifyApiKey = "";
-let speechifyVoiceId = "";
+const isBot = (username) => {
+  const lowerUsername = username.toLowerCase().trim();
+  if (KICK_BOTS.includes(lowerUsername)) return true;
+  if (lowerUsername.endsWith("bot") || lowerUsername.endsWith("_bot") || lowerUsername.includes("bot_")) {
+    return true;
+  }
+  return false;
+};
 
-/* ====== VOICE LOADER (BROWSER) ====== */
+/* ====== VOICE LOADER ====== */
 function initVoices() {
   voices = speechSynthesis.getVoices();
   if (voices.length === 0) {
@@ -34,119 +50,24 @@ function initVoices() {
     tSelect.innerHTML = "";
     voices.forEach(v => {
       let opt = document.createElement("option");
-      opt.value = v.name; 
-      opt.textContent = v.name;
+      opt.value = v.name; opt.textContent = v.name;
       kSelect.appendChild(opt.cloneNode(true));
       tSelect.appendChild(opt.cloneNode(true));
     });
   }
 }
-
-// Handle browser voice loading
-if (speechSynthesis.onvoiceschanged !== undefined) {
-  speechSynthesis.onvoiceschanged = initVoices;
-}
+speechSynthesis.onvoiceschanged = initVoices;
 initVoices();
 
-/* ====== THE SPEAKING LOOP ====== */
-setInterval(async () => {
-  // Don't speak if audio isn't enabled, we're muted, paused, already speaking, or queue is empty
-  if (!audioEnabled || !isPlaying || isMuted || isSpeaking || queue.length === 0) return;
-
-  // Get the next message from the queue
-  const next = queue.shift();
-  
-  // Update UI stats
-  const qDisplay = document.getElementById("queueLen");
-  const nowDisplay = document.getElementById("speakingNow");
-  if (qDisplay) qDisplay.textContent = queue.length;
-  if (nowDisplay) nowDisplay.textContent = next.username || "System";
-
-  // Build the text based on the "Read Username" checkbox
-  const readUserCheck = document.getElementById("readUsername");
-  const textToSpeak = (readUserCheck && readUserCheck.checked) 
-    ? `${next.username} says: ${next.message}` 
-    : next.message;
-
-  isSpeaking = true;
-
-  // CHOICE: SPEECHIFY VS BROWSER
-  if (ttsEngine === "speechify" && speechifyApiKey) {
-    await speakWithSpeechify(textToSpeak);
-  } else {
-    // Standard Browser TTS
-    const utter = new SpeechSynthesisUtterance(textToSpeak);
-    utter.volume = ttsVolume;
-    utter.rate = ttsRate;
-    utter.pitch = ttsPitch;
-    
-    // Pick the voice assigned in the UI
-    const vId = (next.platform === "kick") ? "kickVoice" : "timerVoice";
-    const vElement = document.getElementById(vId);
-    if (vElement) {
-      utter.voice = voices.find(v => v.name === vElement.value);
-    }
-
-    utter.onend = () => {
-      isSpeaking = false;
-      if (nowDisplay) nowDisplay.textContent = "None";
-    };
-
-    utter.onerror = () => {
-      isSpeaking = false;
-      if (nowDisplay) nowDisplay.textContent = "None";
-    };
-
-    speechSynthesis.speak(utter);
-  }
-}, 250);
-
-/* ====== SPEECHIFY API INTEGRATION ====== */
-async function speakWithSpeechify(text) {
-  if (!speechifyApiKey || !speechifyVoiceId) {
-    isSpeaking = false;
+/* ====== THE FRONT DOOR (addMessage) ====== */
+function addMessage(msg) {
+  // 1. Bot Filtering
+  if (isBot(msg.username)) {
+    console.log("Ignored bot message from:", msg.username);
     return;
   }
 
-  try {
-    const res = await fetch("https://api.sws.speechify.com/v1/audio/speech", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${speechifyApiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        voice_id: speechifyVoiceId,
-        text: text,
-        audio_format: "mp3"
-      })
-    });
-
-    if (!res.ok) throw new Error("Speechify API Failed");
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const audio = document.getElementById("speechifyAudio");
-    
-    if (audio) {
-      audio.src = url;
-      audio.play();
-      audio.onended = () => {
-        isSpeaking = false;
-        URL.revokeObjectURL(url);
-        document.getElementById("speakingNow").textContent = "None";
-      };
-    }
-  } catch (err) {
-    console.error(err);
-    isSpeaking = false;
-  }
-}
-
-/* ====== GLOBAL ADD MESSAGE HELPER ====== */
-// This is the function kick.js and twitch.js use to send data here
-function addMessage(msg) {
-  // Add to the visual chat log
+  // 2. Update HUD Feed
   const log = document.getElementById("chatLog");
   if (log) {
     const div = document.createElement("div");
@@ -157,8 +78,63 @@ function addMessage(msg) {
     log.scrollTop = log.scrollHeight;
   }
 
-  // Push to the TTS queue
+  // 3. Add to Queue
   queue.push(msg);
   const qDisplay = document.getElementById("queueLen");
   if (qDisplay) qDisplay.textContent = queue.length;
 }
+
+/* ====== QUEUE PROCESSING (Every 100ms per Blueprint) ====== */
+const processQueue = () => {
+  // Don't process if paused, muted, already speaking, queue empty, or audio not enabled
+  if (!audioEnabled || !isPlaying || isMuted || isSpeaking || queue.length === 0) {
+    return;
+  }
+
+  // Get next message from queue
+  const nextMessage = queue.shift();
+  
+  // Update UI Stats
+  const qDisplay = document.getElementById("queueLen");
+  const nowDisplay = document.getElementById("speakingNow");
+  if (qDisplay) qDisplay.textContent = queue.length;
+  if (nowDisplay) nowDisplay.textContent = nextMessage.username;
+
+  isSpeaking = true;
+
+  // Build text to speak
+  const readUserCheck = document.getElementById("readUsername");
+  const textToSpeak = (readUserCheck && readUserCheck.checked) 
+    ? `${nextMessage.username} says: ${nextMessage.message}`
+    : nextMessage.message;
+
+  // Create utterance
+  const utterance = new SpeechSynthesisUtterance(textToSpeak);
+  utterance.volume = volume;
+  utterance.rate = rate;
+  utterance.pitch = pitch;
+  
+  // Select Voice
+  const vId = (nextMessage.platform === "kick") ? "kickVoice" : "timerVoice";
+  const vSelect = document.getElementById(vId);
+  if (vSelect) {
+    const voice = voices.find((v) => v.name === vSelect.value);
+    if (voice) utterance.voice = voice;
+  }
+
+  // Completion Handlers
+  utterance.onend = () => {
+    isSpeaking = false;
+    if (nowDisplay) nowDisplay.textContent = "None";
+  };
+  utterance.onerror = () => {
+    isSpeaking = false;
+    if (nowDisplay) nowDisplay.textContent = "None";
+  };
+
+  // Speak
+  speechSynthesis.speak(utterance);
+};
+
+// Start the 100ms interval
+setInterval(processQueue, 100);
