@@ -1,9 +1,11 @@
+In the box for the filename, type: vercel.json
+
+Paste this exact code into the main editor:
+
+JSON
 {
   "version": 2,
   "public": true,
   "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/$1" }
-  ]
+  "trailingSlash": false
 }
