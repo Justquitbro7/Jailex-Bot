@@ -1,62 +1,112 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Home() {
-  const [username, setUsername] = useState("");
-  const [platform, setPlatform] = useState("auto");
+  const [username, setUsername] = useState("justquitbro7");
+  const [kickId, setKickId] = useState("92474944");
+  const [token, setToken] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [status, setStatus] = useState("Offline");
+
+  // Client ID from your scirpt.js
+  const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
+
+  // 1. Listen for the token from setup.html
+  useEffect(() => {
+    const handleMessage = (event) => {
+      // Allows messages from your Vercel or Localhost
+      if (event.data.type === 'TWITCH_TOKEN') {
+        setToken(event.data.token);
+        setStatus("Twitch Synced!");
+        localStorage.setItem('jailex_twitch_token', event.data.token);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
+  // 2. Twitch Login using your existing Client ID
+  const handleTwitchLogin = () => {
+    const redirectUri = `${window.location.origin}/setup.html`;
+    const scope = encodeURIComponent('chat:read chat:edit');
+    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+    window.open(authUrl, 'JailexSync', 'width=450,height=600');
+  };
+
+  const toggleConnect = () => {
+    setIsConnected(!isConnected);
+    setStatus(!isConnected ? "Connected" : "Offline");
+  };
+
+  // 3. Construct the dynamic Overlay URL
+  // This matches the params your overlay.html is looking for: twitch, kick, size, and stay
+  const overlayUrl = `/overlay.html?twitch=${username}&kick=${kickId}&size=22&stay=20`;
 
   return (
     <div style={styles.container}>
       {/* LEFT: QUICKSYNC */}
       <div style={styles.card}>
         <h2 style={styles.title}>QuickSync 2.0</h2>
+        <p style={{fontSize: '12px', color: isConnected ? "#00ff99" : "#ff4444", marginBottom: '10px'}}>
+          ● {status}
+        </p>
 
-        <label style={styles.label}>Username</label>
+        <label style={styles.label}>Twitch Username</label>
         <input
           style={styles.input}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Enter Kick or Twitch username"
+          placeholder="e.g. justquitbro7"
         />
 
-        <label style={styles.label}>Platform</label>
-        <select
+        <label style={styles.label}>Kick Channel ID</label>
+        <input
           style={styles.input}
-          value={platform}
-          onChange={(e) => setPlatform(e.target.value)}
-        >
-          <option value="auto">Auto Detect</option>
-          <option value="kick">Kick</option>
-          <option value="twitch">Twitch</option>
-        </select>
+          value={kickId}
+          onChange={(e) => setKickId(e.target.value)}
+          placeholder="e.g. 92474944"
+        />
 
-        <button style={styles.button}>Connect</button>
+        <button 
+          onClick={handleTwitchLogin}
+          style={{...styles.button, background: token ? "#6441a5" : "#333", color: '#fff', marginBottom: '10px'}}
+        >
+          {token ? "Twitch Linked ✓" : "Link Twitch Account"}
+        </button>
+
+        <button 
+          style={{...styles.button, background: isConnected ? "#ff4444" : "#00ff99"}} 
+          onClick={toggleConnect}
+        >
+          {isConnected ? "Disconnect" : "Connect Jailex"}
+        </button>
       </div>
 
       {/* CENTER: OVERLAY PREVIEW */}
       <div style={styles.card}>
-        <h2 style={styles.title}>Chat Overlay</h2>
-        <iframe
-          src="/overlay"
-          style={{
-            width: "100%",
-            height: "350px",
-            borderRadius: "12px",
-            border: "1px solid #333",
-          }}
-        />
+        <h2 style={styles.title}>Chat Preview</h2>
+        <div style={styles.previewContainer}>
+          {isConnected ? (
+            <iframe
+              src={overlayUrl}
+              style={styles.iframe}
+            />
+          ) : (
+            <div style={styles.placeholder}>Click Connect to Load Overlay</div>
+          )}
+        </div>
+        <div style={styles.urlDisplay}>URL: {overlayUrl}</div>
       </div>
 
       {/* RIGHT: TTS ENGINE */}
       <div style={styles.card}>
         <h2 style={styles.title}>TTS Engine</h2>
-
         <label style={styles.label}>Voice</label>
         <select style={styles.input}>
           <option>System Default</option>
-          <option>Male 1</option>
+          <option>Bears Fan (Male)</option>
           <option>Female 1</option>
         </select>
-
         <button style={styles.button}>Test Voice</button>
       </div>
     </div>
@@ -79,19 +129,11 @@ const styles = {
     padding: "20px",
     borderRadius: "12px",
     border: "1px solid #222",
+    display: "flex",
+    flexDirection: "column",
   },
-  title: {
-    marginBottom: "20px",
-    fontSize: "20px",
-    fontWeight: "600",
-  },
-  label: {
-    marginTop: "10px",
-    marginBottom: "5px",
-    display: "block",
-    fontSize: "14px",
-    opacity: 0.8,
-  },
+  title: { marginBottom: "20px", fontSize: "20px", fontWeight: "600" },
+  label: { marginTop: "10px", marginBottom: "5px", fontSize: "14px", opacity: 0.8 },
   input: {
     width: "100%",
     padding: "10px",
@@ -110,6 +152,29 @@ const styles = {
     color: "#000",
     fontWeight: "700",
     cursor: "pointer",
-    marginTop: "10px",
+    marginTop: "auto",
   },
+  previewContainer: {
+    flex: 1,
+    background: "#000",
+    borderRadius: "12px",
+    border: "1px solid #333",
+    overflow: "hidden",
+    position: "relative",
+    minHeight: "350px",
+  },
+  iframe: { width: "100%", height: "100%", border: "none" },
+  placeholder: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100%",
+    color: "#444",
+  },
+  urlDisplay: {
+    fontSize: "10px",
+    marginTop: "10px",
+    opacity: 0.4,
+    wordBreak: "break-all",
+  }
 };
