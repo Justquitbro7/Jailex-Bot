@@ -1,172 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jailex Dashboard</title>
-  <style>
-    /* Dark Navy & Neon Orange Sci-Fi Aesthetic */
-    body {
-      background-color: #050a14;
-      color: #e0e0e0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-    }
-    h1, h2, h3 {
-      color: #ff7a18;
-      text-shadow: 0 0 8px rgba(255, 122, 24, 0.6);
-      margin-top: 0;
-    }
-    .layout {
-      display: flex;
-      gap: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    .sidebar {
-      width: 250px;
-      background: #0a1122;
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid #ff7a18;
-      box-shadow: 0 0 10px rgba(255, 122, 24, 0.2);
-    }
-    .main-content {
-      flex-grow: 1;
-      background: #0a1122;
-      padding: 20px;
-      border-radius: 8px;
-      border: 1px solid #1f2d4a;
-    }
-    .tab-button {
-      display: block;
-      width: 100%;
-      background: transparent;
-      color: #fff;
-      border: 1px solid #1f2d4a;
-      padding: 10px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      border-radius: 4px;
-      text-align: left;
-    }
-    .tab-button.active {
-      background: #ff7a18;
-      color: #000;
-      font-weight: bold;
-      border-color: #ff7a18;
-      box-shadow: 0 0 8px rgba(255, 122, 24, 0.5);
-    }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-    
-    .chat-box {
-      background: #050a14;
-      height: 300px;
-      overflow-y: auto;
-      padding: 10px;
-      border: 1px solid #1f2d4a;
-      border-radius: 4px;
-      margin-top: 10px;
-      font-family: monospace;
-      font-size: 14px;
-    }
-    .status-on { color: #53fc18; text-shadow: 0 0 5px rgba(83, 252, 24, 0.5); }
-    .status-off { color: #ff3333; }
-    input, select, button {
-      background: #050a14;
-      color: #fff;
-      border: 1px solid #ff7a18;
-      padding: 8px;
-      border-radius: 4px;
-      margin: 5px 0;
-    }
-    button {
-      background: #1a1005;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    button:hover { background: #ff7a18; color: #000; }
-    .timer-item {
-        border-bottom: 1px solid #1f2d4a;
-        padding: 10px 0;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Jailex HUD</title>
+<style>
+  /* Your provided CSS for the Sci-Fi HUD */
+  body {
+    margin: 0; padding: 0;
+    background: radial-gradient(circle at center, #02030a 0%, #000000 80%);
+    color: #f5f5f5; font-family: system-ui, sans-serif; overflow: hidden;
+  }
+  .app-container { display: flex; height: 100vh; }
+  .sidebar {
+    width: 220px; background: rgba(5,5,15,0.95);
+    border-right: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    display: flex; flex-direction: column; padding: 16px 10px;
+  }
+  .sidebar-title { font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+  .sidebar-sub { font-size: 12px; opacity: 0.7; margin-bottom: 16px; }
+  .tab-button {
+    width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 8px;
+    border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(10,10,20,0.9); color: #f5f5f5; cursor: pointer;
+    font-weight: 600; font-size: 14px;
+    box-shadow: 0 0 10px rgba(255,122,24,0.25), inset 0 0 4px rgba(0,200,255,0.2);
+    transition: 0.2s ease;
+  }
+  .tab-button.active {
+    background: linear-gradient(135deg, rgba(255,122,24,0.9), rgba(0,200,255,0.7));
+    box-shadow: 0 0 20px rgba(255,122,24,0.9), 0 0 14px rgba(0,200,255,0.8);
+    border-color: rgba(255,255,255,0.6);
+  }
+  .main { flex: 1; overflow-y: auto; padding: 16px 20px 40px 20px; }
+  .panel {
+    backdrop-filter: blur(14px); background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
+    padding: 16px; margin: 10px auto 20px auto; width: 100%; max-width: 900px;
+    box-shadow: 0 0 20px rgba(255,122,24,0.4), 0 0 10px rgba(0,200,255,0.3);
+  }
+  .panel h2 { margin-top: 0; padding-bottom: 6px; border-bottom: 2px solid rgba(255,122,24,0.6); text-shadow: 0 0 8px #ff7a18; }
+  button {
+    padding: 10px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(10,10,20,0.8); color: #fff; cursor: pointer; font-weight: 600; margin-top: 6px;
+    box-shadow: 0 0 10px rgba(255,122,24,0.4), inset 0 0 6px rgba(0,200,255,0.3);
+  }
+  input[type=text], input[type=number], input[type=password], select {
+    width: 100%; padding: 6px 8px; margin-top: 6px; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.25); background: rgba(5,5,10,0.9); color: #f5f5f5;
+  }
+  #chatLog { max-height: 300px; overflow-y: auto; }
+  .chat-line { margin-bottom: 6px; font-size: 14px; animation: holoSlide 0.35s ease; }
+  @keyframes holoSlide { 0% { opacity: 0; transform: translateX(-12px); } 100% { opacity: 1; transform: translateX(0); } }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .status-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; margin-left: 6px; }
+  .status-on { background: rgba(83,252,24,0.15); color: #53fc18; border: 1px solid rgba(83,252,24,0.6); }
+  .status-off { background: rgba(255,122,24,0.15); color: #ff7a18; border: 1px solid rgba(255,122,24,0.6); }
+</style>
 </head>
 <body>
 
-  <div class="layout">
-    <div class="sidebar">
-      <h2>Jailex Core</h2>
-      <button class="tab-button active" data-target="panel-connections">Connections</button>
-      <button class="tab-button" data-target="panel-audio">Audio & TTS</button>
-      <button class="tab-button" data-target="panel-timers">Timers</button>
-      
-      <div style="margin-top: 30px;">
-        <h3>Live Stats</h3>
-        <p>Queue: <span id="queueLen" style="color: #00c8ff;">0</span></p>
-        <p>Now: <span id="speakingNow" style="color: #53fc18;">None</span></p>
-      </div>
-    </div>
-
-    <div class="main-content">
-      
-      <div id="panel-connections" class="tab-panel active">
-        <h2>Live Feed</h2>
-        <div class="chat-box" id="chatLog"></div>
-        
-        <h3 style="margin-top: 20px;">Kick</h3>
-        <input type="text" id="kickUsernameInput" readonly>
-        <span id="kickStatusPill" class="status-on">Connecting...</span>
-
-        <h3 style="margin-top: 20px;">Twitch</h3>
-        <input type="text" id="twitchUsernameInput" readonly>
-        <span id="twitchStatusPill" class="status-off">Disconnected</span>
-        <div id="authWarning"></div>
-      </div>
-
-      <div id="panel-audio" class="tab-panel">
-        <h2>TTS Engine</h2>
-        <button id="enableAudioBtn">1. Enable Audio</button>
-        <button id="playPauseBtn">Pause</button>
-        <button id="muteBtn">Mute</button>
-        <button id="testTtsBtn">Test TTS</button>
-
-        <div style="margin-top: 20px;">
-          <label><input type="checkbox" id="readUsername" checked> Read Usernames</label>
-        </div>
-
-        <div style="margin-top: 20px; display: grid; gap: 10px; max-width: 300px;">
-          <label>Kick Voice: <select id="kickVoice"></select></label>
-          <label>Timer Voice: <select id="timerVoice"></select></label>
-          <label>Volume: <input type="range" id="volume" min="0" max="1" step="0.1" value="1"></label>
-          <label>Speed: <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1"></label>
-          <label>Pitch: <input type="range" id="pitch" min="0" max="2" step="0.1" value="1"></label>
-        </div>
-      </div>
-
-      <div id="panel-timers" class="tab-panel">
-        <h2>Multi-Timer</h2>
-        <input type="text" id="timerMessageInput" placeholder="Message..." style="width: 60%;">
-        <select id="timerPresetSelect">
-          <option value="300">5 mins</option>
-          <option value="600">10 mins</option>
-          <option value="custom">Custom...</option>
-        </select>
-        <div id="customIntervalWrapper" style="display:none;"><input type="number" id="customIntervalInput" placeholder="Seconds..."></div>
-        <button id="addTimerBtn">Add</button>
-        <button id="testTimerBtn">Test</button>
-        <div id="timerError"></div>
-        <div id="timersList"></div>
-      </div>
-
-    </div>
+<div class="app-container">
+  <div class="sidebar">
+    <div class="sidebar-title">Jailex HUD</div>
+    <div class="sidebar-sub">Control Deck</div>
+    <button class="tab-button active" data-target="tab-playback">Playback</button>
+    <button class="tab-button" data-target="tab-voices">Voices</button>
+    <button class="tab-button" data-target="tab-chat">Chat</button>
+    <button class="tab-button" data-target="tab-timers">Timers</button>
+    <button class="tab-button" data-target="tab-connections">Connections</button>
+    <div class="version-tag">Version 1.2.0 (Speechify Built-in)</div>
   </div>
 
-  <script src="script.js"></script>
-  <script src="kick.js"></script>
-  <script src="twitch.js"></script>
+  <div class="main">
+    <div id="tab-playback" class="tab-panel active">
+      <div class="panel">
+        <h2>Playback Control</h2>
+        <button id="enableAudioBtn">Enable Audio</button>
+        <button id="playPauseBtn">Pause</button>
+        <button id="muteBtn">Mute</button>
+        <button id="testTtsBtn">TEST TTS</button>
+        <button id="testTimerBtn">TEST TIMER</button>
+        <div style="margin-top:12px">
+          <label><input type="checkbox" id="readUsername" checked /> Read username</label>
+        </div>
+        <p style="opacity:0.8;font-size:14px;margin-top:10px">
+          Queue: <span id="queueLen">0</span> | Speaking: <span id="speakingNow">None</span>
+        </p>
+      </div>
+    </div>
+
+    <div id="tab-voices" class="tab-panel">
+      <div class="panel">
+        <h2>Voice Settings</h2>
+        <label>TTS Engine</label>
+        <select id="ttsEngineSelect">
+          <option value="browser">Browser TTS</option>
+          <option value="speechify">Speechify API</option>
+        </select>
+        <div id="browserTtsSettings" style="margin-top:14px;">
+          <label>Kick Voice</label><select id="kickVoice"></select>
+          <label>Timer Voice</label><select id="timerVoice"></select>
+          <label>Volume</label><input type="range" id="volume" min="0" max="1" step="0.01" value="1">
+          <label>Rate</label><input type="range" id="rate" min="0.5" max="2" step="0.01" value="1">
+        </div>
+        <div id="speechifySettings" style="margin-top:18px; display:none;">
+          <input type="password" id="speechifyApiKeyInput" placeholder="Speechify API Key">
+          <button id="speechifyLoadVoicesBtn">Load Voices</button>
+          <select id="speechifyVoiceDropdown"></select>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-chat" class="tab-panel">
+      <div class="panel">
+        <h2>Chat Feed</h2>
+        <div id="chatLog"></div>
+      </div>
+    </div>
+
+    <div id="tab-timers" class="tab-panel">
+      <div class="panel">
+        <h2>Timers</h2>
+        <input type="text" id="timerMessageInput" placeholder="Timer message...">
+        <select id="timerPresetSelect">
+          <option value="60">1 Minute</option>
+          <option value="300">5 Minutes</option>
+          <option value="custom">Custom (seconds)</option>
+        </select>
+        <div id="customIntervalWrapper" style="display:none;"><input type="number" id="customIntervalInput" value="60"></div>
+        <button id="addTimerBtn">Add Timer</button>
+        <div id="timersList" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <div id="tab-connections" class="tab-panel">
+      <div class="panel">
+        <h2>Connections</h2>
+        <label>Kick Username</label><input type="text" id="kickUsernameInput" value="justquitbro7">
+        <label>Twitch Username</label><input type="text" id="twitchUsernameInput" value="justquitbro7">
+        <span id="kickStatusPill" class="status-pill status-on">Connected</span>
+        <span id="twitchStatusPill" class="status-pill status-off">Disconnected</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<audio id="speechifyAudio"></audio>
+
+<script src="script.js"></script>
+<script src="kick.js"></script>
+<script src="twitch.js"></script>
 
 </body>
 </html>
