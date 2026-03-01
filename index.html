@@ -1,181 +1,115 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAILEX STUDIO | v9.8.7 RESTORED</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        :root { --navy: #020617; --orange: #C83803; --blue: #00F3FF; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 260px; border-right: 1px solid rgba(200, 56, 3, 0.2); background: rgba(15, 23, 42, 0.95); flex-shrink: 0; display: flex; flex-direction: column; }
-        .neon-logo { text-shadow: 0 0 15px var(--blue); }
-        .nav-item { padding: 18px 28px; cursor: pointer; transition: 0.3s; color: #64748b; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; border-left: 3px solid transparent; }
-        .nav-item.active { background: rgba(200, 56, 3, 0.1); color: var(--orange); border-left: 3px solid var(--orange); }
-        .main-content { flex: 1; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 70% 20%, #0f172a, #020617); }
-        .tab-content { display: none; max-width: 900px; margin: 0 auto; animation: slideUp 0.4s ease-out; }
-        .tab-content.active { display: block; }
-        .hud-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(0, 243, 255, 0.1); padding: 30px; border-radius: 24px; margin-bottom: 24px; backdrop-filter: blur(12px); }
-        .hud-btn { background: var(--orange); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: 900; transition: 0.3s; text-transform: uppercase; font-size: 0.75rem; }
-        input { background: rgba(0,0,0,0.5); border: 1px solid #334155; color: white; padding: 12px; border-radius: 12px; width: 100%; font-size: 0.85rem; outline: none; text-align: center; }
-        .status-pill { background: #1e293b; padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 900; border: 1px solid #334155; }
-        .status-on { color: var(--blue); border-color: var(--blue); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
-        .kick-on { color: #00E701; border-color: #00E701; box-shadow: 0 0 15px rgba(0, 231, 1, 0.2); }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-</head>
-<body onclick="wakeVoice()">
+import { useState } from "react";
 
-    <aside class="sidebar">
-        <div class="p-10 text-center">
-            <h1 class="text-4xl font-black text-orange-600 neon-logo tracking-tighter italic">JAILEX</h1>
-            <p class="text-[9px] font-black uppercase mt-3 italic text-blue-400">Stream HUD</p>
-        </div>
-        <nav class="flex-1">
-            <div class="nav-item active" onclick="showTab('dash', this)">📊 Dashboard</div>
-            <div class="nav-item" onclick="showTab('sync', this)">🔄 Quick Sync</div>
-            <div class="nav-item" onclick="showTab('engine', this)">🔊 Engine Master</div>
-            <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
-            <div class="nav-item" onclick="showTab('timers', this)">⏰ Timers</div>
-        </nav>
-        <div class="p-6 bg-blue-900/10 border-t border-white/5 text-center"><p class="text-lg font-black text-white italic">v9.8.7</p></div>
-    </aside>
+export default function Home() {
+  const [username, setUsername] = useState("");
+  const [platform, setPlatform] = useState("auto");
 
-    <main class="main-content">
-        <div id="dash" class="tab-content active">
-            <div class="hud-card">
-                <h2 class="text-2xl font-black mb-8 italic text-blue-400 uppercase">Live Telemetry</h2>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-8">
-                    <div class="bg-black/40 p-4 rounded-xl border-l-4 border-purple-600">
-                        <p class="text-[9px] text-slate-500 font-black mb-1 uppercase">Twitch Follows</p>
-                        <p id="stat-t-follows" class="text-2xl font-black text-white">0</p>
-                    </div>
-                    <div class="bg-black/40 p-4 rounded-xl border-l-4 border-emerald-500">
-                        <p class="text-[9px] text-slate-500 font-black mb-1 uppercase">Kick Follows</p>
-                        <p id="stat-k-follows" class="text-2xl font-black text-white">--</p>
-                    </div>
-                    <div class="bg-black/40 p-4 rounded-xl border border-white/5">
-                        <p class="text-[9px] text-slate-500 font-black mb-1 uppercase">Live Viewers</p>
-                        <p id="stat-viewers" class="text-2xl font-black text-white">0</p>
-                    </div>
-                    <div class="bg-black/40 p-4 rounded-xl border border-white/5">
-                        <p class="text-[9px] text-slate-500 font-black mb-1 uppercase">Saved Triggers</p>
-                        <p id="stat-cmds" class="text-2xl font-black text-orange-500">0</p>
-                    </div>
-                </div>
-                <div class="bg-black/20 p-6 rounded-2xl border border-white/5">
-                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Quick Update Title</h3>
-                    <input type="text" id="stream-title" placeholder="New Stream Title..." class="mb-3 text-left">
-                    <button class="hud-btn w-full" onclick="updateStreamInfo()">Apply Changes</button>
-                </div>
-            </div>
-        </div>
+  return (
+    <div style={styles.container}>
+      {/* LEFT: QUICKSYNC */}
+      <div style={styles.card}>
+        <h2 style={styles.title}>QuickSync 2.0</h2>
 
-        <div id="sync" class="tab-content">
-            <div class="grid grid-cols-2 gap-8">
-                <div class="hud-card text-center border-purple-500/20">
-                    <h3 class="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-6">Twitch Status</h3>
-                    <div id="t-pill" class="status-pill inline-block mb-8">OFFLINE</div>
-                    <button id="t-btn" class="hud-btn w-full bg-purple-800 py-6" onclick="startTwitchSync()">Authorize Account</button>
-                    <p id="t-user" class="text-xl font-black text-blue-400 italic hidden"></p>
-                </div>
-                <div class="hud-card text-center border-emerald-500/20">
-                    <h3 class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-6">Kick Status</h3>
-                    <div id="k-pill" class="status-pill inline-block mb-8">OFFLINE</div>
-                    <input type="text" id="k-id-input" placeholder="KICK USERNAME" class="mb-4">
-                    <button class="hud-btn w-full bg-emerald-700" onclick="saveKickID()">Link Signal</button>
-                </div>
-            </div>
-        </div>
+        <label style={styles.label}>Username</label>
+        <input
+          style={styles.input}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Enter Kick or Twitch username"
+        />
 
-        <div id="engine" class="tab-content"><div class="hud-card"><h1>Engine Master</h1></div></div>
-        <div id="keywords" class="tab-content"><div class="hud-card"><h1>Keywords</h1></div></div>
-        <div id="timers" class="tab-content"><div class="hud-card"><h1>Timers</h1></div></div>
-    </main>
+        <label style={styles.label}>Platform</label>
+        <select
+          style={styles.input}
+          value={platform}
+          onChange={(e) => setPlatform(e.target.value)}
+        >
+          <option value="auto">Auto Detect</option>
+          <option value="kick">Kick</option>
+          <option value="twitch">Twitch</option>
+        </select>
 
-    <script>
-        const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
-        const REDIRECT_URI = "https://jailex.vercel.app/setup.html";
+        <button style={styles.button}>Connect</button>
+      </div>
 
-        // TAB LOGIC
-        function showTab(id, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            el.classList.add('active');
-        }
+      {/* CENTER: OVERLAY PREVIEW */}
+      <div style={styles.card}>
+        <h2 style={styles.title}>Chat Overlay</h2>
+        <iframe
+          src="/overlay"
+          style={{
+            width: "100%",
+            height: "350px",
+            borderRadius: "12px",
+            border: "1px solid #333",
+          }}
+        />
+      </div>
 
-        // --- HANDSHAKE REPAIR ---
-        window.addEventListener('message', (event) => {
-            if (event.origin !== window.location.origin) return;
-            if (event.data.type === 'TWITCH_TOKEN') {
-                localStorage.setItem('jailex_t_token', event.data.token);
-                validateTwitch(event.data.token);
-            }
-        });
+      {/* RIGHT: TTS ENGINE */}
+      <div style={styles.card}>
+        <h2 style={styles.title}>TTS Engine</h2>
 
-        async function validateTwitch(token) {
-            try {
-                const res = await fetch('https://api.twitch.tv/helix/users', {
-                    headers: { 'Authorization': `Bearer ${token}`, 'Client-ID': CLIENT_ID }
-                });
-                const data = await res.json();
-                if (data.data && data.data[0]) {
-                    localStorage.setItem('jailex_user', data.data[0].display_name);
-                    localStorage.setItem('jailex_user_id', data.data[0].id);
-                    syncUI();
-                    fetchFollowers(data.data[0].id, token);
-                }
-            } catch (e) { console.error("Sync Failed", e); }
-        }
+        <label style={styles.label}>Voice</label>
+        <select style={styles.input}>
+          <option>System Default</option>
+          <option>Male 1</option>
+          <option>Female 1</option>
+        </select>
 
-        async function fetchFollowers(id, token) {
-            const res = await fetch(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${id}`, {
-                headers: { 'Authorization': `Bearer ${token}`, 'Client-ID': CLIENT_ID }
-            });
-            const data = await res.json();
-            if(data.total) document.getElementById('stat-t-follows').innerText = data.total;
-        }
+        <button style={styles.button}>Test Voice</button>
+      </div>
+    </div>
+  );
+}
 
-        function startTwitchSync() {
-            const scope = encodeURIComponent('chat:read chat:edit user:write:chat channel:manage:broadcast');
-            window.open(`https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=${scope}`, 'JailexSync', 'width=450,height=600');
-        }
-
-        function saveKickID() {
-            const val = document.getElementById('k-id-input').value.trim();
-            if(val) {
-                localStorage.setItem('jailex_kick_id', val);
-                syncUI();
-            }
-        }
-
-        function syncUI() {
-            const user = localStorage.getItem('jailex_user');
-            const kick = localStorage.getItem('jailex_kick_id');
-            if(user) {
-                document.getElementById('t-pill').innerText="ONLINE";
-                document.getElementById('t-pill').classList.add('status-on');
-                document.getElementById('t-btn').classList.add('hidden');
-                document.getElementById('t-user').innerText = user.toUpperCase();
-                document.getElementById('t-user').classList.remove('hidden');
-            }
-            if(kick) {
-                document.getElementById('k-pill').innerText="ONLINE";
-                document.getElementById('k-pill').classList.add('kick-on');
-                document.getElementById('k-id-input').value = kick;
-                document.getElementById('stat-k-follows').innerText = "LINKED";
-            }
-        }
-
-        window.onload = () => {
-            syncUI();
-            const tkn = localStorage.getItem('jailex_t_token');
-            if(tkn) validateTwitch(tkn);
-        };
-
-        function wakeVoice() { window.speechSynthesis.cancel(); }
-    </script>
-</body>
-</html>
+const styles = {
+  container: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gap: "20px",
+    padding: "40px",
+    background: "#0f0f0f",
+    minHeight: "100vh",
+    color: "#fff",
+    fontFamily: "Inter, sans-serif",
+  },
+  card: {
+    background: "#1a1a1a",
+    padding: "20px",
+    borderRadius: "12px",
+    border: "1px solid #222",
+  },
+  title: {
+    marginBottom: "20px",
+    fontSize: "20px",
+    fontWeight: "600",
+  },
+  label: {
+    marginTop: "10px",
+    marginBottom: "5px",
+    display: "block",
+    fontSize: "14px",
+    opacity: 0.8,
+  },
+  input: {
+    width: "100%",
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid #333",
+    background: "#111",
+    color: "#fff",
+    marginBottom: "10px",
+  },
+  button: {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "8px",
+    background: "#00ff99",
+    border: "none",
+    color: "#000",
+    fontWeight: "700",
+    cursor: "pointer",
+    marginTop: "10px",
+  },
+};
