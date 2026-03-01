@@ -64,7 +64,7 @@
         }
 
         window.onload = function() {
-            // --- 1. TWITCH AUTO-SAVE (Saves immediately on return) ---
+            // --- 1. TWITCH AUTO-SAVE ---
             const hash = window.location.hash;
             if (hash) {
                 const params = new URLSearchParams(hash.substring(1));
@@ -100,33 +100,36 @@
             if(!user) return alert("Enter Kick name!");
             
             try {
-                // Swapped to a different proxy because corsproxy.io gets blocked by Kick frequently
-                const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=https://kick.com/api/v1/channels/${user}`);
+                // Trying a new proxy to bypass Kick's Cloudflare
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://kick.com/api/v1/channels/' + user)}`;
+                const res = await fetch(proxyUrl);
                 
-                if (!res.ok) {
-                    throw new Error(`Proxy blocked (Status: ${res.status})`);
-                }
-
+                if (!res.ok) throw new Error("Blocked");
+                
                 const data = await res.json();
-                
-                if (!data || !data.chatroom) {
-                    throw new Error("Invalid username or API changed.");
-                }
-
                 const roomID = data.chatroom.id;
 
-                // UPDATE UI
+                // --- AUTO-SAVE DATA ---
+                localStorage.setItem('jx_kick_id', roomID);
+                localStorage.setItem('jx_kick_user', user);
+
+                // --- UI UPDATE ---
                 document.getElementById('kickIDText').innerText = roomID;
                 document.getElementById('kickResult').classList.remove('hidden');
                 document.getElementById('step2').classList.add('step-done');
 
-                // --- 3. KICK AUTO-SAVE ---
-                localStorage.setItem('jx_kick_id', roomID);
-                localStorage.setItem('jx_kick_user', user);
-
             } catch (e) { 
-                alert(`Error: ${e.message}\n\nKick's security might be blocking the proxy right now. Try again in a minute!`); 
-                console.error(e);
+                // FAILSAFE: If Kick blocks the search, let the user type it manually so the app doesn't break.
+                const manualID = prompt("Kick's security blocked the auto-search! \n\nIf you know your Kick ID, paste it below to continue:");
+                
+                if (manualID) {
+                    localStorage.setItem('jx_kick_id', manualID.trim());
+                    localStorage.setItem('jx_kick_user', user);
+
+                    document.getElementById('kickIDText').innerText = manualID.trim();
+                    document.getElementById('kickResult').classList.remove('hidden');
+                    document.getElementById('step2').classList.add('step-done');
+                }
             }
         }
 
