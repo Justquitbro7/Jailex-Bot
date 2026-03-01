@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Jailex Studio | Audio Engine</title>
+    <style>
+        body { 
+            background: #050a14; /* Deep sci-fi dark */
+            color: #00ffcc; /* Neon cyan text */
+            font-family: 'Courier New', Courier, monospace; 
+            text-align: center; 
+            padding: 40px 20px; 
+            margin: 0;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: auto; 
+        }
+        .panel { 
+            border: 1px solid #00ffcc; 
+            padding: 30px; 
+            background: rgba(0, 255, 204, 0.05); 
+            border-radius: 10px; 
+            margin-bottom: 25px; 
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.2), inset 0 0 20px rgba(0, 255, 204, 0.05); 
+        }
+        h1 { 
+            color: #fff; 
+            text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc; 
+            letter-spacing: 3px; 
+            text-transform: uppercase;
+        }
+        .status-box {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .status-item {
+            padding: 15px;
+            border-radius: 8px;
+            background: #111;
+            width: 45%;
+            font-weight: bold;
+            text-shadow: 0 0 5px currentColor;
+        }
+        .twitch-status { color: #b784eb; border: 1px solid #b784eb; box-shadow: 0 0 10px rgba(183, 132, 235, 0.3); }
+        .kick-status { color: #00E701; border: 1px solid #00E701; box-shadow: 0 0 10px rgba(0, 231, 1, 0.3); }
+        
+        .btn-disconnect { 
+            background: transparent; 
+            color: #ff0055; 
+            border: 1px solid #ff0055; 
+            padding: 10px 20px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            border-radius: 5px; 
+            margin-top: 20px; 
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.2);
+            transition: 0.3s;
+        }
+        .btn-disconnect:hover {
+            background: #ff0055;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.6);
+        }
+        .console-log {
+            background: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: left;
+            height: 150px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AUDIO ENGINE</h1>
+        
+        <div class="panel">
+            <h3 style="margin-top:0; color: #fff;">System Status</h3>
+            <p>Initializing connection to streaming platforms...</p>
+            
+            <div class="status-box">
+                <div id="tw-status" class="status-item twitch-status">TWITCH: OFFLINE</div>
+                <div id="kk-status" class="status-item kick-status">KICK: OFFLINE</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3 style="margin-top:0; color: #fff;">Activity Feed</h3>
+            <div class="console-log" id="logWindow">
+                > System booted.<br>
+                > Awaiting credentials...<br>
+            </div>
+        </div>
+
+        <button class="btn-disconnect" onclick="disconnect()">PURGE DATA & DISCONNECT</button>
+    </div>
+
+    <script>
+        // System variables
+        let twitchToken = null;
+        let kickRoomId = null;
+        let kickUser = null;
+
+        window.onload = function() {
+            // 1. SILENTLY GRAB THE SAVED DATA FROM SETUP.HTML
+            twitchToken = localStorage.getItem('jx_twitch_token');
+            kickRoomId = localStorage.getItem('jx_kick_id');
+            kickUser = localStorage.getItem('jx_kick_user');
+
+            // 2. SECURITY CHECK: Did they bypass the setup?
+            if (!twitchToken || !kickRoomId) {
+                logMessage("ERROR: Missing credentials. Redirecting to Master Setup...", "#ff0055");
+                setTimeout(() => {
+                    window.location.href = "/setup.html";
+                }, 2000);
+                return;
+            }
+
+            // 3. IF DATA EXISTS, UPDATE THE UI
+            document.getElementById('tw-status').innerText = "TWITCH: LINKED";
+            document.getElementById('tw-status').style.boxShadow = "0 0 20px rgba(183, 132, 235, 0.8)";
+            
+            document.getElementById('kk-status').innerText = `KICK: ${kickUser.toUpperCase()}`;
+            document.getElementById('kk-status').style.boxShadow = "0 0 20px rgba(0, 231, 1, 0.8)";
+
+            logMessage(`Successfully authenticated as ${kickUser}.`);
+            logMessage(`Targeting Kick Room ID: ${kickRoomId}`);
+            logMessage(`Twitch token loaded.`);
+            logMessage(`Standing by for audio commands...`);
+            
+            // This is where we will eventually trigger the actual chat connections!
+            // startListening(); 
+        };
+
+        // Helper function to write to our neon console
+        function logMessage(msg, color = "#00ff00") {
+            const logWin = document.getElementById('logWindow');
+            const time = new Date().toLocaleTimeString();
+            logWin.innerHTML += `<span style="color:${color}">[${time}] > ${msg}</span><br>`;
+            logWin.scrollTop = logWin.scrollHeight; // Auto-scroll to bottom
+        }
+
+        // Failsafe disconnect
+        function disconnect() {
+            if(confirm("Are you sure you want to disconnect the audio engine and clear your tokens?")) {
+                localStorage.clear();
+                window.location.href = "/setup.html";
+            }
+        }
+    </script>
+</body>
+</html>
