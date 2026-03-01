@@ -3,212 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAILEX | Master Dashboard v9.1.5</title>
+    <title>JAILEX STUDIO | v9.8.7 RESTORED</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --navy: #0B162A;
-            --orange: #C83803;
-            --white: #FFFFFF;
-            --kick-green: #00E701;
-            --sidebar-width: 280px;
-            --card-bg: rgba(255, 255, 255, 0.05);
-        }
-        * { box-sizing: border-box; }
-        body { 
-            background-color: var(--navy); 
-            color: var(--white); 
-            font-family: 'Inter', 'Segoe UI', sans-serif; 
-            margin: 0; display: flex; height: 100vh; overflow: hidden;
-        }
-
-        /* SIDEBAR HUD */
-        #sidebar {
-            width: var(--sidebar-width);
-            background: rgba(0, 0, 0, 0.5);
-            border-right: 2px solid var(--orange);
-            display: flex; flex-direction: column; padding: 30px;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
-        }
-        .logo-area { text-align: center; margin-bottom: 40px; }
-        .logo { color: var(--orange); font-weight: 900; font-size: 32px; letter-spacing: 3px; }
-        .version { font-size: 10px; color: #555; letter-spacing: 1px; }
-
-        .nav-item { 
-            padding: 15px 20px; margin-bottom: 12px; cursor: pointer; border-radius: 10px; 
-            transition: 0.3s; font-weight: 700; font-size: 14px; color: #888;
-            border: 1px solid transparent;
-        }
-        .nav-item:hover { background: rgba(200, 56, 3, 0.1); color: white; border-color: rgba(200, 56, 3, 0.3); }
-        .nav-item.active { background: var(--orange); color: white; box-shadow: 0 4px 15px rgba(200, 56, 3, 0.4); }
-
-        /* MAIN STAGE */
-        #main-stage { flex-grow: 1; padding: 50px; overflow-y: auto; background: radial-gradient(circle at top right, #162640, #0B162A); }
-        .tab-content { display: none; max-width: 900px; animation: slideUp 0.4s ease; }
+        :root { --navy: #020617; --orange: #C83803; --blue: #00F3FF; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--navy); color: white; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 260px; border-right: 1px solid rgba(200, 56, 3, 0.2); background: rgba(15, 23, 42, 0.95); flex-shrink: 0; display: flex; flex-direction: column; }
+        .neon-logo { text-shadow: 0 0 15px var(--blue); }
+        .nav-item { padding: 18px 28px; cursor: pointer; transition: 0.3s; color: #64748b; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; border-left: 3px solid transparent; }
+        .nav-item.active { background: rgba(200, 56, 3, 0.1); color: var(--orange); border-left: 3px solid var(--orange); }
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 70% 20%, #0f172a, #020617); }
+        .tab-content { display: none; max-width: 900px; margin: 0 auto; animation: slideUp 0.4s ease-out; }
         .tab-content.active { display: block; }
+        .hud-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(0, 243, 255, 0.1); padding: 30px; border-radius: 24px; margin-bottom: 24px; backdrop-filter: blur(12px); }
+        .hud-btn { background: var(--orange); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: 900; transition: 0.3s; text-transform: uppercase; font-size: 0.75rem; }
+        input { background: rgba(0,0,0,0.5); border: 1px solid #334155; color: white; padding: 12px; border-radius: 12px; width: 100%; font-size: 0.85rem; outline: none; text-align: center; }
+        .status-pill { background: #1e293b; padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 900; border: 1px solid #334155; }
+        .status-on { color: var(--blue); border-color: var(--blue); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
+        .kick-on { color: #00E701; border-color: #00E701; box-shadow: 0 0 15px rgba(0, 231, 1, 0.2); }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* UI COMPONENTS */
-        .card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; margin-bottom: 30px; backdrop-filter: blur(10px); }
-        h1 { color: var(--orange); font-size: 36px; margin: 0 0 10px 0; text-transform: uppercase; }
-        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
-
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .btn { padding: 16px 30px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 14px; text-transform: uppercase; }
-        .btn-twitch { background: #6441a5; color: white; }
-        .btn-kick { background: var(--kick-green); color: black; }
-        .btn-primary { background: var(--orange); color: white; width: 100%; }
-        
-        input, select, textarea {
-            background: rgba(0,0,0,0.4); border: 1px solid #333; color: white; 
-            padding: 15px; width: 100%; margin-top: 10px; border-radius: 10px; font-size: 15px;
-        }
-        input:focus { border-color: var(--orange); outline: none; background: rgba(0,0,0,0.6); }
-
-        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-        .online { background: var(--kick-green); box-shadow: 0 0 10px var(--kick-green); }
-        .offline { background: #ff4444; }
     </style>
 </head>
-<body>
+<body onclick="wakeVoice()">
 
-    <div id="sidebar">
-        <div class="logo-area">
-            <div class="logo">JAILEX</div>
-            <div class="version">V9.1.5 FULL SHIELD</div>
+    <aside class="sidebar">
+        <div class="p-10 text-center">
+            <h1 class="text-4xl font-black text-orange-600 neon-logo tracking-tighter italic">JAILEX</h1>
+            <p class="text-[9px] font-black uppercase mt-3 italic text-blue-400">Stream HUD</p>
         </div>
-        <div class="nav-item active" onclick="showTab('sync')">QUICK SYNC</div>
-        <div class="nav-item" onclick="showTab('engine')">ENGINE MASTER</div>
-        <div class="nav-item" onclick="showTab('live')">LIVE DASHBOARD</div>
-        <div class="nav-item" onclick="showTab('overlay')">OVERLAY HUB</div>
-        <div class="nav-item" onclick="showTab('keywords')">KEYWORDS</div>
-        <div class="nav-item" onclick="showTab('timers')">AUTO TIMERS</div>
-    </div>
+        <nav class="flex-1">
+            <div class="nav-item active" onclick="showTab('dash', this)">📊 Dashboard</div>
+            <div class="nav-item" onclick="showTab('sync', this)">🔄 Quick Sync</div>
+            <div class="nav-item" onclick="showTab('engine', this)">🔊 Engine Master</div>
+            <div class="nav-item" onclick="showTab('keywords', this)">⚡ Keywords</div>
+            <div class="nav-item" onclick="showTab('timers', this)">⏰ Timers</div>
+        </nav>
+        <div class="p-6 bg-blue-900/10 border-t border-white/5 text-center"><p class="text-lg font-black text-white italic">v9.8.7</p></div>
+    </aside>
 
-    <div id="main-stage">
-        
-        <div id="sync" class="tab-content active">
-            <h1>Quick Sync</h1>
-            <p class="subtitle">Connect your broadcast identities to the Jailex Engine.</p>
-            <div class="grid">
-                <div class="card">
-                    <h3>Twitch Vault</h3>
-                    <button class="btn btn-twitch" id="sync-twitch">REAUTHORIZE TWITCH</button>
-                    <p id="t-status" style="margin-top:15px; font-size:13px;"><span class="status-dot offline"></span>Disconnected</p>
+    <main class="main-content">
+        <div id="dash" class="tab-content active">
+            <div class="hud-card">
+                <h2 class="text-2xl font-black mb-8 italic text-blue-400 uppercase">Live Telemetry</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-8">
+                    <div class="bg-black/40 p-4 rounded-xl border-l-4 border-purple-600">
+                        <p class="text-[9px] text-slate-500 font-black mb-1 uppercase">Twitch Follows</p>
+                        <p id="stat-t-follows" class="text-2xl font-black text-white">0</p>
+                    </div>
+                    <div class="bg-black/40 p-4 rounded-xl border-l-4 border-emerald-500">
+                        <p class="text-[9px] text-slate-500 font-black mb-1 uppercase">Kick Follows</p>
+                        <p id="stat-k-follows" class="text-2xl font-black text-white">--</p>
+                    </div>
+                    <div class="bg-black/40 p-4 rounded-xl border border-white/5">
+                        <p class="text-[9px] text-slate-500 font-black mb-1 uppercase">Live Viewers</p>
+                        <p id="stat-viewers" class="text-2xl font-black text-white">0</p>
+                    </div>
+                    <div class="bg-black/40 p-4 rounded-xl border border-white/5">
+                        <p class="text-[9px] text-slate-500 font-black mb-1 uppercase">Saved Triggers</p>
+                        <p id="stat-cmds" class="text-2xl font-black text-orange-500">0</p>
+                    </div>
                 </div>
-                <div class="card">
-                    <h3>Kick Signal</h3>
-                    <input type="text" id="kick-input" placeholder="Kick Channel Name...">
-                    <button class="btn btn-kick" style="margin-top:15px; width:100%;" onclick="saveKick()">LINK SIGNAL</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="engine" class="tab-content">
-            <h1>Engine Master</h1>
-            <div class="card">
-                <h3>Global Bot Control</h3>
-                <p>Status: <span id="engine-status" style="color:#ff4444">OFFLINE</span></p>
-                <button class="btn btn-primary" onclick="toggleEngine()">INITIALIZE ENGINE</button>
-            </div>
-        </div>
-
-        <div id="live" class="tab-content">
-            <h1>Live Dashboard</h1>
-            <div class="card">
-                <div id="chat-feed" style="height:300px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:15px; border-radius:10px; font-size:13px; color:#aaa;">
-                    [System] Awaiting engine initialization...
+                <div class="bg-black/20 p-6 rounded-2xl border border-white/5">
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Quick Update Title</h3>
+                    <input type="text" id="stream-title" placeholder="New Stream Title..." class="mb-3 text-left">
+                    <button class="hud-btn w-full" onclick="updateStreamInfo()">Apply Changes</button>
                 </div>
             </div>
         </div>
 
-        <div id="overlay" class="tab-content">
-            <h1>Overlay Hub</h1>
-            <div class="card">
-                <h3>Browser Source</h3>
-                <input type="text" id="ov-link" readonly value="https://jailex.vercel.app/overlay?user=Justquitbro7">
-                <button class="btn btn-primary" style="margin-top:15px;" onclick="copyOverlay()">COPY TO CLIPBOARD</button>
+        <div id="sync" class="tab-content">
+            <div class="grid grid-cols-2 gap-8">
+                <div class="hud-card text-center border-purple-500/20">
+                    <h3 class="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-6">Twitch Status</h3>
+                    <div id="t-pill" class="status-pill inline-block mb-8">OFFLINE</div>
+                    <button id="t-btn" class="hud-btn w-full bg-purple-800 py-6" onclick="startTwitchSync()">Authorize Account</button>
+                    <p id="t-user" class="text-xl font-black text-blue-400 italic hidden"></p>
+                </div>
+                <div class="hud-card text-center border-emerald-500/20">
+                    <h3 class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-6">Kick Status</h3>
+                    <div id="k-pill" class="status-pill inline-block mb-8">OFFLINE</div>
+                    <input type="text" id="k-id-input" placeholder="KICK USERNAME" class="mb-4">
+                    <button class="hud-btn w-full bg-emerald-700" onclick="saveKickID()">Link Signal</button>
+                </div>
             </div>
         </div>
 
-        <div id="keywords" class="tab-content">
-            <h1>Keywords</h1>
-            <div class="card">
-                <input type="text" id="kw-input" placeholder="Keyword (e.g. !discord)">
-                <textarea id="kw-reply" placeholder="Bot Response..."></textarea>
-                <button class="btn btn-primary" onclick="addKeyword()">ADD COMMAND</button>
-            </div>
-        </div>
-
-        <div id="timers" class="tab-content">
-            <h1>Auto Timers</h1>
-            <div class="card">
-                <input type="number" id="timer-min" placeholder="Interval (Minutes)">
-                <textarea id="timer-msg" placeholder="Timed Message..."></textarea>
-                <button class="btn btn-primary" onclick="addTimer()">ENABLE TIMER</button>
-            </div>
-        </div>
-
-    </div>
+        <div id="engine" class="tab-content"><div class="hud-card"><h1>Engine Master</h1></div></div>
+        <div id="keywords" class="tab-content"><div class="hud-card"><h1>Keywords</h1></div></div>
+        <div id="timers" class="tab-content"><div class="hud-card"><h1>Timers</h1></div></div>
+    </main>
 
     <script>
-        // --- HARD-LOCKED CONFIG ---
         const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
-        const REDIRECT = window.location.origin + '/setup.html';
+        const REDIRECT_URI = "https://jailex.vercel.app/setup.html";
 
-        // TAB NAVIGATION
-        function showTab(tabId) {
+        // TAB LOGIC
+        function showTab(id, el) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
         }
 
-        // TWITCH HANDSHAKE
-        document.getElementById('sync-twitch').onclick = () => {
-            const url = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT}&response_type=token&scope=chat:read+chat:edit`;
-            window.open(url, 'TwitchSync', 'width=500,height=600');
-        };
-
+        // --- HANDSHAKE REPAIR ---
         window.addEventListener('message', (event) => {
             if (event.origin !== window.location.origin) return;
             if (event.data.type === 'TWITCH_TOKEN') {
-                localStorage.setItem('jailex_twitch_vault', event.data.token);
-                updateUI();
+                localStorage.setItem('jailex_t_token', event.data.token);
+                validateTwitch(event.data.token);
             }
         });
 
-        // ENGINE LOGIC
-        function toggleEngine() {
-            const status = document.getElementById('engine-status');
-            const feed = document.getElementById('chat-feed');
-            if(status.innerText === "OFFLINE") {
-                status.innerText = "RUNNING"; status.style.color = "#00E701";
-                feed.innerHTML += "<br><span style='color:#00E701'>[System] Engine connected to Twitch and Kick.</span>";
-            } else {
-                status.innerText = "OFFLINE"; status.style.color = "#ff4444";
+        async function validateTwitch(token) {
+            try {
+                const res = await fetch('https://api.twitch.tv/helix/users', {
+                    headers: { 'Authorization': `Bearer ${token}`, 'Client-ID': CLIENT_ID }
+                });
+                const data = await res.json();
+                if (data.data && data.data[0]) {
+                    localStorage.setItem('jailex_user', data.data[0].display_name);
+                    localStorage.setItem('jailex_user_id', data.data[0].id);
+                    syncUI();
+                    fetchFollowers(data.data[0].id, token);
+                }
+            } catch (e) { console.error("Sync Failed", e); }
+        }
+
+        async function fetchFollowers(id, token) {
+            const res = await fetch(`https://api.twitch.tv/helix/channels/followers?broadcaster_id=${id}`, {
+                headers: { 'Authorization': `Bearer ${token}`, 'Client-ID': CLIENT_ID }
+            });
+            const data = await res.json();
+            if(data.total) document.getElementById('stat-t-follows').innerText = data.total;
+        }
+
+        function startTwitchSync() {
+            const scope = encodeURIComponent('chat:read chat:edit user:write:chat channel:manage:broadcast');
+            window.open(`https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=${scope}`, 'JailexSync', 'width=450,height=600');
+        }
+
+        function saveKickID() {
+            const val = document.getElementById('k-id-input').value.trim();
+            if(val) {
+                localStorage.setItem('jailex_kick_id', val);
+                syncUI();
             }
         }
 
-        function saveKick() {
-            const val = document.getElementById('kick-input').value;
-            localStorage.setItem('jailex_kick_vault', val);
-            alert("Kick Signal Established.");
-        }
-
-        function copyOverlay() {
-            const el = document.getElementById('ov-link');
-            el.select(); document.execCommand('copy');
-            alert("Overlay Link Copied!");
-        }
-
-        function updateUI() {
-            const tToken = localStorage.getItem('jailex_twitch_vault');
-            if(tToken) {
-                document.getElementById('t-status').innerHTML = '<span class="status-dot online"></span>Connected';
+        function syncUI() {
+            const user = localStorage.getItem('jailex_user');
+            const kick = localStorage.getItem('jailex_kick_id');
+            if(user) {
+                document.getElementById('t-pill').innerText="ONLINE";
+                document.getElementById('t-pill').classList.add('status-on');
+                document.getElementById('t-btn').classList.add('hidden');
+                document.getElementById('t-user').innerText = user.toUpperCase();
+                document.getElementById('t-user').classList.remove('hidden');
+            }
+            if(kick) {
+                document.getElementById('k-pill').innerText="ONLINE";
+                document.getElementById('k-pill').classList.add('kick-on');
+                document.getElementById('k-id-input').value = kick;
+                document.getElementById('stat-k-follows').innerText = "LINKED";
             }
         }
 
-        window.onload = updateUI;
+        window.onload = () => {
+            syncUI();
+            const tkn = localStorage.getItem('jailex_t_token');
+            if(tkn) validateTwitch(tkn);
+        };
+
+        function wakeVoice() { window.speechSynthesis.cancel(); }
     </script>
 </body>
 </html>
