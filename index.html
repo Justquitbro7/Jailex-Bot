@@ -1,180 +1,121 @@
-import { useState, useEffect } from "react";
+// --- CONFIG & VERSIONING ---
+        const APP_VERSION = "v1.0.0";
+        const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
+        const REDIRECT_URI = "https://jailex-bot.vercel.app/setup.html";
+        let socket;
 
-export default function Home() {
-  const [username, setUsername] = useState("justquitbro7");
-  const [kickId, setKickId] = useState("92474944");
-  const [token, setToken] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [status, setStatus] = useState("Offline");
+        // --- CORE ENGINE ---
+        function wakeVoice() { speak(""); }
+        
+        function speak(text) {
+            if(!text) return;
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.rate = 1.1; // Slight speed boost for "AI" feel
+            msg.pitch = 0.9; // Lower pitch for "Command Center" vibe
+            window.speechSynthesis.speak(msg);
+        }
 
-  // Client ID from your scirpt.js
-  const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
+        function showTab(id, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        }
 
-  // 1. Listen for the token from setup.html
-  useEffect(() => {
-    const handleMessage = (event) => {
-      // Allows messages from your Vercel or Localhost
-      if (event.data.type === 'TWITCH_TOKEN') {
-        setToken(event.data.token);
-        setStatus("Twitch Synced!");
-        localStorage.setItem('jailex_twitch_token', event.data.token);
-      }
-    };
+        // --- CHAT ENGINE (Upgraded with Command Logic) ---
+        function connectChat() {
+            const token = localStorage.getItem('jailex_t_token');
+            const user = localStorage.getItem('jailex_user');
+            if(!token || !user) {
+                alert("Please Authorize Twitch first!");
+                return;
+            }
+            if(socket) socket.close();
+            
+            socket = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+            
+            socket.onopen = () => {
+                socket.send(`PASS oauth:${token}`);
+                socket.send(`NICK ${user.toLowerCase()}`);
+                socket.send(`JOIN #${user.toLowerCase()}`);
+                logToHUD(`[SYSTEM] v1.0 Engine Online. Connected to #${user}`);
+                speak("Jaikex v1.0 is now monitoring your broadcast.");
+            };
 
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, []);
+            socket.onmessage = (event) => {
+                // Keep-alive check
+                if(event.data.includes('PING')) { socket.send('PONG :tmi.twitch.tv'); return; }
 
-  // 2. Twitch Login using your existing Client ID
-  const handleTwitchLogin = () => {
-    const redirectUri = `${window.location.origin}/setup.html`;
-    const scope = encodeURIComponent('chat:read chat:edit');
-    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
-    window.open(authUrl, 'JailexSync', 'width=450,height=600');
-  };
+                if(event.data.includes('PRIVMSG')) {
+                    const parts = event.data.split(' :');
+                    const username = parts[0].split('!')[0].substring(1);
+                    const msg = parts[1].trim();
+                    
+                    logToHUD(`<b>${username}:</b> ${msg}`);
+                    
+                    // --- THE COMMAND PROCESSOR ---
+                    processCommands(username, msg);
+                }
+            };
+        }
 
-  const toggleConnect = () => {
-    setIsConnected(!isConnected);
-    setStatus(!isConnected ? "Connected" : "Offline");
-  };
+        function processCommands(user, message) {
+            const keywords = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
+            const trigger = message.toLowerCase().split(' ')[0]; // Match first word
 
-  // 3. Construct the dynamic Overlay URL
-  // This matches the params your overlay.html is looking for: twitch, kick, size, and stay
-  const overlayUrl = `/overlay.html?twitch=${username}&kick=${kickId}&size=22&stay=20`;
+            keywords.forEach(item => {
+                if(item.cmd.toLowerCase() === trigger) {
+                    // 1. Send to Chat (Requires chat:edit scope)
+                    sendTwitchMessage(item.resp);
+                    // 2. Voice Feedback
+                    speak(`Triggered ${item.cmd}. Response sent.`);
+                    logToHUD(`<span class="text-orange-500">[TRIGGER] Found ${item.cmd}</span>`);
+                }
+            });
+        }
 
-  return (
-    <div style={styles.container}>
-      {/* LEFT: QUICKSYNC */}
-      <div style={styles.card}>
-        <h2 style={styles.title}>QuickSync 2.0</h2>
-        <p style={{fontSize: '12px', color: isConnected ? "#00ff99" : "#ff4444", marginBottom: '10px'}}>
-          ● {status}
-        </p>
+        async function sendTwitchMessage(msg) {
+            if(socket && socket.readyState === WebSocket.OPEN) {
+                const user = localStorage.getItem('jailex_user').toLowerCase();
+                socket.send(`PRIVMSG #${user} :${msg}`);
+            }
+        }
 
-        <label style={styles.label}>Twitch Username</label>
-        <input
-          style={styles.input}
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="e.g. justquitbro7"
-        />
+        function logToHUD(html) {
+            const log = document.getElementById('log');
+            log.innerHTML += `<br>${html}`;
+            log.scrollTop = log.scrollHeight; // Auto-scroll
+        }
 
-        <label style={styles.label}>Kick Channel ID</label>
-        <input
-          style={styles.input}
-          value={kickId}
-          onChange={(e) => setKickId(e.target.value)}
-          placeholder="e.g. 92474944"
-        />
+        // --- UI & DATA SYNC ---
+        function syncUI() {
+            const user = localStorage.getItem('jailex_user');
+            const kick = localStorage.getItem('jailex_kick_id');
+            const k = JSON.parse(localStorage.getItem('jailex_keywords') || '[]');
+            
+            // Set Version Labels
+            document.title = `JAILEX STUDIO | ${APP_VERSION}`;
+            document.querySelector('.sidebar .text-white.italic').innerText = APP_VERSION;
 
-        <button 
-          onClick={handleTwitchLogin}
-          style={{...styles.button, background: token ? "#6441a5" : "#333", color: '#fff', marginBottom: '10px'}}
-        >
-          {token ? "Twitch Linked ✓" : "Link Twitch Account"}
-        </button>
+            if(user) {
+                document.getElementById('t-pill').innerText="ONLINE"; 
+                document.getElementById('t-pill').classList.add('status-on');
+                document.getElementById('t-btn').classList.add('hidden');
+                document.getElementById('t-user').innerText = user.toUpperCase(); 
+                document.getElementById('t-user').classList.remove('hidden');
+            }
+            
+            const list = document.getElementById('keyword-list');
+            list.innerHTML = k.length ? '' : '<p class="text-center text-slate-700 py-4 italic text-[10px] uppercase">No Commands Saved</p>';
+            k.forEach((item, i) => {
+                list.innerHTML += `
+                    <div class="bg-black/20 p-4 rounded-lg flex justify-between items-center border border-white/5">
+                        <span><b class="text-blue-400 font-mono">${item.cmd}</b> <span class="text-slate-500 mx-2">→</span> ${item.resp}</span>
+                        <button class="text-red-500 font-bold text-[10px] hover:text-red-300" onclick="delK(${i})">REMOVE</button>
+                    </div>`;
+            });
+            document.getElementById('stat-cmds').innerText = k.length;
+        }
 
-        <button 
-          style={{...styles.button, background: isConnected ? "#ff4444" : "#00ff99"}} 
-          onClick={toggleConnect}
-        >
-          {isConnected ? "Disconnect" : "Connect Jailex"}
-        </button>
-      </div>
-
-      {/* CENTER: OVERLAY PREVIEW */}
-      <div style={styles.card}>
-        <h2 style={styles.title}>Chat Preview</h2>
-        <div style={styles.previewContainer}>
-          {isConnected ? (
-            <iframe
-              src={overlayUrl}
-              style={styles.iframe}
-            />
-          ) : (
-            <div style={styles.placeholder}>Click Connect to Load Overlay</div>
-          )}
-        </div>
-        <div style={styles.urlDisplay}>URL: {overlayUrl}</div>
-      </div>
-
-      {/* RIGHT: TTS ENGINE */}
-      <div style={styles.card}>
-        <h2 style={styles.title}>TTS Engine</h2>
-        <label style={styles.label}>Voice</label>
-        <select style={styles.input}>
-          <option>System Default</option>
-          <option>Bears Fan (Male)</option>
-          <option>Female 1</option>
-        </select>
-        <button style={styles.button}>Test Voice</button>
-      </div>
-    </div>
-  );
-}
-
-const styles = {
-  container: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr",
-    gap: "20px",
-    padding: "40px",
-    background: "#0f0f0f",
-    minHeight: "100vh",
-    color: "#fff",
-    fontFamily: "Inter, sans-serif",
-  },
-  card: {
-    background: "#1a1a1a",
-    padding: "20px",
-    borderRadius: "12px",
-    border: "1px solid #222",
-    display: "flex",
-    flexDirection: "column",
-  },
-  title: { marginBottom: "20px", fontSize: "20px", fontWeight: "600" },
-  label: { marginTop: "10px", marginBottom: "5px", fontSize: "14px", opacity: 0.8 },
-  input: {
-    width: "100%",
-    padding: "10px",
-    borderRadius: "8px",
-    border: "1px solid #333",
-    background: "#111",
-    color: "#fff",
-    marginBottom: "10px",
-  },
-  button: {
-    width: "100%",
-    padding: "12px",
-    borderRadius: "8px",
-    background: "#00ff99",
-    border: "none",
-    color: "#000",
-    fontWeight: "700",
-    cursor: "pointer",
-    marginTop: "auto",
-  },
-  previewContainer: {
-    flex: 1,
-    background: "#000",
-    borderRadius: "12px",
-    border: "1px solid #333",
-    overflow: "hidden",
-    position: "relative",
-    minHeight: "350px",
-  },
-  iframe: { width: "100%", height: "100%", border: "none" },
-  placeholder: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100%",
-    color: "#444",
-  },
-  urlDisplay: {
-    fontSize: "10px",
-    marginTop: "10px",
-    opacity: 0.4,
-    wordBreak: "break-all",
-  }
-};
+        // ... [Keep other existing helper functions like startTwitchSync, validateTwitch, etc.]
