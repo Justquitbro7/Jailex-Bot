@@ -1,25 +1,54 @@
-const CHANNEL_NAME = 'justquitbro7';
+/* ====== TWITCH CONNECTOR ====== */
+const TWITCH_CHANNEL_NAME = "justquitbro7";
 
-function connectToTwitch() {
-    // Note: To read chat anonymously without a token, we use a simple WebSocket
-    const socket = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+function initTwitch() {
+  const statusPill = document.getElementById("twitchStatusPill");
+  const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
 
-    socket.onopen = () => {
-        socket.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
-        socket.send('PASS SCHMOOPIE'); // Anonymous pass
-        socket.send(`NICK justinfan${Math.floor(Math.random() * 10000)}`);
-        socket.send(`JOIN #${CHANNEL_NAME}`);
-        console.log("Twitch Hardwired!");
-    };
+  ws.onopen = () => {
+    if (statusPill) {
+      statusPill.textContent = "Connected";
+      statusPill.className = "status-pill status-on";
+    }
+    
+    // Request tags to get IDs/Colors and login anonymously
+    ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
+    ws.send("NICK justinfan12345");
+    ws.send(`JOIN #${TWITCH_CHANNEL_NAME.toLowerCase()}`);
+  };
 
-    socket.onmessage = (event) => {
-        if (event.data.includes('PRIVMSG')) {
-            const parts = event.data.split('!');
-            const username = parts[0].substring(1);
-            const message = event.data.split('PRIVMSG')[1].split(':')[1];
-            addMessage('twitch', username, message, '#9146ff');
-        }
-    };
+  ws.onmessage = (event) => {
+    const rawData = event.data;
+    
+    // Process standard chat messages (PRIVMSG)
+    if (rawData.includes("PRIVMSG")) {
+      const userMatch = rawData.match(/:(\w+)!\w+@\w+/);
+      const msgMatch = rawData.split("PRIVMSG")[1].split(":")[1];
+
+      if (userMatch && msgMatch) {
+        // SEND TO AUDIO ENGINE & UI
+        addMessage({
+          platform: "twitch",
+          username: userMatch[1],
+          message: msgMatch.trim()
+        });
+      }
+    }
+    
+    // Keep connection alive with heartbeats
+    if (rawData.startsWith("PING")) {
+      ws.send("PONG :tmi.twitch.tv");
+    }
+  };
+
+  ws.onclose = () => {
+    if (statusPill) {
+      statusPill.textContent = "Disconnected";
+      statusPill.className = "status-pill status-off";
+    }
+    setTimeout(initTwitch, 5000);
+  };
 }
 
-connectToTwitch();
+// Fire it up!
+initTwitch();
