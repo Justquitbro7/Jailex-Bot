@@ -51,10 +51,11 @@
                 <button class="btn" style="background: #444; color: white;" onclick="copyURL()">COPY TO CLIPBOARD</button>
             </div>
         </div>
+        
+        <p onclick="localStorage.clear(); location.reload();" style="color: #ff4444; cursor: pointer; text-decoration: underline; font-size: 0.9rem; margin-top: 20px;">Logout / Clear Saved Data</p>
     </div>
 
     <script>
-        // YOUR BRAND NEW WORKING CLIENT ID
         const MY_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz'; 
         const MY_REDIRECT = 'https://jailex-bot.vercel.app/setup.html';
 
@@ -63,31 +64,69 @@
         }
 
         window.onload = function() {
+            // --- 1. TWITCH AUTO-SAVE (Saves immediately on return) ---
             const hash = window.location.hash;
             if (hash) {
                 const params = new URLSearchParams(hash.substring(1));
                 const token = params.get('access_token');
                 if (token) {
-                    document.getElementById('twitchBtn').classList.add('hidden');
-                    document.getElementById('twitchResult').classList.remove('hidden');
-                    document.getElementById('twitchTokenText').innerText = token;
-                    document.getElementById('step1').classList.add('step-done');
+                    localStorage.setItem('jx_twitch_token', token);
+                    window.history.replaceState({}, document.title, window.location.pathname);
                 }
+            }
+
+            // --- 2. AUTO-LOAD ON REFRESH ---
+            const savedToken = localStorage.getItem('jx_twitch_token');
+            const savedKickID = localStorage.getItem('jx_kick_id');
+            const savedKickUser = localStorage.getItem('jx_kick_user');
+
+            if (savedToken) {
+                document.getElementById('twitchBtn').classList.add('hidden');
+                document.getElementById('twitchResult').classList.remove('hidden');
+                document.getElementById('twitchTokenText').innerText = savedToken;
+                document.getElementById('step1').classList.add('step-done');
+            }
+
+            if (savedKickID) {
+                document.getElementById('kickUser').value = savedKickUser || "";
+                document.getElementById('kickIDText').innerText = savedKickID;
+                document.getElementById('kickResult').classList.remove('hidden');
+                document.getElementById('step2').classList.add('step-done');
             }
         };
 
         async function findKickID() {
             const user = document.getElementById('kickUser').value.trim().toLowerCase();
             if(!user) return alert("Enter Kick name!");
+            
             try {
-                // Using a proxy to avoid CORS issues
-                const res = await fetch(`https://corsproxy.io/?https://kick.com/api/v1/channels/${user}`);
+                // Swapped to a different proxy because corsproxy.io gets blocked by Kick frequently
+                const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=https://kick.com/api/v1/channels/${user}`);
+                
+                if (!res.ok) {
+                    throw new Error(`Proxy blocked (Status: ${res.status})`);
+                }
+
                 const data = await res.json();
-                document.getElementById('kickIDText').innerText = data.chatroom.id;
+                
+                if (!data || !data.chatroom) {
+                    throw new Error("Invalid username or API changed.");
+                }
+
+                const roomID = data.chatroom.id;
+
+                // UPDATE UI
+                document.getElementById('kickIDText').innerText = roomID;
                 document.getElementById('kickResult').classList.remove('hidden');
                 document.getElementById('step2').classList.add('step-done');
+
+                // --- 3. KICK AUTO-SAVE ---
+                localStorage.setItem('jx_kick_id', roomID);
+                localStorage.setItem('jx_kick_user', user);
+
             } catch (e) { 
-                alert("User not found! Make sure the spelling is correct."); 
+                alert(`Error: ${e.message}\n\nKick's security might be blocking the proxy right now. Try again in a minute!`); 
+                console.error(e);
             }
         }
 
