@@ -1,91 +1,130 @@
-/* ====== JAILEX AUDIO ENGINE (GLOBAL HUB) ====== */
+/* ====== JAILEX AUDIO ENGINE (BLUEPRINT TRANSLATION) ====== */
 
-// 1. ENGINE STATE
-window.ttsQueue = [];
-window.isSpeaking = false;
+// 1. GLOBAL STATE (Blueprint equivalent of Refs/State)
+window.queue = [];
+window.isSpeaking = false; // Blueprint'isSpeakingRef'
 window.audioEnabled = false;
-window.browserVoices = [];
+window.isPlaying = true;
+window.isMuted = false;
+window.voices = [];
 
-// 2. THE HANDSHAKE (Used by Kick and Twitch)
-window.addMessage = function(msg) {
-    // A. Update Chat HUD
-    const log = document.getElementById("chatLog");
-    if (log) {
-        const div = document.createElement("div");
-        div.className = "chat-line";
-        const color = msg.platform === "kick" ? "#53fc18" : "#a970ff";
-        div.innerHTML = `<span style="color:${color};font-weight:800">[${msg.platform.toUpperCase()}] ${msg.username}:</span> ${msg.message}`;
-        log.appendChild(div);
-        log.scrollTop = log.scrollHeight;
-    }
+// 2. BOT FILTERING LOGIC (Direct from Blueprint)
+const KICK_BOTS = [
+  "botrix", "kickbot", "kick", "streamelements", "nightbot", "moobot",
+  "fossabot", "wizebot", "deepbot", "coebot", "phantombot", "ankhbot",
+  "vivbot", "streamlabs", "cloudbot", "stay_hydrated_bot", "restreambot",
+  "sery_bot", "commanderroot", "lurxx", "electricalskateboard",
+  "electricallongboard", "alizeepathfinder", "virgoproz", "creatisbot",
+  "slocool", "p0lizei_", "lolrankbot", "0ax2", "thepositivebot",
+  "communityshowcase",
+];
 
-    // B. Add to Speaking Queue
-    window.ttsQueue.push(msg);
-    const qLen = document.getElementById("queueLen");
-    if (qLen) qLen.textContent = window.ttsQueue.length;
+const isKickBot = (username) => {
+  const lowerUsername = username.toLowerCase().trim();
+  if (KICK_BOTS.includes(lowerUsername)) return true;
+  if (lowerUsername.endsWith("bot") || lowerUsername.endsWith("_bot") || lowerUsername.includes("bot_")) {
+    return true;
+  }
+  return false;
 };
 
-// 3. VOICE LOADING
-function loadSystemVoices() {
-    window.browserVoices = speechSynthesis.getVoices();
-    const selector = document.getElementById("voiceSelect");
-    if (selector && window.browserVoices.length > 0) {
-        selector.innerHTML = "";
-        window.browserVoices.forEach(v => {
-            const opt = document.createElement("option");
-            opt.value = v.name;
-            opt.textContent = `${v.name} (${v.lang})`;
-            selector.appendChild(opt);
-        });
-    } else {
-        setTimeout(loadSystemVoices, 300); // Retry until browser loads them
-    }
+// 3. FRONT DOOR (Handshake for Quick Sync Engine)
+window.addMessage = function(msg) {
+  // Bot Filter Check
+  if (isKickBot(msg.username)) {
+    console.log("Kick: Filtered bot message from", msg.username);
+    return;
+  }
+
+  // Update Chat HUD Feed
+  const log = document.getElementById("chatLog");
+  if (log) {
+    const div = document.createElement("div");
+    div.className = "chat-line";
+    const color = msg.platform === "kick" ? "#53fc18" : "#a970ff";
+    div.innerHTML = `<span style="color:${color};font-weight:800">[${msg.platform.toUpperCase()}] ${msg.username}:</span> ${msg.message}`;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  // Push to Blueprint Queue
+  window.queue.push(msg);
+  const qLen = document.getElementById("queueLen");
+  if (qLen) qLen.textContent = window.queue.length;
+};
+
+// 4. TTS PLAYBACK QUEUE SYSTEM (Blueprint logic)
+const processQueue = () => {
+  // Don't process if paused, muted, already speaking, queue empty, or engine not initialized
+  if (!window.audioEnabled || !window.isPlaying || window.isMuted || window.isSpeaking || window.queue.length === 0) {
+    return;
+  }
+
+  // Get next message from queue
+  const nextMessage = window.queue.shift();
+  
+  // Update UI Stats
+  if (document.getElementById("queueLen")) document.getElementById("queueLen").textContent = window.queue.length;
+  if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = nextMessage.username;
+
+  window.isSpeaking = true;
+
+  // Build text to speak (Blueprint 'readUsername' check)
+  const readUserCheck = document.getElementById("readUsername");
+  const textToSpeak = (readUserCheck && readUserCheck.checked) 
+    ? `${nextMessage.username} says: ${nextMessage.message}` 
+    : nextMessage.message;
+
+  // Create speech utterance
+  const utterance = new SpeechSynthesisUtterance(textToSpeak);
+  
+  // Apply voice settings from UI
+  const volInput = document.getElementById("volume");
+  utterance.volume = volInput ? parseFloat(volInput.value) : 1;
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  
+  // Select voice from dropdown
+  const voiceChoice = document.getElementById("voiceSelect");
+  if (voiceChoice && window.voices.length > 0) {
+    const selectedVoice = window.voices.find(v => v.name === voiceChoice.value);
+    if (selectedVoice) utterance.voice = selectedVoice;
+  }
+
+  // Handle completion (Blueprint 'onend')
+  utterance.onend = () => {
+    window.isSpeaking = false;
+    if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = "None";
+  };
+
+  // Handle errors
+  utterance.onerror = () => {
+    window.isSpeaking = false;
+    if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = "None";
+  };
+
+  // Speak the message
+  speechSynthesis.speak(utterance);
+};
+
+// 5. ENGINE HEARTBEAT (100ms per Blueprint)
+setInterval(processQueue, 100);
+
+// 6. INITIALIZE VOICES
+function loadVoices() {
+  window.voices = speechSynthesis.getVoices();
+  const selector = document.getElementById("voiceSelect");
+  if (selector && window.voices.length > 0) {
+    selector.innerHTML = "";
+    window.voices.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v.name;
+      opt.textContent = v.name;
+      selector.appendChild(opt);
+    });
+  } else {
+    setTimeout(loadVoices, 300);
+  }
 }
-speechSynthesis.onvoiceschanged = loadSystemVoices;
-loadSystemVoices();
-
-// 4. THE PLAYBACK LOOP (Checks every 150ms)
-setInterval(() => {
-    // Only speak if initialized, not already speaking, and queue isn't empty
-    if (!window.audioEnabled || window.isSpeaking || window.ttsQueue.length === 0) return;
-
-    const next = window.ttsQueue.shift();
-    
-    // Update UI Stats
-    if (document.getElementById("queueLen")) document.getElementById("queueLen").textContent = window.ttsQueue.length;
-    if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = next.username;
-
-    window.isSpeaking = true;
-
-    // Check if we should read username
-    const readUserCheck = document.getElementById("readUsername");
-    const textToSay = (readUserCheck && readUserCheck.checked) 
-        ? `${next.username} says: ${next.message}` 
-        : next.message;
-
-    const utter = new SpeechSynthesisUtterance(textToSay);
-    
-    // Apply Volume
-    const volInput = document.getElementById("volume");
-    utter.volume = volInput ? parseFloat(volInput.value) : 1;
-
-    // Apply Selected Voice
-    const voiceChoice = document.getElementById("voiceSelect");
-    if (voiceChoice) {
-        const selectedVoice = window.browserVoices.find(v => v.name === voiceChoice.value);
-        if (selectedVoice) utter.voice = selectedVoice;
-    }
-
-    // End Handler
-    utter.onend = () => {
-        window.isSpeaking = false;
-        if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = "None";
-    };
-
-    utter.onerror = () => {
-        window.isSpeaking = false;
-        if (document.getElementById("speakingNow")) document.getElementById("speakingNow").textContent = "None";
-    };
-
-    speechSynthesis.speak(utter);
-}, 150);
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
