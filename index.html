@@ -3,155 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAILEX | Iron Vault v5.2</title>
+    <title>JAILEX | Master Dashboard v9.1.5</title>
     <style>
         :root {
-            --bears-navy: #0B162A;
-            --bears-orange: #C83803;
-            --bears-white: #FFFFFF;
-            --kick-green: #53fc18;
-            --sidebar-width: 240px;
+            --navy: #0B162A;
+            --orange: #C83803;
+            --white: #FFFFFF;
+            --kick-green: #00E701;
+            --sidebar-width: 280px;
+            --card-bg: rgba(255, 255, 255, 0.05);
         }
         * { box-sizing: border-box; }
         body { 
-            background-color: var(--bears-navy); 
-            color: var(--bears-white); 
+            background-color: var(--navy); 
+            color: var(--white); 
             font-family: 'Inter', 'Segoe UI', sans-serif; 
-            margin: 0; 
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
+            margin: 0; display: flex; height: 100vh; overflow: hidden;
         }
 
-        /* SIDEBAR STYLING */
+        /* SIDEBAR HUD */
         #sidebar {
             width: var(--sidebar-width);
-            background: rgba(0, 0, 0, 0.4);
-            border-right: 2px solid var(--bears-orange);
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-right: 2px solid var(--orange);
+            display: flex; flex-direction: column; padding: 30px;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
         }
-        .logo { color: var(--bears-orange); font-weight: 900; font-size: 22px; margin-bottom: 30px; text-align: center; }
+        .logo-area { text-align: center; margin-bottom: 40px; }
+        .logo { color: var(--orange); font-weight: 900; font-size: 32px; letter-spacing: 3px; }
+        .version { font-size: 10px; color: #555; letter-spacing: 1px; }
+
         .nav-item { 
-            padding: 12px; 
-            margin-bottom: 8px; 
-            cursor: pointer; 
-            border-radius: 6px; 
-            transition: 0.2s; 
-            font-weight: 600;
+            padding: 15px 20px; margin-bottom: 12px; cursor: pointer; border-radius: 10px; 
+            transition: 0.3s; font-weight: 700; font-size: 14px; color: #888;
+            border: 1px solid transparent;
         }
-        .nav-item:hover { background: rgba(200, 56, 3, 0.2); }
-        .nav-item.active { background: var(--bears-orange); color: white; }
+        .nav-item:hover { background: rgba(200, 56, 3, 0.1); color: white; border-color: rgba(200, 56, 3, 0.3); }
+        .nav-item.active { background: var(--orange); color: white; box-shadow: 0 4px 15px rgba(200, 56, 3, 0.4); }
 
-        /* MAIN CONTENT AREA */
-        #main-content {
-            flex-grow: 1;
-            padding: 40px;
-            overflow-y: auto;
-        }
-        .tab-content { display: none; }
+        /* MAIN STAGE */
+        #main-stage { flex-grow: 1; padding: 50px; overflow-y: auto; background: radial-gradient(circle at top right, #162640, #0B162A); }
+        .tab-content { display: none; max-width: 900px; animation: slideUp 0.4s ease; }
         .tab-content.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .vault-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-        .btn-twitch { background: var(--bears-orange); color: white; }
+        /* UI COMPONENTS */
+        .card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 20px; margin-bottom: 30px; backdrop-filter: blur(10px); }
+        h1 { color: var(--orange); font-size: 36px; margin: 0 0 10px 0; text-transform: uppercase; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .btn { padding: 16px 30px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 14px; text-transform: uppercase; }
+        .btn-twitch { background: #6441a5; color: white; }
         .btn-kick { background: var(--kick-green); color: black; }
+        .btn-primary { background: var(--orange); color: white; width: 100%; }
         
-        input {
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--bears-orange);
-            color: white;
-            padding: 10px;
-            width: 100%;
-            margin-top: 10px;
-            border-radius: 4px;
+        input, select, textarea {
+            background: rgba(0,0,0,0.4); border: 1px solid #333; color: white; 
+            padding: 15px; width: 100%; margin-top: 10px; border-radius: 10px; font-size: 15px;
         }
+        input:focus { border-color: var(--orange); outline: none; background: rgba(0,0,0,0.6); }
 
-        /* ATOMIC CAPTURE STATUS */
-        #status-bar {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            background: var(--bears-orange);
-            border-radius: 50px;
-            font-size: 12px;
-            font-weight: bold;
-            display: none;
-        }
+        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .online { background: var(--kick-green); box-shadow: 0 0 10px var(--kick-green); }
+        .offline { background: #ff4444; }
     </style>
 </head>
 <body>
 
     <div id="sidebar">
-        <div class="logo">JAILEX</div>
-        <div class="nav-item active" onclick="showTab('sync')">SYNC ACCOUNTS</div>
-        <div class="nav-item" onclick="showTab('overlay')">OVERLAY LINK</div>
-        <div class="nav-item" onclick="showTab('engine')">BOT ENGINE</div>
+        <div class="logo-area">
+            <div class="logo">JAILEX</div>
+            <div class="version">V9.1.5 FULL SHIELD</div>
+        </div>
+        <div class="nav-item active" onclick="showTab('sync')">QUICK SYNC</div>
+        <div class="nav-item" onclick="showTab('engine')">ENGINE MASTER</div>
+        <div class="nav-item" onclick="showTab('live')">LIVE DASHBOARD</div>
+        <div class="nav-item" onclick="showTab('overlay')">OVERLAY HUB</div>
+        <div class="nav-item" onclick="showTab('keywords')">KEYWORDS</div>
+        <div class="nav-item" onclick="showTab('timers')">AUTO TIMERS</div>
     </div>
 
-    <div id="main-content">
+    <div id="main-stage">
         
         <div id="sync" class="tab-content active">
-            <h1>Quick Sync Engine</h1>
-            <p>User: <strong>Justquitbro7</strong></p>
-            
-            <div class="vault-card">
-                <h3>Twitch Vault</h3>
-                <button class="btn btn-twitch" id="btn-twitch-sync">REAUTHORIZE TWITCH</button>
-                <p id="twitch-status" style="font-size: 12px; margin-top: 10px; color: #888;">Status: Disconnected</p>
-            </div>
-
-            <div class="vault-card">
-                <h3>Kick Signal</h3>
-                <input type="text" id="kick-channel" placeholder="Enter Kick Channel Name...">
-                <button class="btn btn-kick" style="margin-top:10px;" id="btn-kick-link">LINK SIGNAL</button>
-            </div>
-        </div>
-
-        <div id="overlay" class="tab-content">
-            <h1>Overlay Generator</h1>
-            <div class="vault-card">
-                <p>Copy this URL into OBS as a Browser Source:</p>
-                <input type="text" id="overlay-url" readonly value="https://jailex.vercel.app/overlay?user=Justquitbro7">
-                <button class="btn" style="margin-top:10px; background: #444; color: white;" onclick="copyOverlay()">COPY LINK</button>
+            <h1>Quick Sync</h1>
+            <p class="subtitle">Connect your broadcast identities to the Jailex Engine.</p>
+            <div class="grid">
+                <div class="card">
+                    <h3>Twitch Vault</h3>
+                    <button class="btn btn-twitch" id="sync-twitch">REAUTHORIZE TWITCH</button>
+                    <p id="t-status" style="margin-top:15px; font-size:13px;"><span class="status-dot offline"></span>Disconnected</p>
+                </div>
+                <div class="card">
+                    <h3>Kick Signal</h3>
+                    <input type="text" id="kick-input" placeholder="Kick Channel Name...">
+                    <button class="btn btn-kick" style="margin-top:15px; width:100%;" onclick="saveKick()">LINK SIGNAL</button>
+                </div>
             </div>
         </div>
 
         <div id="engine" class="tab-content">
-            <h1>Bot Engine</h1>
-            <div class="vault-card">
-                <p>Engine Status: <span id="engine-status" style="color:red">OFFLINE</span></p>
-                <button class="btn btn-twitch" onclick="toggleEngine()">START ENGINE</button>
+            <h1>Engine Master</h1>
+            <div class="card">
+                <h3>Global Bot Control</h3>
+                <p>Status: <span id="engine-status" style="color:#ff4444">OFFLINE</span></p>
+                <button class="btn btn-primary" onclick="toggleEngine()">INITIALIZE ENGINE</button>
+            </div>
+        </div>
+
+        <div id="live" class="tab-content">
+            <h1>Live Dashboard</h1>
+            <div class="card">
+                <div id="chat-feed" style="height:300px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:15px; border-radius:10px; font-size:13px; color:#aaa;">
+                    [System] Awaiting engine initialization...
+                </div>
+            </div>
+        </div>
+
+        <div id="overlay" class="tab-content">
+            <h1>Overlay Hub</h1>
+            <div class="card">
+                <h3>Browser Source</h3>
+                <input type="text" id="ov-link" readonly value="https://jailex.vercel.app/overlay?user=Justquitbro7">
+                <button class="btn btn-primary" style="margin-top:15px;" onclick="copyOverlay()">COPY TO CLIPBOARD</button>
+            </div>
+        </div>
+
+        <div id="keywords" class="tab-content">
+            <h1>Keywords</h1>
+            <div class="card">
+                <input type="text" id="kw-input" placeholder="Keyword (e.g. !discord)">
+                <textarea id="kw-reply" placeholder="Bot Response..."></textarea>
+                <button class="btn btn-primary" onclick="addKeyword()">ADD COMMAND</button>
+            </div>
+        </div>
+
+        <div id="timers" class="tab-content">
+            <h1>Auto Timers</h1>
+            <div class="card">
+                <input type="number" id="timer-min" placeholder="Interval (Minutes)">
+                <textarea id="timer-msg" placeholder="Timed Message..."></textarea>
+                <button class="btn btn-primary" onclick="addTimer()">ENABLE TIMER</button>
             </div>
         </div>
 
     </div>
 
-    <div id="status-bar">SYNCING...</div>
-
     <script>
-        // --- 1. ATOMIC CAPTURE & VAULT PERSISTENCE ---
-        const vault = {
-            twitch: localStorage.getItem('jailex_twitch_vault'),
-            kick: localStorage.getItem('jailex_kick_vault')
-        };
+        // --- HARD-LOCKED CONFIG ---
+        const CLIENT_ID = 'nk06xpus7cc4naiif04xqqamwcf8rz';
+        const REDIRECT = window.location.origin + '/setup.html';
 
-        // UI Tab Switcher
+        // TAB NAVIGATION
         function showTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -159,60 +163,52 @@
             event.currentTarget.classList.add('active');
         }
 
-        // --- 2. THE HANDSHAKE LISTENER ---
-        window.addEventListener('message', (event) => {
-            if (event.origin !== window.location.origin) return;
-
-            if (event.data.type === 'AUTH_SUCCESS') {
-                const token = event.data.token;
-                localStorage.setItem('jailex_twitch_vault', token);
-                document.getElementById('twitch-status').innerText = "Status: CONNECTED";
-                document.getElementById('twitch-status').style.color = "#53fc18";
-                console.log("Twitch Vault Updated.");
-            }
-        });
-
-        // --- 3. TWITCH SYNC TRIGGER ---
-        document.getElementById('btn-twitch-sync').onclick = () => {
-            const clientID = 'YOUR_TWITCH_CLIENT_ID'; // Keep this updated!
-            const redirect = window.location.origin + '/setup.html';
-            const url = `https://id.twitch.tv/oauth2/authorize?client_id=${clientID}&redirect_uri=${redirect}&response_type=token&scope=chat:read+chat:edit`;
-            
+        // TWITCH HANDSHAKE
+        document.getElementById('sync-twitch').onclick = () => {
+            const url = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT}&response_type=token&scope=chat:read+chat:edit`;
             window.open(url, 'TwitchSync', 'width=500,height=600');
         };
 
-        // --- 4. KICK SYNC TRIGGER ---
-        document.getElementById('btn-kick-link').onclick = () => {
-            const channel = document.getElementById('kick-channel').value;
-            if(!channel) return alert("Please enter a Kick channel name.");
-            
-            localStorage.setItem('jailex_kick_vault', channel);
-            alert("Kick Signal Linked to: " + channel);
-        };
+        window.addEventListener('message', (event) => {
+            if (event.origin !== window.location.origin) return;
+            if (event.data.type === 'TWITCH_TOKEN') {
+                localStorage.setItem('jailex_twitch_vault', event.data.token);
+                updateUI();
+            }
+        });
 
-        function copyOverlay() {
-            const copyText = document.getElementById("overlay-url");
-            copyText.select();
-            document.execCommand("copy");
-            alert("Overlay URL copied to clipboard!");
-        }
-
+        // ENGINE LOGIC
         function toggleEngine() {
             const status = document.getElementById('engine-status');
+            const feed = document.getElementById('chat-feed');
             if(status.innerText === "OFFLINE") {
-                status.innerText = "RUNNING";
-                status.style.color = "#53fc18";
+                status.innerText = "RUNNING"; status.style.color = "#00E701";
+                feed.innerHTML += "<br><span style='color:#00E701'>[System] Engine connected to Twitch and Kick.</span>";
             } else {
-                status.innerText = "OFFLINE";
-                status.style.color = "red";
+                status.innerText = "OFFLINE"; status.style.color = "#ff4444";
             }
         }
 
-        // Check login status on boot
-        if(vault.twitch) {
-            document.getElementById('twitch-status').innerText = "Status: CONNECTED";
-            document.getElementById('twitch-status').style.color = "#53fc18";
+        function saveKick() {
+            const val = document.getElementById('kick-input').value;
+            localStorage.setItem('jailex_kick_vault', val);
+            alert("Kick Signal Established.");
         }
+
+        function copyOverlay() {
+            const el = document.getElementById('ov-link');
+            el.select(); document.execCommand('copy');
+            alert("Overlay Link Copied!");
+        }
+
+        function updateUI() {
+            const tToken = localStorage.getItem('jailex_twitch_vault');
+            if(tToken) {
+                document.getElementById('t-status').innerHTML = '<span class="status-dot online"></span>Connected';
+            }
+        }
+
+        window.onload = updateUI;
     </script>
 </body>
 </html>
