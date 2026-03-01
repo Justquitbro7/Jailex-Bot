@@ -1,298 +1,147 @@
-I am building an all in one streaming tool for streamers streaming on kick and twitch platforms. It needs to have a unique quicksync onboarding and log in where the user just enters his username to kick his kick id room number and twitches oauth for the user and fetches and saves it for the user. It will automatically log him into the audio engine TTS system. Im using gihub with the following file structure: 
-Jailex-Bot
-Public
-Justquitbro7/Jailex-Bot
-t
-
-
-Name
-
-
-
-
-Justquitbro7
-Update quick-sync.js
-24885dc · 29 minutes ago
-api
-Create kick.js
-2 days ago
-audio-engine.html
-Update audio-engine.html
-44 minutes ago
-index.html
-Update index.html
-31 minutes ago
-kick.js
-Update kick.js
-1 hour ago
-logo.jpg
-logo.jpg
-2 days ago
-overlay.html
-Update overlay.html
-2 days ago
-quick-sync.js
-Update quick-sync.js
-29 minutes ago
-script.js
-Update script.js
-30 minutes ago
-twitch.js
-Update twitch.js
-
-
-
-
-
-
-
-The audio and quicksync features are at the heart and core of what makes this app special and has to be perfect. I would like the audios logics to look something like this as it works very well: BEST AI BOT BLUE PRINT’
-
-
-Coderick AI
-Absolutely! Here’s the full code logic for both the Kick connection and TTS playback system:
-🔌 Kick Chat Connection (WebSocket via Pusher)
-code
-// Connect to Kick Chat
-useEffect(() => {
-  let isActive = true;
-  
-  const connectKick = async () => {
-    if (!isActive) return;
-    
-    try {
-      // Step 1: Get chatroom ID from Kick API
-      const response = await fetch(`https://kick.com/api/v2/channels/${KICK_CHANNEL}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch Kick channel info");
-      }
-      const channelData = await response.json();
-      const chatroomId = channelData.chatroom?.id;
-
-      if (!chatroomId) {
-        throw new Error("Could not find Kick chatroom ID");
-      }
-
-      console.log("Kick: Chatroom ID:", chatroomId);
-
-      // Step 2: Connect to Pusher WebSocket (Kick's chat infrastructure)
-      const ws = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0-rc2&flash=false");
-      kickWsRef.current = ws;
-
-      ws.onopen = () => {
-        if (!isActive) {
-          ws.close();
-          return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAILEX | Professional Streaming Suite</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap">
+    <style>
+        :root {
+            --jailex-blue: #00d2ff;
+            --jailex-deep: #060e1a;
+            --jailex-glass: rgba(10, 25, 47, 0.85);
+            --text-main: #e6f1ff;
         }
-        console.log("Kick: Pusher connected");
-      };
 
-      ws.onmessage = (event) => {
-        if (!isActive) return;
-        
-        try {
-          const data = JSON.parse(event.data);
-          
-          // Step 3: Subscribe to the chatroom channel
-          if (data.event === "pusher:connection_established") {
-            ws.send(JSON.stringify({
-              event: "pusher:subscribe",
-              data: { channel: `chatrooms.${chatroomId}.v2` }
-            }));
-          }
-
-          if (data.event === "pusher_internal:subscription_succeeded") {
-            setKickConnected(true);
-            console.log("Kick: Subscribed to chatroom");
-          }
-
-          // Step 4: Process incoming chat messages
-          if (data.event === "App\\Events\\ChatMessageEvent") {
-            const messageData = JSON.parse(data.data);
-            const username = messageData.sender?.username || "Unknown";
-            const messageId = messageData.id || `${Date.now()}-${Math.random()}`;
-            
-            // Duplicate detection
-            if (processedKickIds.current.has(messageId)) {
-              console.log("Kick: Duplicate message filtered:", messageId);
-              return;
-            }
-            
-            // Bot filtering
-            if (isKickBot(username)) {
-              console.log("Kick: Filtered bot message from", username);
-              return;
-            }
-
-            // Mark as processed
-            processedKickIds.current.add(messageId);
-            
-            // Clean up old IDs (keep last 1000)
-            if (processedKickIds.current.size > 1000) {
-              const idsArray = Array.from(processedKickIds.current);
-              processedKickIds.current = new Set(idsArray.slice(-1000));
-            }
-
-            // Create message object
-            const parsed = {
-              id: `kick-${messageId}`,
-              platform: "kick",
-              username: username,
-              message: messageData.content || "",
-              timestamp: new Date(),
-              color: "#53fc18"
-            };
-            addMessage(parsed);
-          }
-        } catch (error) {
-          console.error("Kick message parse error:", error);
+        body {
+            background: var(--jailex-deep);
+            background-image: radial-gradient(circle at top right, #0a192f, #060e1a);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
         }
-      };
 
-      ws.onerror = (error) => {
-        console.error("Kick WebSocket error:", error);
-      };
+        .hud-container {
+            width: 400px;
+            background: var(--jailex-glass);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            text-align: center;
+        }
 
-      ws.onclose = () => {
-        if (!isActive) return;
-        console.log("Kick: Disconnected, reconnecting in 5s...");
-        setKickConnected(false);
-        setTimeout(connectKick, 5000);
-      };
-    } catch (error) {
-      if (!isActive) return;
-      console.error("Kick connection failed:", error);
-      setTimeout(connectKick, 10000);
-    }
-  };
+        .header h1 {
+            font-weight: 900;
+            letter-spacing: 5px;
+            color: var(--jailex-blue);
+            margin: 0;
+            text-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
+        }
 
-  connectKick();
+        .sync-section {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 30px;
+            text-align: left;
+        }
 
-  return () => {
-    isActive = false;
-    if (kickWsRef.current) {
-      kickWsRef.current.close();
-      kickWsRef.current = null;
-    }
-  };
-}, [addMessage]);
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.6; }
 
+        input {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
 
-🎤 TTS Playback Queue System
-code
-// TTS Queue Processing
-useEffect(() => {
-  const processQueue = () => {
-    // Don't process if paused, muted, already speaking, or queue empty
-    if (!isPlaying || isMuted || isSpeakingRef.current || queue.length === 0) {
-      return;
-    }
+        input:focus { 
+            border-color: var(--jailex-blue); 
+            background: rgba(255, 255, 255, 0.07);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.15); 
+        }
 
-    // Get next message from queue
-    const nextMessage = queue[0];
-    setQueue((prev) => prev.slice(1));
-    setCurrentMessage(nextMessage);
-    isSpeakingRef.current = true;
+        .btn-sync {
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
 
-    // Build text to speak based on readUsername setting
-    const textToSpeak = readUsername 
-      ? `${nextMessage.username} says: ${nextMessage.message}`
-      : nextMessage.message;
+        .btn-sync:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3); }
 
-    // Create speech utterance
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    
-    // Apply voice settings
-    utterance.volume = volume;  // 0 to 1
-    utterance.rate = rate;      // 0.5 to 2
-    utterance.pitch = pitch;    // 0.5 to 2
-    
-    // Select voice based on platform
-    let selectedVoiceName = "";
-    if (nextMessage.platform === "twitch") {
-      selectedVoiceName = twitchVoice;
-    } else if (nextMessage.platform === "kick") {
-      selectedVoiceName = kickVoice;
-    } else if (nextMessage.platform === "timer") {
-      selectedVoiceName = timerVoice;
-    }
-    
-    const voice = voices.find((v) => v.name === selectedVoiceName);
-    if (voice) {
-      utterance.voice = voice;
-    }
+        .status-bar {
+            margin-top: 35px;
+            display: flex;
+            justify-content: space-around;
+            padding-top: 25px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
 
-    // Handle completion
-    utterance.onend = () => {
-      isSpeakingRef.current = false;
-      setCurrentMessage(null);
-    };
+        .pill { font-size: 10px; font-weight: bold; opacity: 0.4; transition: 0.5s; }
+        .pill.active { opacity: 1; color: var(--jailex-blue); text-shadow: 0 0 8px var(--jailex-blue); }
 
-    // Handle errors
-    utterance.onerror = () => {
-      isSpeakingRef.current = false;
-      setCurrentMessage(null);
-    };
+        #chat-preview {
+            margin-top: 25px;
+            height: 50px;
+            font-size: 12px;
+            overflow: hidden;
+            color: rgba(255, 255, 255, 0.3);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
 
-    // Speak the message
-    speechSynthesis.speak(utterance);
-  };
+<div class="hud-container">
+    <div class="header">
+        <h1>JAILEX</h1>
+        <p style="font-size: 10px; opacity: 0.4; margin-top: 5px;">INTEGRATED STREAMING ENGINE</p>
+    </div>
 
-  // Process queue every 100ms
-  const interval = setInterval(processQueue, 100);
-  return () => clearInterval(interval);
-}, [isPlaying, isMuted, queue, volume, rate, pitch, twitchVoice, kickVoice, timerVoice, voices, readUsername]);
+    <div class="sync-section">
+        <div class="input-group">
+            <label>Kick Channel</label>
+            <input type="text" id="kickInput" placeholder="Enter Username...">
+        </div>
+        <div class="input-group">
+            <label>Twitch Channel</label>
+            <input type="text" id="twitchInput" placeholder="Enter Username...">
+        </div>
+        <button class="btn-sync" onclick="startJailexSync()">INITIALIZE ENGINE</button>
+    </div>
 
+    <div id="chat-preview">Awaiting system initialization...</div>
 
-🤖 Bot Filtering Logic
-code
-// Comprehensive bot list
-const KICK_BOTS = [
-  "botrix", "kickbot", "kick", "streamelements", "nightbot", "moobot",
-  "fossabot", "wizebot", "deepbot", "coebot", "phantombot", "ankhbot",
-  "vivbot", "streamlabs", "cloudbot", "stay_hydrated_bot", "restreambot",
-  "sery_bot", "commanderroot", "lurxx", "electricalskateboard",
-  "electricallongboard", "alizeepathfinder", "virgoproz", "creatisbot",
-  "slocool", "p0lizei_", "lolrankbot", "0ax2", "thepositivebot",
-  "communityshowcase",
-];
+    <div class="status-bar">
+        <div class="pill" id="kickPill">KICK: OFFLINE</div>
+        <div class="pill" id="twitchPill">TWITCH: OFFLINE</div>
+        <div class="pill" id="audioPill">AUDIO: READY</div>
+    </div>
+</div>
 
-// Bot detection function
-const isKickBot = (username) => {
-  const lowerUsername = username.toLowerCase().trim();
-  
-  // Check against known bot list
-  if (KICK_BOTS.includes(lowerUsername)) {
-    return true;
-  }
-  
-  // Pattern matching for common bot naming conventions
-  if (lowerUsername.endsWith("bot") || 
-      lowerUsername.endsWith("_bot") || 
-      lowerUsername.includes("bot_")) {
-    return true;
-  }
-  
-  return false;
-};
-
-
-🔑 Key Technical Details:
-Kick Connection:
-Uses Kick’s public Pusher WebSocket endpoint (no auth required)
-Fetches chatroom ID from: https://kick.com/api/v2/channels/justquitbro7
-Connects to: wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679
-Subscribes to channel: chatrooms.{chatroomId}.v2
-Listens for event: App\\Events\\ChatMessageEvent
-TTS Playback:
-Uses browser’s Web Speech API (speechSynthesis)
-Queue processes every 100ms
-One message at a time (controlled by isSpeakingRef)
-Configurable volume, rate, pitch, and voice per platform
-No Backend/Server Required:
-Everything runs client-side in the browser
-No API keys or authentication tokens needed
-Read-only access to public chat streams
-Does this help you understand the connection logic? Let me know if you want to see any other parts of the code!
-
-I would like the hud to look something a clean and very professional and simple look and appearance. Preferably shades of blue. Where do we start?
+<script src="quick-sync.js"></script>
+<script src="script.js"></script>
+<script src="kick.js"></script>
+<script src="twitch.js"></script>
+</body>
+</html>
